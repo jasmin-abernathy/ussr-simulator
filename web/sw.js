@@ -1,10 +1,11 @@
 // Bump VERSION whenever a published asset changes. Only this game's scope is used.
-const VERSION = '2026-11-27-investments-1';
+const VERSION = '2026-11-27-runtime-v2';
 const SCOPE = new URL(self.registration.scope);
 const PREFIX = `ussr-simulator:${SCOPE.pathname}:`;
 const CACHE = `${PREFIX}${VERSION}`;
 const FILES = [
   './', './index.html', './styles.css', './app.js', './engine.js', './game-data.js', './world.js', './anthem-clip.js',
+   './runtime/app.js', './runtime/engine.js', './runtime/world.js', './runtime/game-data.js', './runtime/anthem-clip.js', './runtime/styles.css',
   './manifest.webmanifest', './assets/icon.svg', './assets/icon-192.png',
   './assets/icon-512.png', './assets/factory.svg', './assets/symbols.svg', './assets/anthem-world.png', './LICENSE.txt',
 ];
@@ -40,6 +41,24 @@ self.addEventListener('fetch', event => {
     })());
   } else if (ASSETS.has(url.origin + url.pathname)) {
     const canonical=url.origin+url.pathname;
-    event.respondWith(caches.match(canonical).then(cached => cached || fetch(request)));
+    // Network-first for code: a cached older engine must never silently
+    // replace a deployed update. The latest verified copy remains offline.
+    const isCode=/\\.(?:js|css)$/.test(url.pathname);
+    if(isCode){
+      event.respondWith((async()=>{
+        try {
+          const fresh=await fetch(new Request(request,{cache:'no-store'}));
+          if(fresh.ok){
+            const cache=await caches.open(CACHE);
+            await cache.put(canonical,fresh.clone());
+          }
+          return fresh;
+        }catch{
+          return await caches.match(canonical)||Response.error();
+        }
+      })());
+    }else{
+      event.respondWith(caches.match(canonical).then(cached=>cached||fetch(request)));
+    }
   }
 });

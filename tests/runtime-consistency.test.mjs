@@ -1,0 +1,30 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { createState, buyActivity, clickProduce, advance, getStats, exportState, hydrateState } from '../web/runtime/engine.js';
+import { RULES } from '../web/runtime/game-data.js';
+const now=1700000000000;
+const close=(actual,expected)=>assert.ok(Math.abs(actual-expected)<1e-8,`${actual} vs ${expected}`);
+test('deployed runtime has a fixed 10 rouble action and precisely quoted per-second income',()=>{
+ const s=createState(now);s.worldEconomyEnabled=true;s.cash=20000;s.communism=500;
+ assert.equal(RULES.initialProduction,10);
+ assert.equal(buyActivity(s,'matches',5).ok,true);
+ const start=s.cash;
+ const perSecond=getStats(s).business.netToTreasuryPerSecond;
+ assert.equal(getStats(s).productionPerClick,10);
+ advance(s,now+2000);
+ close(s.cash,start+2*perSecond);
+ clickProduce(s);close(s.cash,start+2*perSecond+10);
+ clickProduce(s);close(s.cash,start+2*perSecond+20);
+ advance(s,now+2000);close(s.cash,start+2*perSecond+20);
+ advance(s,now+3000);close(s.cash,start+3*perSecond+20);
+});
+test('runtime saves keep income rate, previous balance and fractional second progress',()=>{
+ const s=createState(now);s.worldEconomyEnabled=true;s.cash=20000;buyActivity(s,'matches');
+ advance(s,now+1250);
+ const snapshot=exportState(s,now+1250);
+ const restored=hydrateState(snapshot,now+1250);
+ const r=getStats(restored).business.netToTreasuryPerSecond;
+ close(restored.cash,s.cash);
+ advance(restored,now+1999);close(restored.cash,s.cash);
+ advance(restored,now+2000);close(restored.cash,s.cash+r);
+});
