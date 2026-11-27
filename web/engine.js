@@ -323,23 +323,46 @@ export function buyActivity(state, id, quantity = 1) {
   return { ok: true, bought: quote.quantity, spent: quote.cost };
 }
 
-/** Risky enterprises only; 40% of the last owned unit's reference price. */
-export function quoteActivitySale(state,id){
- const entry=BY_ID.get(id);
- if(!entry||!Object.hasOwn(CORRUPTION_PURCHASE,id))return {ok:false,reason:'not-resellable'};
- const owned=state.owned?.[id]||0;
- if(!Number.isSafeInteger(owned)||owned<1)return {ok:false,reason:'not-owned'};
- const original=priceFor(entry.item,entry.index,owned-1,state.owned.radio);
- return {ok:true,id,count:owned,refund:Math.round(original*RESALE_RATE*100)/100,
-   rateRemoved:getActivityCorruptionRate(id)};
-}
-export function sellActivity(state,id){
+/** A converted commerce stays in service and changes its business type.
+ * Its trade-in value offsets the new structure, without cashing out.
+ */
+export const CONVERSION_TARGETS=Object.freeze({
+ gum:Object.freeze(['matches','soda','grocery']),
+ trading:Object.freeze(['matches','soda','grocery']),
+ 'black-market':Object.freeze(['matches','soda','grocery']),
+ 'us-imports':Object.freeze(['matches','soda','grocery']),
+});
+export const CONVERSION_TRADE_IN_RATE=.40;
+export function quoteActivityConversion(state,sourceId,targetId){
  if(!state.worldEconomyEnabled)return {ok:false,reason:'unavailable'};
- const quote=quoteActivitySale(state,id);
+ const options=CONVERSION_TARGETS[sourceId];
+ if(!options)return {ok:false,reason:'not-convertible'};
+ if(!options.includes(targetId))return {ok:false,reason:'invalid-target'};
+ const count=sourceId==='us-imports'?(state.importsOwned||0):(state.owned?.[sourceId]||0);
+ if(!Number.isSafeInteger(count)||count<1)return {ok:false,reason:'not-owned'};
+ const target=getActivity(state,targetId);
+ if(!target||!target.unlocked)return {ok:false,reason:'locked'};
+ if(target.owned>=RULES.maxOwned)return {ok:false,reason:'ownership-limit'};
+ const lastPrice=sourceId==='us-imports'
+   ?Math.round(35000*Math.pow(1.18,count-1))
+   :priceFor(BY_ID.get(sourceId).item,BY_ID.get(sourceId).index,count-1,state.owned.radio);
+ const tradeInValue=Math.round(lastPrice*CONVERSION_TRADE_IN_RATE*100)/100;
+ // Only a positive difference is payable; no cash is ever refunded.
+ const cost=Math.max(0,Math.round((target.cost-tradeInValue)*100)/100);
+ return {ok:true,sourceId,targetId,cost,tradeInValue,targetPrice:target.cost,
+   available:state.cash>=cost,sourceCount:count,targetCount:target.owned};
+}
+export function convertActivity(state,sourceId,targetId){
+ const quote=quoteActivityConversion(state,sourceId,targetId);
  if(!quote.ok)return quote;
- state.owned[id]-=1;
- const refunded=addMoney(state,quote.refund);
- return {ok:true,id,refunded,rateRemoved:quote.rateRemoved};
+ if(!quote.available)return {ok:false,reason:'funds',cost:quote.cost};
+ state.cash=Math.max(0,state.cash-quote.cost);
+ if(sourceId==='us-imports')state.importsOwned--;
+ else state.owned[sourceId]--;
+ state.owned[targetId]++;
+ // The prior one-time awards remain, with no new free purchase award.
+ // Passive income/communism/corruption derive from the replacement business.
+ return {ok:true,sourceId,targetId,cost:quote.cost,tradeInValue:quote.tradeInValue,targetPrice:quote.targetPrice};
 }
 
 /** Dubious propaganda purchase, distinct from legitimate public services. */

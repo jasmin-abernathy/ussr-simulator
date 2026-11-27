@@ -240,15 +240,18 @@ export function buyUSImports(w,state){
  return {ok:true,spent:offer.cost,offer};
 }
 
-/** Sell one import establishment, ceasing its passive corruption. */
-export function sellUSImports(w,state){
- if(!state.worldEconomyEnabled||!w.usImports)return {ok:false,reason:'not-owned'};
- const reference=Math.round(35000*Math.pow(1.18,w.usImports-1));
- const refunded=Math.min(Math.max(0,1e12-state.cash),Math.round(reference*.4*100)/100);
- w.usImports--;state.importsOwned=w.usImports;
- state.cash=Math.min(1e12,state.cash+refunded);
- state.totalEarned=Math.min(1e12,state.totalEarned+refunded);
- return {ok:true,refunded,rateRemoved:state.usCapitalist===false?0:.05};
+/** Keep the partner-world import count consistent with the economic save.
+ * Conversion is one-for-one, never cashes out an establishment.
+ * Conversion logic is injected by the caller so the world module remains
+ * independent of the economic engine and circular imports are avoided.
+ */
+export function convertUSImports(w,state,targetId,convert){
+ if(!w||!state||!Number.isSafeInteger(w.usImports)||w.usImports<1||
+    w.usImports!==state.importsOwned||typeof convert!=='function')
+   return {ok:false,reason:'not-owned'};
+ const result=convert(state,'us-imports',targetId);
+ if(result.ok)w.usImports=state.importsOwned;
+ return result;
 }
 
 /** Compromises are separate investments, not additions to the 22 factories.
