@@ -184,7 +184,7 @@ export const corruptionPerMinute = state =>
   (state.bilateralAgreements||0)*.10;
 
 /** Derived values only; querying never changes the state or the clock. */
-/** Industry passively yields 40% of its one-time communism bonus per minute.
+/** Industry passively yields 1% of its one-time communism bonus per minute.
  * Purchase rewards remain unchanged; fractional points accumulate normally.
  * Non-industry investments and international agreements are excluded.
  */
@@ -196,7 +196,7 @@ export function getCommunismPerMinute(state){
    total=cap(total+cap(count,RULES.maxOwned)*item.effects.communism);
   }
  }
- return cap(total*.4+(state.worldEconomyEnabled?(state.propagandaAgencies||0)*1:0));
+ return cap(total*.01+(state.worldEconomyEnabled?(state.propagandaAgencies||0)*.05:0));
 }
 
 /** Ring-fenced tax budget. Projects never spend the business treasury. */
@@ -394,7 +394,7 @@ export function getPropagandaOffer(state){
  const count=state.propagandaAgencies||0;
  const cost=Math.round(2500*Math.pow(1.35,count));
  return {count,cost,corruptionOnPurchase:3,corruptionPerMinute:.036,
-   communismPerMinute:1,available:state.worldEconomyEnabled&&count<1000&&state.communism>=40&&state.cash>=cost};
+   communismPerMinute:.05,available:state.worldEconomyEnabled&&count<1000&&state.communism>=40&&state.cash>=cost};
 }
 export function buyPropagandaAgency(state){
  const offer=getPropagandaOffer(state);
