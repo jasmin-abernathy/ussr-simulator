@@ -508,44 +508,44 @@ export function activityBusinessRate(state,id){
  const grossPerSecond=definition[0]*BUSINESS_REBALANCE/60;
  return {grossPerSecond,taxRate:rate,
  taxesPerSecond:grossPerSecond*rate/100,
- dividendsPerSecond:grossPerSecond*(1-rate/100)*0.6,
+ treasuryPerSecond:grossPerSecond*(1-rate/100),
  // Keep compatibility fields for older developer tests and external consumers.
  grossPerMinute:grossPerSecond*60,
  taxesPerMinute:grossPerSecond*rate,
- dividendsPerMinute:grossPerSecond*(1-rate/100)*0.6*60};
+ treasuryPerMinute:grossPerSecond*(1-rate/100)*60};
 }
 export function getBusinessEconomyForPolicy(state,policy){
   if(!Object.prototype.hasOwnProperty.call(TAX_POLICIES,policy))return getBusinessEconomy(state);
   return getBusinessEconomy({...state,taxPolicy:policy});
 }
 export function getBusinessEconomy(state){
- let gross=0,taxes=0,dividends=0,owned=0;
+ let gross=0,taxes=0,treasury=0,owned=0;
  for(const [id,count] of Object.entries(state.owned||{})){
   if(!count)continue;
   const rate=activityBusinessRate(state,id);
   if(!rate)continue;
   const units=cap(count,RULES.maxOwned);owned+=units;
-  gross+=rate.grossPerSecond*units;taxes+=rate.taxesPerSecond*units;dividends+=rate.dividendsPerSecond*units;
+  gross+=rate.grossPerSecond*units;taxes+=rate.taxesPerSecond*units;treasury+=rate.treasuryPerSecond*units;
  }
  if(state.importsOwned){
   const rate=activityBusinessRate(state,'us-imports');
   gross+=rate.grossPerSecond*state.importsOwned;
   taxes+=rate.taxesPerSecond*state.importsOwned;
-  dividends+=rate.dividendsPerSecond*state.importsOwned;
+  treasury+=rate.treasuryPerSecond*state.importsOwned;
   owned+=state.importsOwned;
  }
  const leakage=Math.min(35,Math.floor((state.corruption||0)/25))/100;
  const administrationEfficiency=1+Math.min(0.20,(state.bureaucracyOffices||0)*0.02)+Math.min(.30,(state.publicServicesLevel||0)*.03);
- const bilateralDividendBonus=1+Math.min(0.15,(state.bilateralAgreements||0)*0.01);
+ const bilateralTradeBonus=1+Math.min(0.15,(state.bilateralAgreements||0)*0.01);
  const collected=taxes*(1-leakage)*administrationEfficiency*(1-0.1*Math.min(3,state.crisesPending||0));
- const distributed=dividends*bilateralDividendBonus;
+ const businessIncome=treasury*bilateralTradeBonus;
  return {grossPerSecond:cap(gross),taxesPerSecond:cap(taxes),
- taxesCollectedPerSecond:cap(collected),dividendsPerSecond:cap(distributed),
- netToTreasuryPerSecond:cap(distributed),
+ taxesCollectedPerSecond:cap(collected),businessIncomePerSecond:cap(businessIncome),
+ netToTreasuryPerSecond:cap(businessIncome),
  grossPerMinute:cap(gross*60),taxesPerMinute:cap(taxes*60),
  taxesCollectedPerMinute:cap(collected*60),
- dividendsPerMinute:cap(distributed*60),
- netToTreasuryPerMinute:cap(distributed*60),
+ businessIncomePerMinute:cap(businessIncome*60),
+ netToTreasuryPerMinute:cap(businessIncome*60),
  taxPolicy:state.taxPolicy||'balanced',owned,
  secondsUntilPayout:(1000-(state.secondRemainderMs||0))/1000};
 }

@@ -264,7 +264,7 @@ export function getBilateralOffer(world,state,id){
  const signed=world.bilateral.includes(id);
  const cost=4500+Number(id)*350;
  return {...country,cost,signed,corruptionOnPurchase:4,corruptionPerMinute:0.16,
-  dividendBonusPercent:1,
+  businessIncomeBonusPercent:1,
   available:!signed&&state.cash>=cost&&state.communism>=100};
 }
 export function buyBilateralAgreement(world,state,id){

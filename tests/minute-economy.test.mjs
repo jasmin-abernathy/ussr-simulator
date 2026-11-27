@@ -9,7 +9,7 @@ test('matches factory pays every second, at a quarter of previous per-minute ear
  assert.equal(BUSINESS_REBALANCE,0.25);
  const business=getBusinessEconomy(s);
  close(business.grossPerSecond,.625);
- close(business.netToTreasuryPerSecond,.345);
+ close(business.netToTreasuryPerSecond,.575);
  close(business.taxesCollectedPerSecond,.05);
  assert.equal(getStats(s).productionPerClick,10.16);
  clickProduce(s);close(s.cash,start+10.16);
@@ -50,7 +50,7 @@ test('migration from minute saves does not grant 59 seconds of backdated income'
  advance(restored,NOW+999);close(restored.cash,0);
  advance(restored,NOW+1000);close(restored.cash,getBusinessEconomy(restored).netToTreasuryPerSecond);
 });
-test('corruption reduces taxes rather than deleting legitimate dividends',()=>{
+test('corruption reduces taxes rather than deleting legitimate business income',()=>{
  const s=createState(NOW);s.worldEconomyEnabled=true;s.cash=500;buyActivity(s,'matches');s.cash=0;
  const dirty=structuredClone(s);dirty.corruption=250;
  advance(s,NOW+1000);advance(dirty,NOW+1000);
@@ -60,7 +60,7 @@ test('corruption reduces taxes rather than deleting legitimate dividends',()=>{
 test('forecast remains immediate and does not modify the chosen tax policy',()=>{
  const s=createState(NOW);s.cash=500;s.worldEconomyEnabled=false;buyActivity(s,'matches');
  close(getBusinessEconomy(s).grossPerSecond,.625);
- s.worldEconomyEnabled=true;close(getStats(s).business.netToTreasuryPerSecond,.345);
+ s.worldEconomyEnabled=true;close(getStats(s).business.netToTreasuryPerSecond,.575);
  assert.equal(getStats(s).productionPerClick,10.16);
  close(getBusinessEconomyForPolicy(s,'balanced').taxesPerSecond,.05);
  assert.ok(getBusinessEconomyForPolicy(s,'social').taxesCollectedPerSecond<

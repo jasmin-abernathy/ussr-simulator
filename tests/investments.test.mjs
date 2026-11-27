@@ -42,13 +42,13 @@ test('reinforced civil service raises corruption but increases tax collection',(
 test('each capitalist country may sign one bilateral agreement; converting stops recurring corruption',()=>{
  const state=createState(NOW),world=createWorld();state.worldEconomyEnabled=true;
  chooseCountry(world,'0');state.cash=100000000;state.communism=100001;
- buyActivity(state,'matches');const dividends=getBusinessEconomy(state).dividendsPerSecond;
+ buyActivity(state,'matches');const businessRevenue=getBusinessEconomy(state).businessIncomePerSecond;
  const offer=getBilateralOffer(world,state,'1');assert.equal(offer.available,true);
  assert.equal(buyBilateralAgreement(world,state,'1').ok,true);
  assert.equal(buyBilateralAgreement(world,state,'1').ok,false);
  assert.equal(state.bilateralAgreements,1);close(state.corruption,4);
  close(getStats(state).corruptionPerMinute,.16);
- assert.ok(getBusinessEconomy(state).dividendsPerSecond>dividends);
+ assert.ok(getBusinessEconomy(state).businessIncomePerSecond>businessRevenue);
  const saved=hydrateWorld(JSON.parse(JSON.stringify(world)));
  assert.deepEqual(saved.bilateral,['1']);
  const corruption=state.corruption;

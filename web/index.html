@@ -9,8 +9,8 @@
   <title>Communist World Simulator — Édition de développement</title>
   <link rel="icon" href="./assets/icon.svg" type="image/svg+xml">
   <link rel="manifest" href="./manifest.webmanifest">
-  <link rel="stylesheet" href="./runtime-tabs-v11/styles.css?v=2026-11-27-public-navigation-1">
-  <script type="module" src="./runtime-tabs-v11/app.js?v=2026-11-27-public-navigation-1"></script>
+  <link rel="stylesheet" href="./runtime-income-v12/styles.css?v=2026-11-27-enterprise-income-1">
+  <script type="module" src="./runtime-income-v12/app.js?v=2026-11-27-enterprise-income-1"></script>
 <script>
 /* Web playtest: disable the previous offline service worker and its caches.
    The game state is in localStorage and must never be touched here. */
@@ -61,7 +61,7 @@
         <div><span>Communisme</span><strong class="red" id="home-communism">0</strong><small class="passive-communism-rate" id="home-communism-per-minute">+0 / min</small></div>
         <div><span>Production</span><strong class="teal"><span id="home-production">10</span> ₽ / clic</strong></div>
         <div><span>Taxes collectées</span><strong class="green"><span id="home-taxes">0</span> ₽ / seconde</strong></div>
-        <div><span>Dividendes</span><strong class="teal"><span id="home-commerce">0</span> ₽ / seconde</strong></div><div><span>Corruption</span><strong class="red" id="home-corruption">0 point</strong><small class="confidence-inline" id="home-confidence">100 % de confiance</small></div>
+        <div><span>Recettes des activités</span><strong class="teal"><span id="home-commerce">0</span> ₽ / seconde</strong></div><div><span>Corruption</span><strong class="red" id="home-corruption">0 point</strong><small class="confidence-inline" id="home-confidence">100 % de confiance</small></div>
       </section>
       <p class="home-hint">Les recettes automatiques continuent pendant ton absence.</p>
       <section class="anthem-panel" aria-label="L’Internationale">
@@ -117,7 +117,7 @@
         <div><p class="eyebrow">L’ÉCONOMIE SE CONSTRUIT</p><h2 id="activities-title">Tes activités</h2></div>
         <span class="count-label"><span id="owned-count">0</span><span id="owned-label"> activité</span></span>
       </div>
-      <p class="section-description">Chaque entreprise verse des dividendes en trésorerie et des taxes dans la caisse publique. Certains achats génèrent également de la corruption.</p>
+      <p class="section-description">Chaque entreprise verse ses recettes après impôt en trésorerie et des taxes dans la caisse publique. Certains achats génèrent également de la corruption.</p>
 
       <div class="activity-toolbar">
         <div class="filter-tabs" role="group" aria-label="Afficher les activités">
@@ -156,11 +156,11 @@
           <article class="investment-item investment-bilateral">
             <div class="investment-symbol" aria-hidden="true">🤝</div>
             <div class="investment-details"><h4>Accord bilatéral avec un pays capitaliste</h4>
-              <p>Développe les échanges avec un pays non encore communisé. Augmente les dividendes, mais aussi la corruption.</p>
+              <p>Développe les échanges avec un pays non encore communisé. Augmente les recettes commerciales, mais aussi la corruption.</p>
               <label class="bilateral-select-label" for="bilateral-country">Pays partenaire
                 <select id="bilateral-country" aria-label="Pays capitaliste pour l'accord"></select>
               </label>
-              <div class="investment-stats"><span id="bilateral-owned">0 accord</span><span>+1 % de dividendes</span><span id="bilateral-risk">+4 corruption à la signature · +0,16 / min</span></div>
+              <div class="investment-stats"><span id="bilateral-owned">0 accord</span><span>+1 % de recettes commerciales</span><span id="bilateral-risk">+4 corruption à la signature · +0,16 / min</span></div>
             </div>
             <button id="bilateral-buy" class="country-action" type="button" disabled>Signer l'accord</button>
           </article>
@@ -176,7 +176,7 @@
         <div><p class="eyebrow">GÉRER LE BIEN COMMUN</p><h2 id="public-screen-title">Finances publiques</h2></div>
         <span class="count-label">Budget collectif</span>
       </div>
-      <p class="section-description">Les activités produisent des dividendes pour la trésorerie et des taxes pour la caisse publique. Ici, règle la fiscalité et finance les services publics, la solidarité et la résolution des crises.</p>
+      <p class="section-description">Les activités produisent des recettes après impôt pour la trésorerie et des taxes pour la caisse publique. Ici, règle la fiscalité et finance les services publics, la solidarité et la résolution des crises.</p>
       <section class="finance-panel" aria-labelledby="finance-title">
         <div class="finance-panel-heading">
           <div>
@@ -186,18 +186,18 @@
           <div class="finance-timer"><span>Versement chaque seconde</span><strong id="finance-countdown">1 s</strong></div>
         </div>
         <div class="finance-net-hero">
-          <span>Dividendes versés en trésorerie chaque seconde</span>
+          <span>Recettes des entreprises après impôt · par seconde</span>
           <strong id="finance-net">0 ₽</strong>
         </div>
         <div class="finance-breakdown" aria-label="Détail des revenus">
           <div><span>Activité totale</span><strong id="finance-gross">0 ₽</strong></div>
           <div><span>Taxes → caisse publique</span><strong id="finance-taxes">0 ₽</strong></div>
-          <div><span>Dividendes → trésorerie</span><strong id="finance-dividends">0 ₽</strong></div>
+          <div><span>Recettes des activités → trésorerie</span><strong id="finance-business-income">0 ₽</strong></div>
         </div>
         <div class="finance-policy">
           <div class="finance-policy-heading">
             <h4>Choisis ta fiscalité</h4>
-            <p>Elle modifie la collecte de la caisse publique et les dividendes disponibles.</p>
+            <p>Elle modifie la collecte de la caisse publique et les recettes commerciales disponibles.</p>
           </div>
           <div class="policy-buttons" role="group" aria-label="Politique fiscale">
             <button type="button" data-tax-policy="social" aria-pressed="false"><span class="policy-name">Allégée</span><small>−10 pts de taxe</small><strong data-policy-preview="social">0 ₽/s</strong></button>

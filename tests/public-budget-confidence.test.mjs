@@ -15,12 +15,12 @@ test('chewing gum adds exactly +2 corruption when purchased, never recurring',()
  close(s.corruption,4);
  assert.equal(getCommunismPerMinute(s),rate);
 });
-test('taxes go exclusively into public budget and dividends to ordinary cash',()=>{
+test('taxes go exclusively into public budget and business revenues to ordinary cash',()=>{
  const s=world();buyActivity(s,'matches');
  const beginning=s.cash,fin=getBusinessEconomy(s);
- close(fin.taxesCollectedPerSecond,.05);close(fin.netToTreasuryPerSecond,.345);
+ close(fin.taxesCollectedPerSecond,.05);close(fin.netToTreasuryPerSecond,.575);
  const r=advance(s,NOW+1000);
- close(s.cash-beginning,fin.dividendsPerSecond);
+ close(s.cash-beginning,fin.businessIncomePerSecond);
  close(s.publicBudget,fin.taxesCollectedPerSecond);
  close(s.publicTaxesCollected,s.publicBudget);
  close(r.earned,fin.netToTreasuryPerSecond);close(r.taxesEarned,fin.taxesCollectedPerSecond);
