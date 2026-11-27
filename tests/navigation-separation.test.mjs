@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 
 const html=readFileSync(new URL('../web/index.html',import.meta.url),'utf8');
-const app=readFileSync(new URL('../web/runtime-tabs-v11/app.js',import.meta.url),'utf8');
-const css=readFileSync(new URL('../web/runtime-tabs-v11/styles.css',import.meta.url),'utf8');
+const app=readFileSync(new URL('../web/runtime-income-v12/app.js',import.meta.url),'utf8');
+const css=readFileSync(new URL('../web/runtime-income-v12/styles.css',import.meta.url),'utf8');
 const section=(start,end)=>{
  const a=html.indexOf(start),b=html.indexOf(end,a+start.length);
  assert.ok(a>=0&&b>a,`Expected section markers: ${start}, ${end}`);
@@ -25,7 +25,7 @@ test('five navigation destinations include independent public-finances tab',()=>
 test('tax policy, budget and every fiscal project exist only in the public tab',()=>{
  assert.match(publicTab,/class="finance-panel"/);
  assert.match(publicTab,/class="public-budget-panel"/);
- for(const id of ['finance-taxes','finance-dividends','public-budget','public-project-services','public-project-solidarity','public-project-crisis']){
+ for(const id of ['finance-taxes','finance-business-income','public-budget','public-project-services','public-project-solidarity','public-project-crisis']){
   assert.match(publicTab,new RegExp('id="'+id+'"'));
   assert.doesNotMatch(work,new RegExp('id="'+id+'"'));
  }
@@ -52,7 +52,7 @@ test('mobile CSS isolates the public tab and keeps five accessible destinations'
 test('save keys and public budget engine data are unchanged by navigation',()=>{
  for(const key of ['ussr-simulator:save:v1','communist-world:world:v1'])
   assert.ok(app.includes(key));
- const engine=readFileSync(new URL('../web/runtime-tabs-v11/engine.js',import.meta.url),'utf8');
+ const engine=readFileSync(new URL('../web/runtime-income-v12/engine.js',import.meta.url),'utf8');
  assert.match(engine,/publicBudget: 0/);
  assert.match(engine,/export function spendPublicBudget/);
 });
