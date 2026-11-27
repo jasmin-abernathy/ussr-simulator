@@ -172,15 +172,20 @@ export function getCooperation(w,state,id){
   const index=Number(id);
   const political=getPoliticalDifficulty(c);
   const threshold=political.threshold;
-  const cost=id===USA_COUNTRY_ID?USA_COOPERATION_COST:Math.round((1500+threshold*6.5)/50)*50;
+  const baseCost=id===USA_COUNTRY_ID?USA_COOPERATION_COST:Math.round((1500+threshold*6.5)/50)*50;
+  const cost=Math.ceil(baseCost*(1-Math.min(.40,(state.internationalAidLevel||0)*.05)));
   const joined=w.partners.includes(id),home=w.origin===id;
   const unlocked=home||joined||isCountryVisible(w,id);
-  return {...c,threshold,cost,politicalContext:political.reason,stage:getCountryWave(w,id),unlocked,joined,home,productionBonus:10+index*3,taxesBonus:5+index*2,communismBonus:5+Math.floor(index/3),available:Boolean(w.origin)&&unlocked&&!home&&!joined&&state.communism>=threshold&&state.cash>=cost};
+  const confidence=state.communism<=0?(state.corruption>0?0:1):state.communism/(state.communism+Math.max(0,state.corruption||0));
+  const confidenceRequired=.85;
+  const confidenceOk=confidence>=confidenceRequired;
+  return {...c,threshold,cost,politicalContext:political.reason,stage:getCountryWave(w,id),unlocked,joined,home,confidence,confidenceRequired,confidenceOk,productionBonus:10+index*3,taxesBonus:5+index*2,communismBonus:5+Math.floor(index/3),available:Boolean(w.origin)&&unlocked&&!home&&!joined&&state.communism>=threshold&&confidenceOk&&state.cash>=cost};
 }
 export function cooperate(w,state,id){
   const c=getCooperation(w,state,id);if(!w.origin||!c||c.home||c.joined)return {ok:false,reason:"unavailable"};
   if(!c.unlocked)return {ok:false,reason:"stage-locked"};
   if(state.communism<c.threshold)return {ok:false,reason:"locked"};
+  if(!c.confidenceOk)return {ok:false,reason:"corruption"};
   if(state.cash<c.cost)return {ok:false,reason:"funds"};
   state.cash-=c.cost;state.counters.production+=c.productionBonus;state.counters.taxes+=c.taxesBonus;state.communism+=c.communismBonus;
   w.partners.push(id);

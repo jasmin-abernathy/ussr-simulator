@@ -9,8 +9,8 @@
   <title>Communist World Simulator — Édition de développement</title>
   <link rel="icon" href="./assets/icon.svg" type="image/svg+xml">
   <link rel="manifest" href="./manifest.webmanifest">
-  <link rel="stylesheet" href="./runtime-communism-v9/styles.css?v=2026-11-27-communism-production-1">
-  <script type="module" src="./runtime-communism-v9/app.js?v=2026-11-27-communism-production-1"></script>
+  <link rel="stylesheet" href="./runtime-public-v10/styles.css?v=2026-11-27-public-budget-confidence-1">
+  <script type="module" src="./runtime-public-v10/app.js?v=2026-11-27-public-budget-confidence-1"></script>
 <script>
 /* Web playtest: disable the previous offline service worker and its caches.
    The game state is in localStorage and must never be touched here. */
@@ -121,18 +121,18 @@
           <div class="finance-timer"><span>Versement chaque seconde</span><strong id="finance-countdown">1 s</strong></div>
         </div>
         <div class="finance-net-hero">
-          <span>Versé en trésorerie chaque seconde</span>
+          <span>Dividendes versés en trésorerie chaque seconde</span>
           <strong id="finance-net">0 ₽</strong>
         </div>
         <div class="finance-breakdown" aria-label="Détail des revenus">
           <div><span>Activité totale</span><strong id="finance-gross">0 ₽</strong></div>
-          <div><span>Taxes</span><strong id="finance-taxes">0 ₽</strong></div>
-          <div><span>Dividendes</span><strong id="finance-dividends">0 ₽</strong></div>
+          <div><span>Taxes → caisse publique</span><strong id="finance-taxes">0 ₽</strong></div>
+          <div><span>Dividendes → trésorerie</span><strong id="finance-dividends">0 ₽</strong></div>
         </div>
         <div class="finance-policy">
           <div class="finance-policy-heading">
             <h4>Choisis ta fiscalité</h4>
-            <p>Elle modifie la part prélevée sur chaque entreprise.</p>
+            <p>Elle modifie la collecte de la caisse publique et les dividendes disponibles.</p>
           </div>
           <div class="policy-buttons" role="group" aria-label="Politique fiscale">
             <button type="button" data-tax-policy="social" aria-pressed="false"><span class="policy-name">Allégée</span><small>−10 pts de taxe</small><strong data-policy-preview="social">0 ₽/s</strong></button>
@@ -142,11 +142,25 @@
           <p class="finance-tip" id="finance-tip">Les taux diffèrent selon les entreprises ; un versement arrive chaque seconde.</p>
         </div>
       </section>
+      <section class="public-budget-panel" aria-labelledby="public-title">
+        <div class="public-budget-head">
+          <div><p class="eyebrow">BUDGET COLLECTIF</p><h3 id="public-title">Caisse publique</h3></div>
+          <strong id="public-budget">0 ₽</strong>
+        </div>
+        <p class="public-budget-info">Les taxes collectées restent ici, séparées de la trésorerie des entreprises. Elles financent trois actions.</p>
+        <div class="public-budget-stats"><span id="public-budget-rate">+0 ₽ / s</span><small>Taxes cumulées : <strong id="public-collected">0 ₽</strong></small></div>
+        <p class="public-crisis-status" id="public-crises">Aucune crise en cours</p>
+        <div class="public-projects">
+          <article class="public-project"><div><strong>🏥 Services publics</strong><small>+3 % de taxes collectées par niveau, jusqu’à +30 %.</small><span id="public-project-services-level">Niveau 0/10</span></div><button id="public-project-services" type="button" disabled>Financer</button></article>
+          <article class="public-project"><div><strong>🌍 Solidarité internationale</strong><small>−5 % sur le coût en roubles des coopérations par niveau, jusqu’à −40 %.</small><span id="public-project-solidarity-level">Niveau 0/8</span></div><button id="public-project-solidarity" type="button" disabled>Financer</button></article>
+          <article class="public-project"><div><strong>🛠️ Gestion des crises</strong><small>Une crise survient toutes les 15 min d’activité, jusqu’à 3. Chaque crise réduit la collecte de 10 % et augmente la corruption de 1. Sa résolution rétablit la collecte et retire 1 point de corruption.</small><span id="public-project-crisis-level">0 à résoudre</span></div><button id="public-project-crisis" type="button" disabled>Aucune crise</button></article>
+        </div>
+      </section>
       <div class="section-heading">
         <div><p class="eyebrow">L’ÉCONOMIE SE CONSTRUIT</p><h2 id="activities-title">Tes activités</h2></div>
         <span class="count-label"><span id="owned-count">0</span><span id="owned-label"> activité</span></span>
       </div>
-      <p class="section-description">Chaque entreprise rapporte automatiquement chaque seconde. La taxe dépend du secteur et de ta politique fiscale.</p>
+      <p class="section-description">Chaque entreprise verse des dividendes en trésorerie et des taxes dans la caisse publique. Certains achats génèrent également de la corruption.</p>
 
       <div class="activity-toolbar">
         <div class="filter-tabs" role="group" aria-label="Afficher les activités">
@@ -209,7 +223,7 @@
         <p id="world-stage-description">Commence par les voisins géographiques du pays choisi. Chaque vague terminée débloque la suivante.</p>
       </section><p id="milestone-message" class="world-milestone" role="status">Une autre économie est possible. Construis les premiers liens !</p>
       <div class="world-toolbar"><label for="world-filter">Région</label><select id="world-filter"><option value="all">Toutes</option><option>Europe</option><option>Amérique du Nord</option><option>Amérique du Sud</option><option>Afrique</option><option>Europe et Asie</option><option>Asie</option><option>Océanie</option></select></div>
-      <p class="world-balance-note">Classement par proximité géographique : voisins d’abord, puis pays du même continent. Les seuils de communisme restent propres à chaque pays.</p>
+      <p class="world-balance-note">Voisins d’abord, puis pays du même continent. Pour coopérer, atteins le seuil de communisme et maintiens au moins 85 % de confiance : communisme ÷ (communisme + corruption).</p>
       <div id="world-list" class="world-list"></div>
       <button id="world-more" class="world-more" type="button" hidden>Afficher d’autres pays</button>
     </section>

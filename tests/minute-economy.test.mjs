@@ -9,7 +9,8 @@ test('matches factory pays every second, at a quarter of previous per-minute ear
  assert.equal(BUSINESS_REBALANCE,0.25);
  const business=getBusinessEconomy(s);
  close(business.grossPerSecond,.625);
- close(business.netToTreasuryPerSecond,.395);
+ close(business.netToTreasuryPerSecond,.345);
+ close(business.taxesCollectedPerSecond,.05);
  assert.equal(getStats(s).productionPerClick,10.16);
  clickProduce(s);close(s.cash,start+10.16);
  advance(s,NOW+999);close(s.cash,start+10.16);
@@ -24,6 +25,8 @@ test('rates still vary by sector and policies change the per-second income',()=>
  assert.equal(activityBusinessRate(s,'beer').taxRate,22);
  assert.equal(setTaxPolicy(s,'social'),true);
  assert.ok(getBusinessEconomy(s).netToTreasuryPerSecond<baseline.netToTreasuryPerSecond);
+ assert.ok(getBusinessEconomy(s).taxesCollectedPerSecond>baseline.taxesCollectedPerSecond);
+ assert.ok(getBusinessEconomy(s).taxesCollectedPerSecond<baseline.taxesCollectedPerSecond);
  assert.equal(setTaxPolicy(s,'solidarity'),true);
  assert.ok(getBusinessEconomy(s).netToTreasuryPerSecond>baseline.netToTreasuryPerSecond);
  assert.equal(setTaxPolicy(s,'invalid'),false);
@@ -51,15 +54,16 @@ test('corruption reduces taxes rather than deleting legitimate dividends',()=>{
  const s=createState(NOW);s.worldEconomyEnabled=true;s.cash=500;buyActivity(s,'matches');s.cash=0;
  const dirty=structuredClone(s);dirty.corruption=250;
  advance(s,NOW+1000);advance(dirty,NOW+1000);
- assert.ok(s.cash>dirty.cash);assert.ok(dirty.cash>0);
+ close(s.cash,dirty.cash);assert.ok(dirty.cash>0);
+ assert.ok(s.publicBudget>dirty.publicBudget);
 });
 test('forecast remains immediate and does not modify the chosen tax policy',()=>{
  const s=createState(NOW);s.cash=500;s.worldEconomyEnabled=false;buyActivity(s,'matches');
  close(getBusinessEconomy(s).grossPerSecond,.625);
- s.worldEconomyEnabled=true;close(getStats(s).business.netToTreasuryPerSecond,.395);
+ s.worldEconomyEnabled=true;close(getStats(s).business.netToTreasuryPerSecond,.345);
  assert.equal(getStats(s).productionPerClick,10.16);
  close(getBusinessEconomyForPolicy(s,'balanced').taxesPerSecond,.05);
- assert.ok(getBusinessEconomyForPolicy(s,'social').netToTreasuryPerSecond<
- getBusinessEconomyForPolicy(s,'solidarity').netToTreasuryPerSecond);
+ assert.ok(getBusinessEconomyForPolicy(s,'social').taxesCollectedPerSecond<
+ getBusinessEconomyForPolicy(s,'solidarity').taxesCollectedPerSecond);
  assert.equal(s.taxPolicy,'balanced');
 });

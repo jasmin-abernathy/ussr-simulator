@@ -19,7 +19,7 @@ const addMoney = (state, amount) => {
 export function createState(now = Date.now()) {
   return {
     version: RULES.saveVersion,
-    cash: 0, totalEarned: 0, clicks: 0, automaticSeconds: 0, communism: 0, corruption: 0, importsOwned: 0, bureaucracyOffices: 0, bilateralAgreements: 0, usCapitalist: true, worldEconomyEnabled: false, taxPolicy: 'balanced', secondRemainderMs: 0, communismRemainderMs: 0, economyTickMode: 'seconds-v1',
+    cash: 0, totalEarned: 0, publicBudget: 0, publicTaxesCollected: 0, publicSpent: 0, publicServicesLevel: 0, internationalAidLevel: 0, crisesPending: 0, crisesGenerated: 0, crisisRemainderMs: 0, clicks: 0, automaticSeconds: 0, communism: 0, corruption: 0, importsOwned: 0, bureaucracyOffices: 0, bilateralAgreements: 0, usCapitalist: true, worldEconomyEnabled: false, taxPolicy: 'balanced', secondRemainderMs: 0, communismRemainderMs: 0, economyTickMode: 'seconds-v1',
     owned: Object.fromEntries(ACTIVITIES.map(item => [item.id, 0])),
     counters: { production: RULES.initialProduction, taxes: 0, productionBonusPercent: 0, taxBonusPercent: 0 },
     productionSteps: 0, taxSteps: 0,
@@ -92,6 +92,15 @@ export function hydrateState(raw, now = Date.now()) {
   // offline period is still credited once by advance() after hydration.
   state.communismRemainderMs=raw.communismRemainderMs===undefined
     ? 0 : readNumber(raw.communismRemainderMs,0,59999.999);
+  // Existing roubles are untouched; only future tax income goes to the public budget.
+  state.publicBudget=raw.publicBudget===undefined?0:readNumber(raw.publicBudget,0);
+  state.publicTaxesCollected=raw.publicTaxesCollected===undefined?0:readNumber(raw.publicTaxesCollected,0);
+  state.publicSpent=raw.publicSpent===undefined?0:readNumber(raw.publicSpent,0);
+  state.publicServicesLevel=raw.publicServicesLevel===undefined?0:readNumber(raw.publicServicesLevel,0,10,true);
+  state.internationalAidLevel=raw.internationalAidLevel===undefined?0:readNumber(raw.internationalAidLevel,0,8,true);
+  state.crisesPending=raw.crisesPending===undefined?0:readNumber(raw.crisesPending,0,3,true);
+  state.crisesGenerated=raw.crisesGenerated===undefined?0:readNumber(raw.crisesGenerated,0,Number.MAX_SAFE_INTEGER,true);
+  state.crisisRemainderMs=raw.crisisRemainderMs===undefined?0:readNumber(raw.crisisRemainderMs,0,899999.999);
   state.cash = readNumber(raw.cash, 0);
   state.totalEarned = Math.max(state.cash, readNumber(raw.totalEarned, state.cash));
   state.communism = Math.max(minimum.communism, readNumber(raw.communism, minimum.communism));
@@ -175,9 +184,44 @@ export function getCommunismPerMinute(state){
  return total;
 }
 
+/** Ring-fenced tax budget. Projects never spend the business treasury. */
+export const PUBLIC_PROJECTS=Object.freeze({
+ services:Object.freeze({name:'Services publics',description:'Augmente la collecte fiscale de 3 % par niveau (maximum 30 %).'}),
+ solidarity:Object.freeze({name:'Solidarité internationale',description:'Réduit le coût des futures coopérations de 5 % par niveau (maximum 40 %).'}),
+ crisis:Object.freeze({name:'Résoudre la crise',description:'Répare une crise économique : restaure la collecte fiscale et réduit la pression de corruption.'}),
+});
+export function publicProjectOffers(state){
+ const services=state.publicServicesLevel||0;
+ const aid=state.internationalAidLevel||0;
+ const pending=state.crisesPending||0;
+ const budget=state.publicBudget||0;
+ const offers={
+  services:{...PUBLIC_PROJECTS.services,level:services,cost:Math.ceil(25*1.6**services),maxLevel:10,locked:services>=10},
+  solidarity:{...PUBLIC_PROJECTS.solidarity,level:aid,cost:Math.ceil(40*1.7**aid),maxLevel:8,locked:aid>=8},
+  crisis:{...PUBLIC_PROJECTS.crisis,level:pending,cost:20+15*pending,locked:pending===0},
+ };
+ for(const offer of Object.values(offers))offer.available=!offer.locked&&budget>=offer.cost;
+ return offers;
+}
+export function spendPublicBudget(state,project){
+ if(!state.worldEconomyEnabled)return {ok:false,reason:'unavailable'};
+ const offer=publicProjectOffers(state)[project];
+ if(!offer)return {ok:false,reason:'invalid-project'};
+ if(offer.locked)return {ok:false,reason:'locked'};
+ if(!offer.available)return {ok:false,reason:'funds'};
+ state.publicBudget=Math.max(0,state.publicBudget-offer.cost);
+ state.publicSpent=cap((state.publicSpent||0)+offer.cost);
+ if(project==='services')state.publicServicesLevel++;
+ if(project==='solidarity')state.internationalAidLevel++;
+ if(project==='crisis'){
+  state.crisesPending=Math.max(0,state.crisesPending-1);
+  state.corruption=Math.max(0,(state.corruption||0)-1);
+ }
+ return {ok:true,spent:offer.cost,project};
+}
 export function getStats(state) {
   return {
-    cash: state.cash, totalEarned: state.totalEarned, communism: state.communism, communismPerMinute: getCommunismPerMinute(state), corruption: state.corruption||0, corruptionPerMinute:corruptionPerMinute(state), commerceRevenuePerSecond:commerceRevenuePerSecond(state), clicks: state.clicks,
+    cash: state.cash, totalEarned: state.totalEarned, publicBudget:state.publicBudget||0, publicTaxesCollected:state.publicTaxesCollected||0, publicSpent:state.publicSpent||0, publicProjects:publicProjectOffers(state), crisesPending:state.crisesPending||0, communism: state.communism, communismPerMinute: getCommunismPerMinute(state), corruption: state.corruption||0, corruptionPerMinute:corruptionPerMinute(state), commerceRevenuePerSecond:commerceRevenuePerSecond(state), clicks: state.clicks,
     productionPerClick: production(state), manualProductionBonus: manualProductionBonus(state), taxesPerSecond: state.worldEconomyEnabled?0:taxes(state),
     business: getBusinessEconomy(state),
     totalOwned: Object.values(state.owned).reduce((total, count) => total + count, 0),
@@ -261,6 +305,7 @@ export function buyActivity(state, id, quantity = 1) {
     state.counters.productionBonusPercent = cap(state.counters.productionBonusPercent + effects.productionPercent);
     state.counters.taxBonusPercent = cap(state.counters.taxBonusPercent + effects.taxPercent);
     state.communism = cap(state.communism + effects.communism);
+    if(id==='gum'&&state.worldEconomyEnabled)state.corruption=Math.min(1e6,(state.corruption||0)+2);
     if(id==='black-market')state.corruption=Math.min(1e6,(state.corruption||0)+2);
     if(id==='trading')state.corruption=Math.min(1e6,(state.corruption||0)+0.5);
     // Increment AFTER applying effects: a doubling never alters already-owned items.
@@ -304,7 +349,7 @@ export function advance(state, now = Date.now()) {
   now = time(now);
   const elapsedMs = Math.max(0, now - state.lastUpdate);
   const creditedMs = Math.min(elapsedMs, RULES.offlineCapMs);
-  const result = { ok: true, earned: 0, communismEarned: 0, elapsedMs, creditedMs, capped: elapsedMs > creditedMs };
+  const result = { ok: true, earned: 0, communismEarned: 0, taxesEarned: 0, crisesCreated: 0, elapsedMs, creditedMs, capped: elapsedMs > creditedMs };
   if (elapsedMs === 0) return result;
   state.lastUpdate = now; // Discard time over the cap, rather than banking it.
   if(state.worldEconomyEnabled){
@@ -320,11 +365,37 @@ export function advance(state, now = Date.now()) {
       state.communism=cap(state.communism+result.communismEarned);
     }
     if(seconds>0){
-      const finances=getBusinessEconomy(state);
-      result.earned=addMoney(state,finances.netToTreasuryPerSecond*seconds);
-      state.automaticSeconds=cap(state.automaticSeconds+seconds,Number.MAX_SAFE_INTEGER);
-      const addedCorruption=corruptionPerMinute(state)*seconds/60;
-      if(addedCorruption>0)state.corruption=Math.min(1e6,(state.corruption||0)+addedCorruption);
+      // A new crisis appears every 15 minutes of business activity (max 3).
+      // Splitting at crisis boundaries avoids losing accuracy after long returns.
+      let remaining=seconds;
+      while(remaining>0){
+        const finances=getBusinessEconomy(state);
+        const runningBusiness=finances.owned>0;
+        const untilCrisis=900-Math.floor((state.crisisRemainderMs||0)/1000);
+        const segment=runningBusiness?Math.min(remaining,Math.max(1,untilCrisis)):remaining;
+        result.earned+=addMoney(state,finances.netToTreasuryPerSecond*segment);
+        const available=Math.max(0,RULES.maxNumber-state.publicBudget);
+        const taxes=Math.min(cap(finances.taxesCollectedPerSecond*segment),available);
+        state.publicBudget=cap(state.publicBudget+taxes);
+        state.publicTaxesCollected=cap(state.publicTaxesCollected+taxes);
+        result.taxesEarned+=taxes;
+        state.automaticSeconds=cap(state.automaticSeconds+segment,Number.MAX_SAFE_INTEGER);
+        const addedCorruption=corruptionPerMinute(state)*segment/60;
+        if(addedCorruption>0)state.corruption=Math.min(1e6,(state.corruption||0)+addedCorruption);
+        remaining-=segment;
+        if(runningBusiness){
+          state.crisisRemainderMs+=segment*1000;
+          if(state.crisisRemainderMs>=900000){
+            state.crisisRemainderMs-=900000;
+            state.crisesGenerated=cap((state.crisesGenerated||0)+1,Number.MAX_SAFE_INTEGER);
+            if(state.crisesPending<3){
+              state.crisesPending++;
+              state.corruption=Math.min(1e6,(state.corruption||0)+1);
+              result.crisesCreated++;
+            }
+          }
+        }
+      }
     }
     if(state.plan.status==='running'){
       state.plan.remainingMs=Math.max(0,state.plan.remainingMs-creditedMs);
@@ -458,17 +529,17 @@ export function getBusinessEconomy(state){
   owned+=state.importsOwned;
  }
  const leakage=Math.min(35,Math.floor((state.corruption||0)/25))/100;
- const administrationEfficiency=1+Math.min(0.20,(state.bureaucracyOffices||0)*0.02);
+ const administrationEfficiency=1+Math.min(0.20,(state.bureaucracyOffices||0)*0.02)+Math.min(.30,(state.publicServicesLevel||0)*.03);
  const bilateralDividendBonus=1+Math.min(0.15,(state.bilateralAgreements||0)*0.01);
- const collected=taxes*(1-leakage)*administrationEfficiency;
+ const collected=taxes*(1-leakage)*administrationEfficiency*(1-0.1*Math.min(3,state.crisesPending||0));
  const distributed=dividends*bilateralDividendBonus;
  return {grossPerSecond:cap(gross),taxesPerSecond:cap(taxes),
  taxesCollectedPerSecond:cap(collected),dividendsPerSecond:cap(distributed),
- netToTreasuryPerSecond:cap(collected+distributed),
+ netToTreasuryPerSecond:cap(distributed),
  grossPerMinute:cap(gross*60),taxesPerMinute:cap(taxes*60),
  taxesCollectedPerMinute:cap(collected*60),
  dividendsPerMinute:cap(distributed*60),
- netToTreasuryPerMinute:cap((collected+distributed)*60),
+ netToTreasuryPerMinute:cap(distributed*60),
  taxPolicy:state.taxPolicy||'balanced',owned,
  secondsUntilPayout:(1000-(state.secondRemainderMs||0))/1000};
 }
