@@ -1,12 +1,12 @@
-const APP_VERSION='2026-11-27-unified-catalog-1';
-import { ACTIVITIES, RULES } from './game-data.js?v=2026-11-27-unified-catalog-1';
+const APP_VERSION='2026-11-27-responsive-pages-1';
+import { ACTIVITIES, RULES } from './game-data.js?v=2026-11-27-responsive-pages-1';
 import {
   createState, hydrateState, getStats, getActivity, quotePurchase,
   clickProduce, buyActivity, quoteActivityConversion, convertActivity, CONVERSION_TARGETS, getActivityCorruptionRate, CORRUPTION_PURCHASE, COMMUNISM_PURCHASE_PENALTY, getPropagandaOffer, buyPropagandaAgency, getIdeologyInstitutionOffer, buyIdeologyInstitution, advance, startPlan, claimPlan, publicProjectOffers, spendPublicBudget,
   reduceInflation, exportState, getGoals, activityBusinessRate, setTaxPolicy, TAX_POLICIES, TAX_POLICY_LABELS, getBusinessEconomyForPolicy,
-} from './engine.js?v=2026-11-27-unified-catalog-1';
-import { COUNTRIES, MILESTONES, createWorld, hydrateWorld, chooseCountry, getCooperation, cooperate, rankCountriesByCooperationCost, getWorldStats, celebrate, rewardAnthem, getAnthemReward, START_COUNTRIES, USA_COUNTRY_ID, getVisibleCountries, getWorldStage, getCampaignWaves, getUSImportOffer, buyUSImports, convertUSImports, getBureaucracyOffer, buyBureaucracy, getBilateralOffer, buyBilateralAgreement } from './world.js?v=2026-11-27-unified-catalog-1';
-import { ANTHEM_END_SECONDS, anthemClipFinished } from './anthem-clip.js?v=2026-11-27-unified-catalog-1';
+} from './engine.js?v=2026-11-27-responsive-pages-1';
+import { COUNTRIES, MILESTONES, createWorld, hydrateWorld, chooseCountry, getCooperation, cooperate, rankCountriesByCooperationCost, getWorldStats, celebrate, rewardAnthem, getAnthemReward, START_COUNTRIES, USA_COUNTRY_ID, getVisibleCountries, getWorldStage, getCampaignWaves, getUSImportOffer, buyUSImports, convertUSImports, getBureaucracyOffer, buyBureaucracy, getBilateralOffer, buyBilateralAgreement } from './world.js?v=2026-11-27-responsive-pages-1';
+import { ANTHEM_END_SECONDS, anthemClipFinished } from './anthem-clip.js?v=2026-11-27-responsive-pages-1';
 
 const SAVE_KEY = 'ussr-simulator:save:v1';
 const BACKUP_KEY = 'ussr-simulator:backup:v1';
@@ -28,8 +28,10 @@ let sessionRequested = false;
 let filter = 'all';
 let search = '';
 let quantity = 1;
-const ACTIVITY_PAGE_SIZE=9;
+const activityPageSize=()=>window.matchMedia('(max-width: 700px)').matches?8:
+  window.matchMedia('(max-width: 1100px)').matches?9:12;
 let activityPage=0;
+let lastActivityPageSize=activityPageSize();
 const specialCards=[];
 let worldFilter='all';
 let worldDisplayLimit=30;
@@ -234,9 +236,10 @@ function renderActivities() {
     return (!search||normalize(card.textContent).includes(search))&&
       (filter==='all'||filter==='available'&&specialUnlocked(id)||filter==='owned'&&specialOwned(id)>0);
   });
-  const pages=Math.max(1,Math.ceil(eligible.length/ACTIVITY_PAGE_SIZE));
+  const pageSize=activityPageSize();
+  const pages=Math.max(1,Math.ceil(eligible.length/pageSize));
   activityPage=Math.min(activityPage,pages-1);
-  const showing=new Set(eligible.slice(activityPage*ACTIVITY_PAGE_SIZE,(activityPage+1)*ACTIVITY_PAGE_SIZE));
+  const showing=new Set(eligible.slice(activityPage*pageSize,(activityPage+1)*pageSize));
   for(const {card} of specialCards)card.hidden=!showing.has(card);
   let visible = 0;
   for (const definition of ACTIVITIES) {
@@ -570,6 +573,16 @@ $('activity-search')?.addEventListener('input', event => {
   activityPage=0;
   renderActivities();
 });
+for(const width of ['(max-width: 700px)','(max-width: 1100px)']){
+  const media=window.matchMedia(width);
+  media.addEventListener('change',()=>{
+    const oldPageSize=lastActivityPageSize;
+    const nextPageSize=activityPageSize();
+    activityPage=Math.floor(activityPage*oldPageSize/nextPageSize);
+    lastActivityPageSize=nextPageSize;
+    renderActivities();
+  });
+}
 for(const [id,delta] of [['activity-page-prev',-1],['activity-page-next',1]]){
   $(id)?.addEventListener('click',()=>{
     activityPage=Math.max(0,activityPage+delta);
