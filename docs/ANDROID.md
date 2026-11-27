@@ -27,4 +27,4 @@ La version web charge l'enregistrement sur Wikimedia Commons en ligne. L'APK uti
 
 ## Musique écourtée
 
-L'enregistrement instrumental de Wikimedia Commons dure environ 78 secondes. Le premier refrain se termine autour de 38 secondes. Le workflow Android recoupe l'enregistrement à 38 secondes avant de l'embarquer. Dans la version web, le lecteur arrête le fichier source au même point. Les +3 points ne sont attribués qu'une seule fois au terme de chaque écoute de cet extrait ; pause et reprise sont autorisées.
+L'enregistrement instrumental de Wikimedia Commons dure environ 78 secondes. Le passage instrumental demandé comprend l'introduction et le premier refrain, et se termine près de 1 min 16. Le workflow Android recoupe l'enregistrement à 76 secondes avant de l'embarquer. Dans la version web, le lecteur arrête le fichier source au même point. Les +3 points ne sont attribués qu'une seule fois au terme de chaque écoute de cet extrait ; pause et reprise sont autorisées.

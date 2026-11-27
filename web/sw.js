@@ -1,12 +1,12 @@
 // Bump VERSION whenever a published asset changes. Only this game's scope is used.
-const VERSION = '2026-11-27-world-economy-1';
+const VERSION = '2026-11-27-anthem-intro-first-2';
 const SCOPE = new URL(self.registration.scope);
 const PREFIX = `ussr-simulator:${SCOPE.pathname}:`;
 const CACHE = `${PREFIX}${VERSION}`;
 const FILES = [
   './', './index.html', './styles.css', './app.js', './engine.js', './game-data.js', './world.js', './anthem-clip.js',
   './manifest.webmanifest', './assets/icon.svg', './assets/icon-192.png',
-  './assets/icon-512.png', './assets/factory.svg', './assets/symbols.svg', './assets/anthem-world.svg', './LICENSE.txt',
+  './assets/icon-512.png', './assets/factory.svg', './assets/symbols.svg', './assets/anthem-world.png', './LICENSE.txt',
 ];
 const ASSETS = new Set(FILES.map(path => new URL(path, SCOPE).href));
 

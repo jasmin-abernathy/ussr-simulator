@@ -38,7 +38,7 @@ jobs:
         run: |
           ffmpeg -hide_banner -loglevel error -y \
             -i web/assets/internationale.ogg \
-            -t 38 -c:a libopus -b:a 128k \
+            -t 76 -c:a libopus -b:a 128k \
             web/assets/internationale-cut.ogg
           mv web/assets/internationale-cut.ogg web/assets/internationale.ogg
           test $(wc -c < web/assets/internationale.ogg) -gt 100000

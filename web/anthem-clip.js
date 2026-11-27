@@ -1,7 +1,7 @@
-/** First refrain cadence in the 78-second CC0 Commons rendition.
- * The 78-second source contains two repeated musical sections; this shorter cut ends after the first.
- * See docs/ANDROID.md for details on the matching APK trim.
+/** Intro + first refrain in the CC0 Commons instrumental arrangement.
+ * Keep the introductory passage: the previous 38s limit stopped too early.
+ * This boundary is at the final cadence, shortly before the source's end.
  */
-export const ANTHEM_END_SECONDS = 38;
+export const ANTHEM_END_SECONDS = 76;
 export const anthemClipFinished = seconds =>
   Number.isFinite(seconds) && seconds >= ANTHEM_END_SECONDS - 0.25;

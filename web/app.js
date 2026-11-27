@@ -512,16 +512,15 @@ if (anthemAudio && anthemButton) {
     anthemButton.setAttribute('aria-pressed', String(playing));
     anthemButton.classList.toggle('is-playing', playing);
     document.getElementById('anthem-label').textContent = playing
-      ? 'Mettre en pause L’Internationale' : 'Jouer L’Internationale';
+      ? 'Mettre en pause L’Internationale' : 'Écouter L’Internationale';
     document.getElementById('anthem-control-symbol').textContent = playing ? 'Ⅱ' : '▶';
-    document.getElementById('anthem-status').textContent = message ||
-      (playing ? 'Écoute jusqu’au premier refrain pour gagner +3 communisme.'
-        : 'Jusqu’au premier refrain · +3 communisme par écoute complète');
+    // Keep the reward hint stable on the button in every playback state.
+    document.getElementById('anthem-status').textContent = '+3 points communisme';
   };
 
   function finishAnthem() {
     // The full source on the web has trailing silence after the first refrain.
-    // The Android build can embed the same 38-second first-refrain cut.
+    // The native build can embed the matching intro + first refrain segment.
     // The guard avoids awarding twice when timeupdate and ended both fire.
     if (rewardedThisListen || !anthemClipFinished(anthemAudio.currentTime)) return;
     rewardedThisListen = true;
