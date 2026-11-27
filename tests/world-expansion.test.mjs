@@ -56,7 +56,7 @@ test('French wave begins with land neighbours instead of distant countries',()=>
  assert.ok(getCampaignWaves(w)[0].every(c=>COUNTRY_GEOGRAPHY[c.id][2]==='Europe'));
 });
 test('continent changes which countries appear first for Africa, Asia, Americas and Oceania',()=>{
- const origins=[['Sénégal','Afrique'],['Népal','Asie'],['Cuba','Americas'],['Nouvelle-Zélande','Oceania']];
+ const origins=[['Sénégal','Africa'],['Népal','Asie'],['Cuba','Americas'],['Nouvelle-Zélande','Oceania']];
  for(const [name,continent] of origins){
   const c=COUNTRIES.find(x=>x.name===name);
   const w=origin(c.id);
