@@ -29,12 +29,18 @@ test('existing poster ownership and historical propaganda agencies retain their 
  close(getCommunismPerMinute(loaded),.2);
  close(corruptionGrossPerMinute(loaded),.4);
 });
-test('five sensitive investments are distributed into nine-per-page activity catalogue',()=>{
+test('five sensitive investments are distributed across responsive activity catalogue pages',()=>{
  const html=readFileSync(new URL('../web/index.html',import.meta.url),'utf8');
  const app=readFileSync(new URL('../web/runtime-anthem-v15/app.js',import.meta.url),'utf8');
  const css=readFileSync(new URL('../web/runtime-anthem-v15/styles.css',import.meta.url),'utf8');
  assert.equal(ACTIVITIES.length,22);
- assert.match(app,/const ACTIVITY_PAGE_SIZE=9/);
+ assert.match(app,/const activityPageSize=/);
+ assert.match(app,/max-width: 700px/);
+ assert.match(app,/max-width: 1100px/);
+ assert.match(app,/matches\?8/);
+ assert.match(app,/matches\?9:12/);
+ assert.match(app,/eligible\.slice\(activityPage\*pageSize,\(activityPage\+1\)\*pageSize\)/);
+ assert.match(app,/media\.addEventListener\('change'/);
  assert.match(app,/const insertAfter=\[2,6,10,14,18\]/);
  assert.match(app,/list\.insertBefore\(card/);
  assert.match(app,/const eligible=\[\.\.\.list\.children\]/);
