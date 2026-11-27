@@ -30,7 +30,7 @@ test('full listening earns exactly the displayed scaled reward, repeatable; abse
  const before=s.communism;
  assert.deepEqual(rewardAnthem(w,s),{ok:true,points:4});
  assert.equal(s.communism,before+4);
- assert.deepEqual(rewardAnthem(w,s),{ok:true,points:8});
+ assert.deepEqual(rewardAnthem(w,s),{ok:true,points:4});
  assert.equal(s.communism,before+8);
  assert.equal(rewardAnthem(createWorld(),s).ok,false);
  assert.equal(s.communism,before+16);
