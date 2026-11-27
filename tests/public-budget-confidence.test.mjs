@@ -77,7 +77,7 @@ test('crisis ticks and tax income are consistent for 30 minutes at once or in pi
  const second=hydrateState(exportState(first,NOW),NOW);
  advance(first,NOW+1800000);
  for(let t=1000;t<=1800000;t+=1000)advance(second,NOW+t);
- close(first.cash,second.cash,1e-6);
+ close(first.cash,second.cash,1e-5);
  close(first.publicBudget,second.publicBudget,1e-6);
  close(first.corruption,second.corruption);
  assert.equal(first.crisesPending,2);

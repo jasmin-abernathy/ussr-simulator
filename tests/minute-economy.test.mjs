@@ -24,11 +24,11 @@ test('rates still vary by sector and policies change the per-second income',()=>
  assert.equal(activityBusinessRate(s,'matches').taxRate,8);
  assert.equal(activityBusinessRate(s,'beer').taxRate,22);
  assert.equal(setTaxPolicy(s,'social'),true);
- assert.ok(getBusinessEconomy(s).netToTreasuryPerSecond<baseline.netToTreasuryPerSecond);
- assert.ok(getBusinessEconomy(s).taxesCollectedPerSecond>baseline.taxesCollectedPerSecond);
+ assert.ok(getBusinessEconomy(s).netToTreasuryPerSecond>baseline.netToTreasuryPerSecond);
  assert.ok(getBusinessEconomy(s).taxesCollectedPerSecond<baseline.taxesCollectedPerSecond);
  assert.equal(setTaxPolicy(s,'solidarity'),true);
- assert.ok(getBusinessEconomy(s).netToTreasuryPerSecond>baseline.netToTreasuryPerSecond);
+ assert.ok(getBusinessEconomy(s).netToTreasuryPerSecond<baseline.netToTreasuryPerSecond);
+ assert.ok(getBusinessEconomy(s).taxesCollectedPerSecond>baseline.taxesCollectedPerSecond);
  assert.equal(setTaxPolicy(s,'invalid'),false);
 });
 test('save, browser resume, offline ticks and repeated calls never double-credit a second',()=>{

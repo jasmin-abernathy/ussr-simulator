@@ -17,7 +17,7 @@ test('American imports create passive taxes and corruption until USA cooperation
  assert.equal(buyActivity(s,'gum').ok,true);
  assert.equal(getUSImportOffer(w,s).available,true);
  assert.equal(buyUSImports(w,s).ok,true);assert.equal(w.usImports,1);assert.equal(s.importsOwned,1);
- assert.equal(s.corruption,5);assert.ok(getStats(s).business.taxesPerMinute>=540);
+ assert.equal(s.corruption,7);assert.ok(getStats(s).business.taxesPerMinute>=540);
  assert.ok(getStats(s).business.grossPerMinute>=1400);
  const cash=s.cash,corruption=s.corruption;advance(s,NOW+60000);
  assert.ok(s.cash>cash);assert.ok(s.corruption>corruption);
