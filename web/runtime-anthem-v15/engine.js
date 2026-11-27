@@ -313,6 +313,28 @@ export const PUBLIC_PROGRAM_CAPS=Object.freeze({
  transport:Object.freeze({base:12,step:2,hard:18}),
  housing:Object.freeze({base:10,step:2,hard:16}),
 });
+/** Minimum collective capacity rises with commercial activity, rather than
+ * arbitrarily expiring. Housing, transport and core services are necessary;
+ * international solidarity remains a voluntary diplomatic investment.
+ * The figures are computed from gross activity to avoid feedback loops.
+ */
+export function getInfrastructureNeeds(state,grossPerSecond,owned){
+ if(!state.worldEconomyEnabled||grossPerSecond<=0||owned<=0)
+   return {active:false,required:{services:0,transport:0,housing:0},missing:{services:0,transport:0,housing:0},costPerSecond:0,pressure:0};
+ const stage=Math.max(0,Math.floor(Math.log2(1+grossPerSecond/20)),Math.floor(Math.log2(1+owned/16)));
+ const required={
+  services:Math.min(16,Math.ceil(stage*1.6)),
+  transport:Math.min(18,Math.ceil(stage*1.8)),
+  housing:Math.min(16,Math.ceil(stage*1.5))
+ };
+ const missing={
+  services:Math.max(0,required.services-(state.publicServicesLevel||0)),
+  transport:Math.max(0,required.transport-(state.publicTransportLevel||0)),
+  housing:Math.max(0,required.housing-(state.publicHousingLevel||0))
+ };
+ const pressure=Math.min(1.6,missing.services*.12+missing.transport*.10+missing.housing*.10);
+ return {active:stage>0,required,missing,pressure,costPerSecond:cap(grossPerSecond*pressure)};
+}
 export function getPublicProgramCaps(state){
  const score=getPublicNeedScore(state);
  const stages=[5,10,16].filter(threshold=>score>=threshold).length;
@@ -638,6 +660,18 @@ export function advance(state, now = Date.now()) {
         state.publicBudget=cap(state.publicBudget+taxes);
         state.publicTaxesCollected=cap(state.publicTaxesCollected+taxes);
         result.taxesEarned+=taxes;
+        // Keeping an undersized public network running costs real money.
+        // Collected taxes cover it first; any deficit drains business cash.
+        // This is applied during offline progression as well.
+        const infrastructureCost=cap(finances.infrastructure.costPerSecond*segment);
+        const publicPaid=Math.min(state.publicBudget,infrastructureCost);
+        state.publicBudget=Math.max(0,state.publicBudget-publicPaid);
+        const cashPaid=Math.min(state.cash,Math.max(0,infrastructureCost-publicPaid));
+        state.cash=Math.max(0,state.cash-cashPaid);
+        result.infrastructureCost=(result.infrastructureCost||0)+publicPaid+cashPaid;
+        result.infrastructureCashLoss=(result.infrastructureCashLoss||0)+cashPaid;
+        state.infrastructureCosts=cap((state.infrastructureCosts||0)+publicPaid+cashPaid);
+        state.infrastructureCashLoss=cap((state.infrastructureCashLoss||0)+cashPaid);
         state.automaticSeconds=cap(state.automaticSeconds+segment,Number.MAX_SAFE_INTEGER);
         const addedCorruption=corruptionPerMinute(state)*segment/60;
         if(addedCorruption!==0)state.corruption=Math.max(0,Math.min(1e6,(state.corruption||0)+addedCorruption));
@@ -802,7 +836,8 @@ export function getBusinessEconomy(state){
  const collected=taxes*(1-leakage)*administrationEfficiency*(1-crisisLoss*Math.min(3,state.crisesPending||0))*(1-.04*Math.min(3,state.publicNeedsPending||0));
  const transportBonus=1+Math.min(.18,(state.publicTransportLevel||0)*.015)+Math.min(.03,Math.max(0,(state.publicTransportLevel||0)-12)*.005);
  const businessIncome=treasury*bilateralTradeBonus*transportBonus;
- return {grossPerSecond:cap(gross),taxesPerSecond:cap(taxes),
+ const infrastructure=getInfrastructureNeeds(state,gross,owned);
+ return {grossPerSecond:cap(gross),infrastructure,taxesPerSecond:cap(taxes),
  taxesCollectedPerSecond:cap(collected),businessIncomePerSecond:cap(businessIncome),
  netToTreasuryPerSecond:cap(businessIncome),
  grossPerMinute:cap(gross*60),taxesPerMinute:cap(taxes*60),
