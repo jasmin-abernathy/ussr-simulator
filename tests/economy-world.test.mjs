@@ -22,7 +22,7 @@ test('American imports create passive taxes and corruption until USA cooperation
  const cash=s.cash,corruption=s.corruption;advance(s,NOW+60000);
  assert.ok(s.cash>cash);assert.ok(s.corruption>corruption);
  w.partners=COUNTRIES.filter(c=>c.id!==w.origin&&c.id!==USA_COUNTRY_ID).map(c=>c.id);
- assert.equal(cooperate(w,s,USA_COUNTRY_ID).ok,true);assert.equal(getStats(s).corruptionPerMinute,0);
+ assert.equal(cooperate(w,s,USA_COUNTRY_ID).ok,true);assert.equal(getStats(s).corruptionPerMinute,.02); // the gum kiosk remains active
  const value=s.corruption;assert.equal(buyUSImports(w,s).ok,true);assert.equal(s.corruption,value);
  const saved=exportState(s,NOW+60000),restored=hydrateState(saved,NOW+60000);
  assert.equal(restored.importsOwned,2);assert.equal(restored.usCapitalist,false);assert.equal(restored.corruption,value);
