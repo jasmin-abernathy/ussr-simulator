@@ -1,12 +1,12 @@
-const APP_VERSION='2026-11-27-public-ux-1';
-import { ACTIVITIES, RULES } from './game-data.js?v=2026-11-27-public-ux-1';
+const APP_VERSION='2026-11-27-nav-corruption-3';
+import { ACTIVITIES, RULES } from './game-data.js?v=2026-11-27-nav-corruption-3';
 import {
   createState, hydrateState, getStats, getActivity, quotePurchase,
   clickProduce, buyActivity, quoteActivityConversion, convertActivity, CONVERSION_TARGETS, getActivityCorruptionRate, CORRUPTION_PURCHASE, getPropagandaOffer, buyPropagandaAgency, advance, startPlan, claimPlan, publicProjectOffers, spendPublicBudget,
   reduceInflation, exportState, getGoals, activityBusinessRate, setTaxPolicy, TAX_POLICY_LABELS, getBusinessEconomyForPolicy,
-} from './engine.js?v=2026-11-27-public-ux-1';
-import { COUNTRIES, MILESTONES, createWorld, hydrateWorld, chooseCountry, getCooperation, cooperate, rankCountriesByCooperationCost, getWorldStats, celebrate, rewardAnthem, getAnthemReward, START_COUNTRIES, USA_COUNTRY_ID, getVisibleCountries, getWorldStage, getCampaignWaves, getUSImportOffer, buyUSImports, convertUSImports, getBureaucracyOffer, buyBureaucracy, getBilateralOffer, buyBilateralAgreement } from './world.js?v=2026-11-27-public-ux-1';
-import { ANTHEM_END_SECONDS, anthemClipFinished } from './anthem-clip.js?v=2026-11-27-public-ux-1';
+} from './engine.js?v=2026-11-27-nav-corruption-3';
+import { COUNTRIES, MILESTONES, createWorld, hydrateWorld, chooseCountry, getCooperation, cooperate, rankCountriesByCooperationCost, getWorldStats, celebrate, rewardAnthem, getAnthemReward, START_COUNTRIES, USA_COUNTRY_ID, getVisibleCountries, getWorldStage, getCampaignWaves, getUSImportOffer, buyUSImports, convertUSImports, getBureaucracyOffer, buyBureaucracy, getBilateralOffer, buyBilateralAgreement } from './world.js?v=2026-11-27-nav-corruption-3';
+import { ANTHEM_END_SECONDS, anthemClipFinished } from './anthem-clip.js?v=2026-11-27-nav-corruption-3';
 
 const SAVE_KEY = 'ussr-simulator:save:v1';
 const BACKUP_KEY = 'ussr-simulator:backup:v1';
@@ -222,13 +222,13 @@ function renderActivities() {
       );
       if(Object.hasOwn(CORRUPTION_PURCHASE,item.id)){
         const risk=document.createElement('span');risk.className='activity-corruption';
-        risk.textContent=`⚠ +${format(CORRUPTION_PURCHASE[item.id])} à l’achat · +${format(getActivityCorruptionRate(item.id))}/min par commerce actif (1 %)`;
+        risk.textContent=`⚠ +${format(CORRUPTION_PURCHASE[item.id])} à l’achat · +${format(getActivityCorruptionRate(item.id))}/min par commerce actif`;
         refs.effects.append(risk);
       }
       if(item.effects.communism){
         const communism=document.createElement('span');
         communism.className='activity-communism';
-        communism.textContent=`+${format(item.effects.communism)} communisme à l’achat · +${format(item.effects.communism)} / min par exemplaire`;
+        communism.textContent=`+${format(item.effects.communism)} communisme à l’achat · influence continue`;
         refs.effects.append(communism);
       }
     } else setText(refs.effects,effectsText(item.effects));
