@@ -1,12 +1,12 @@
-const APP_VERSION='2026-11-27-balance-2';
-import { ACTIVITIES, RULES } from './game-data.js?v=2026-11-27-balance-2';
+const APP_VERSION='2026-11-27-public-ux-1';
+import { ACTIVITIES, RULES } from './game-data.js?v=2026-11-27-public-ux-1';
 import {
   createState, hydrateState, getStats, getActivity, quotePurchase,
   clickProduce, buyActivity, quoteActivityConversion, convertActivity, CONVERSION_TARGETS, getActivityCorruptionRate, CORRUPTION_PURCHASE, getPropagandaOffer, buyPropagandaAgency, advance, startPlan, claimPlan, publicProjectOffers, spendPublicBudget,
   reduceInflation, exportState, getGoals, activityBusinessRate, setTaxPolicy, TAX_POLICY_LABELS, getBusinessEconomyForPolicy,
-} from './engine.js?v=2026-11-27-balance-2';
-import { COUNTRIES, MILESTONES, createWorld, hydrateWorld, chooseCountry, getCooperation, cooperate, rankCountriesByCooperationCost, getWorldStats, celebrate, rewardAnthem, getAnthemReward, START_COUNTRIES, USA_COUNTRY_ID, getVisibleCountries, getWorldStage, getCampaignWaves, getUSImportOffer, buyUSImports, convertUSImports, getBureaucracyOffer, buyBureaucracy, getBilateralOffer, buyBilateralAgreement } from './world.js?v=2026-11-27-balance-2';
-import { ANTHEM_END_SECONDS, anthemClipFinished } from './anthem-clip.js?v=2026-11-27-balance-2';
+} from './engine.js?v=2026-11-27-public-ux-1';
+import { COUNTRIES, MILESTONES, createWorld, hydrateWorld, chooseCountry, getCooperation, cooperate, rankCountriesByCooperationCost, getWorldStats, celebrate, rewardAnthem, getAnthemReward, START_COUNTRIES, USA_COUNTRY_ID, getVisibleCountries, getWorldStage, getCampaignWaves, getUSImportOffer, buyUSImports, convertUSImports, getBureaucracyOffer, buyBureaucracy, getBilateralOffer, buyBilateralAgreement } from './world.js?v=2026-11-27-public-ux-1';
+import { ANTHEM_END_SECONDS, anthemClipFinished } from './anthem-clip.js?v=2026-11-27-public-ux-1';
 
 const SAVE_KEY = 'ussr-simulator:save:v1';
 const BACKUP_KEY = 'ussr-simulator:backup:v1';
@@ -374,19 +374,22 @@ function render() {
   setText($('public-budget-rate'),`+${money(stats.business.taxesCollectedPerSecond)} / s`);
   setText($('public-collected'),money(stats.publicTaxesCollected));
   setText($('public-crises'),stats.crisesPending?
-    `⚠ ${stats.crisesPending} crise${stats.crisesPending>1?'s':''} · −${stats.crisesPending*10} % de collecte fiscale`:
-    'Aucune crise en cours · nouvelle crise possible après 15 min de production');
+    `⚠ ${stats.crisesPending} difficulté${stats.crisesPending>1?'s':''} en cours · les services publics ont besoin de soutien.`:
+    '✓ Situation stable · aucun incident à gérer pour le moment.');
+  $('public-crises')?.classList.toggle('has-crisis',stats.crisesPending>0);
   const projects=stats.publicProjects;
-  for(const name of ['services','solidarity','crisis']){
+  for(const name of ['services','solidarity','crisis','transport','housing','audit','maintenance']){
     const offer=projects[name];
     const button=$('public-project-'+name);
-    setText($('public-project-'+name+'-level'),name==='crisis'?
-      `${stats.crisesPending} à résoudre`:
-      `Niveau ${offer.level}/${offer.maxLevel}`);
+    const progress=name==='crisis'?`${stats.crisesPending} intervention${stats.crisesPending>1?'s':''} nécessaire${stats.crisesPending>1?'s':''}`:
+      name==='audit'?'Mission renouvelable · corruption actuelle : '+format(stats.corruption):
+      name==='maintenance'?'Mission renouvelable · entretien préventif':
+      `Développement ${offer.level}/${offer.maxLevel}`;
+    setText($('public-project-'+name+'-level'),progress);
     if(button){
       button.disabled=!canWrite||!offer.available;
-      setText(button,offer.locked?(name==='crisis'?'Aucune crise':'Maximum atteint'):
-        `Financer · ${money(offer.cost)}`);
+      setText(button,offer.locked?(name==='crisis'?'Aucune crise':name==='audit'?'Comptes assainis':name==='maintenance'?'Équipements en état':'Programme achevé'):
+        `${name==='audit'?'Inspecter':name==='maintenance'?'Entretenir':name==='crisis'?'Intervenir':'Investir'} · ${money(offer.cost)}`);
     }
   }
   for(const button of document.querySelectorAll('[data-tax-policy]')){
@@ -686,14 +689,14 @@ $('bilateral-country')?.addEventListener('change',()=>{
   selectedBilateralCountry=$('bilateral-country').value;
   render();
 });
-for(const project of ['services','solidarity','crisis']){
+for(const project of ['services','solidarity','crisis','transport','housing','audit','maintenance']){
   $('public-project-'+project)?.addEventListener('click',()=>{
     if(!canWrite)return;
     advance(state);
     const result=spendPublicBudget(state,project);
     if(!result.ok){render();return;}
     changed();
-    notify(`${publicProjectOffers(state)[project].name} : ${money(result.spent)} de budget public investis.`);
+    notify(`${publicProjectOffers(state)[project].name} : action réalisée pour ${money(result.spent)}.`);
   });
 }
 $('import-conversion-target')?.addEventListener('change',()=>render());
@@ -710,7 +713,7 @@ $('propaganda-buy')?.addEventListener('click',()=>{
   if(!canWrite)return;advance(state);
   const result=buyPropagandaAgency(state);
   if(!result.ok){render();return;}
-  changed();notify('Agence de propagande ouverte : +2 communisme/min et corruption en hausse.');
+  changed();notify('Agence de propagande ouverte : influence accrue, mais corruption en hausse.');
 });
 $('bureaucracy-buy')?.addEventListener('click',()=>{
   if(!canWrite)return;
