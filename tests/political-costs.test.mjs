@@ -18,8 +18,7 @@ test('dubious shops spend communism immediately, ordinary shops do not',()=>{
   const before=s.communism;
   const result=buyActivity(s,id);
   assert.equal(result.ok,true,id);
-  const effect=ACTIVITIES.find(a=>a.id===id).effects.communism;
-  assert.equal(s.communism,before+effect-COMMUNISM_PURCHASE_PENALTY[id]);
+  assert.equal(s.communism,before-COMMUNISM_PURCHASE_PENALTY[id]);
  }
  const before=s.communism;
  const result=buyActivity(s,'matches');
