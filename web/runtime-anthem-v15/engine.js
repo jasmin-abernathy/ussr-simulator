@@ -7,6 +7,16 @@ const record = value => value !== null && typeof value === 'object' && !Array.is
 const cap = (value, maximum = RULES.maxNumber) => Math.min(maximum, Math.max(0, value));
 const time = value => typeof value === 'number' && Number.isFinite(value)
   ? cap(value, MAX_TIME) : Date.now();
+/** UTC day index makes the daily audit quota independent of local timezone changes. */
+const auditDay = now => Math.floor(time(now)/86400000);
+export const MAX_DAILY_AUDITS=2;
+export function getDailyAuditUsage(state,now=Date.now()){
+ const day=auditDay(now);
+ const recorded=Number.isSafeInteger(state.auditDay)?state.auditDay:day;
+ const used=recorded===day?Math.min(MAX_DAILY_AUDITS,Math.max(0,state.auditsToday||0)):
+   recorded>day?MAX_DAILY_AUDITS:0;
+ return {used,remaining:MAX_DAILY_AUDITS-used,day};
+}
 const emptyOffline = () => ({ elapsedMs: 0, creditedMs: 0, earned: 0, capped: false });
 const addMoney = (state, amount) => {
   const credited = Math.min(cap(amount), RULES.maxNumber - state.cash);
@@ -19,7 +29,7 @@ const addMoney = (state, amount) => {
 export function createState(now = Date.now()) {
   return {
     version: RULES.saveVersion,
-    cash: 0, totalEarned: 0, publicBudget: 0, publicTaxesCollected: 0, publicSpent: 0, publicServicesLevel: 0, internationalAidLevel: 0, publicTransportLevel: 0, publicHousingLevel: 0, corruptionAudits: 0, crisesPending: 0, crisesGenerated: 0, crisisRemainderMs: 0, clicks: 0, automaticSeconds: 0, communism: 0, corruption: 0, importsOwned: 0, bureaucracyOffices: 0, propagandaAgencies: 0, bilateralAgreements: 0, usCapitalist: true, worldEconomyEnabled: false, taxPolicy: 'balanced', secondRemainderMs: 0, communismRemainderMs: 0, economyTickMode: 'seconds-v1',
+    cash: 0, totalEarned: 0, publicBudget: 0, publicTaxesCollected: 0, publicSpent: 0, publicServicesLevel: 0, internationalAidLevel: 0, publicTransportLevel: 0, publicHousingLevel: 0, corruptionAudits: 0, auditDay: auditDay(now), auditsToday: 0, crisesPending: 0, crisesGenerated: 0, crisisRemainderMs: 0, clicks: 0, automaticSeconds: 0, communism: 0, corruption: 0, importsOwned: 0, bureaucracyOffices: 0, propagandaAgencies: 0, bilateralAgreements: 0, usCapitalist: true, worldEconomyEnabled: false, taxPolicy: 'balanced', secondRemainderMs: 0, communismRemainderMs: 0, economyTickMode: 'seconds-v1',
     owned: Object.fromEntries(ACTIVITIES.map(item => [item.id, 0])),
     counters: { production: RULES.initialProduction, taxes: 0, productionBonusPercent: 0, taxBonusPercent: 0 },
     productionSteps: 0, taxSteps: 0,
@@ -102,6 +112,8 @@ export function hydrateState(raw, now = Date.now()) {
   state.publicTransportLevel=raw.publicTransportLevel===undefined?0:readNumber(raw.publicTransportLevel,0,12,true);
   state.publicHousingLevel=raw.publicHousingLevel===undefined?0:readNumber(raw.publicHousingLevel,0,10,true);
   state.corruptionAudits=raw.corruptionAudits===undefined?0:readNumber(raw.corruptionAudits,0,100000,true);
+  state.auditDay=raw.auditDay===undefined?auditDay(now):readNumber(raw.auditDay,auditDay(now),Math.floor(MAX_TIME/86400000),true);
+  state.auditsToday=raw.auditsToday===undefined?0:readNumber(raw.auditsToday,0,MAX_DAILY_AUDITS,true);
   state.crisesPending=raw.crisesPending===undefined?0:readNumber(raw.crisesPending,0,3,true);
   state.crisesGenerated=raw.crisesGenerated===undefined?0:readNumber(raw.crisesGenerated,0,Number.MAX_SAFE_INTEGER,true);
   state.crisisRemainderMs=raw.crisisRemainderMs===undefined?0:readNumber(raw.crisisRemainderMs,0,899999.999);
@@ -217,7 +229,8 @@ export const PUBLIC_PROJECTS=Object.freeze({
  audit:Object.freeze({name:'Contrôle des comptes',description:'Une inspection ponctuelle fait reculer la corruption.'}),
  maintenance:Object.freeze({name:'Entretenir les infrastructures',description:'Remet les équipements en état et soulage les tensions économiques.'}),
 });
-export function publicProjectOffers(state){
+export function publicProjectOffers(state,now=Date.now()){
+ const audits=getDailyAuditUsage(state,now);
  const services=state.publicServicesLevel||0;
  const aid=state.internationalAidLevel||0;
  const pending=state.crisesPending||0;
@@ -228,17 +241,17 @@ export function publicProjectOffers(state){
   crisis:{...PUBLIC_PROJECTS.crisis,level:pending,cost:20+15*pending,locked:pending===0},
   transport:{...PUBLIC_PROJECTS.transport,level:state.publicTransportLevel||0,cost:Math.ceil(180*1.55**(state.publicTransportLevel||0)),maxLevel:12,locked:(state.publicTransportLevel||0)>=12},
   housing:{...PUBLIC_PROJECTS.housing,level:state.publicHousingLevel||0,cost:Math.ceil(220*1.65**(state.publicHousingLevel||0)),maxLevel:10,locked:(state.publicHousingLevel||0)>=10},
-  audit:{...PUBLIC_PROJECTS.audit,cost:Math.ceil(600*1.38**Math.min(24,state.corruptionAudits||0)+Math.min(2000,(state.corruption||0)*18)),locked:(state.corruption||0)<.01},
+  audit:{...PUBLIC_PROJECTS.audit,cost:Math.ceil(600*1.38**Math.min(24,state.corruptionAudits||0)+Math.min(2000,(state.corruption||0)*18)),locked:(state.corruption||0)<.01||audits.remaining===0,quotaReached:audits.remaining===0,usedToday:audits.used,remainingToday:audits.remaining,maxPerDay:MAX_DAILY_AUDITS},
   maintenance:{...PUBLIC_PROJECTS.maintenance,cost:Math.ceil(160+Math.min(900,(state.taxSteps||0)/30+(state.productionSteps||0)/40)),locked:(state.taxSteps||0)<250&&(state.productionSteps||0)<250},
  };
  for(const offer of Object.values(offers))offer.available=!offer.locked&&budget>=offer.cost;
  return offers;
 }
-export function spendPublicBudget(state,project){
+export function spendPublicBudget(state,project,now=Date.now()){
  if(!state.worldEconomyEnabled)return {ok:false,reason:'unavailable'};
- const offer=publicProjectOffers(state)[project];
+ const offer=publicProjectOffers(state,now)[project];
  if(!offer)return {ok:false,reason:'invalid-project'};
- if(offer.locked)return {ok:false,reason:'locked'};
+ if(offer.locked)return {ok:false,reason:project==='audit'&&offer.quotaReached?'daily-limit':'locked'};
  if(!offer.available)return {ok:false,reason:'funds'};
  state.publicBudget=Math.max(0,state.publicBudget-offer.cost);
  state.publicSpent=cap((state.publicSpent||0)+offer.cost);
@@ -247,6 +260,9 @@ export function spendPublicBudget(state,project){
  if(project==='transport')state.publicTransportLevel++;
  if(project==='housing')state.publicHousingLevel++;
  if(project==='audit'){
+  const usage=getDailyAuditUsage(state,now);
+  state.auditDay=usage.day;
+  state.auditsToday=usage.used+1;
   state.corruption=Math.max(0,(state.corruption||0)-5);
   state.corruptionAudits=Math.min(100000,(state.corruptionAudits||0)+1);
  }
