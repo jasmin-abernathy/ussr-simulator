@@ -33,6 +33,14 @@ test('unfunded public minimum drains public taxes and then real commercial cash,
  assert.ok(restored.infrastructureCosts>=s.infrastructureCosts);
  assert.ok(restored.cash<s.cash+10*finances.netToTreasuryPerSecond);
 });
+test('seriously neglected infrastructure can make overall cash balance decline',()=>{
+ const s=growing();s.owned.matches=200;s.publicBudget=0;
+ const before=s.cash;
+ const finances=getBusinessEconomy(s);
+ assert.ok(finances.infrastructure.costPerSecond>finances.taxesCollectedPerSecond+finances.businessIncomePerSecond);
+ advance(s,NOW+1000);
+ assert.ok(s.cash<before);
+});
 test('funding the required public levels removes the deficit without removing existing bonuses',()=>{
  const s=growing(),before=getBusinessEconomy(s).infrastructure;
  s.publicBudget=1e9;
