@@ -1,12 +1,12 @@
-const APP_VERSION='2026-11-28-french-anthem-1';
-import { ACTIVITIES, RULES } from './game-data.js?v=2026-11-28-french-anthem-1';
+const APP_VERSION='2026-11-28-first-refrain-1';
+import { ACTIVITIES, RULES } from './game-data.js?v=2026-11-28-first-refrain-1';
 import {
   createState, hydrateState, getStats, getActivity, quotePurchase,
   clickProduce, buyActivity, quoteActivityConversion, convertActivity, CONVERSION_TARGETS, getActivityCorruptionRate, CORRUPTION_PURCHASE, COMMUNISM_PURCHASE_PENALTY, getPropagandaOffer, buyPropagandaAgency, getIdeologyInstitutionOffer, buyIdeologyInstitution, advance, startPlan, claimPlan, publicProjectOffers, spendPublicBudget,
   reduceInflation, exportState, getGoals, activityBusinessRate, setTaxPolicy, TAX_POLICIES, TAX_POLICY_LABELS, getBusinessEconomyForPolicy,
-} from './engine.js?v=2026-11-28-french-anthem-1';
-import { COUNTRIES, MILESTONES, createWorld, hydrateWorld, chooseCountry, getCooperation, cooperate, rankCountriesByCooperationCost, getWorldStats, celebrate, rewardAnthem, getAnthemReward, START_COUNTRIES, USA_COUNTRY_ID, getVisibleCountries, getWorldStage, getCampaignWaves, getUSImportOffer, buyUSImports, convertUSImports, getBureaucracyOffer, buyBureaucracy, getBilateralOffer, buyBilateralAgreement } from './world.js?v=2026-11-28-french-anthem-1';
-import { ANTHEM_END_SECONDS, anthemClipFinished } from './anthem-clip.js?v=2026-11-28-french-anthem-1';
+} from './engine.js?v=2026-11-28-first-refrain-1';
+import { COUNTRIES, MILESTONES, createWorld, hydrateWorld, chooseCountry, getCooperation, cooperate, rankCountriesByCooperationCost, getWorldStats, celebrate, rewardAnthem, getAnthemReward, START_COUNTRIES, USA_COUNTRY_ID, getVisibleCountries, getWorldStage, getCampaignWaves, getUSImportOffer, buyUSImports, convertUSImports, getBureaucracyOffer, buyBureaucracy, getBilateralOffer, buyBilateralAgreement } from './world.js?v=2026-11-28-first-refrain-1';
+import { ANTHEM_END_SECONDS, anthemClipFinished } from './anthem-clip.js?v=2026-11-28-first-refrain-1';
 
 const SAVE_KEY = 'ussr-simulator:save:v1';
 const BACKUP_KEY = 'ussr-simulator:backup:v1';
@@ -932,9 +932,9 @@ if (anthemAudio && anthemButton) {
   }
 
   function finishAnthem() {
-    // Listen through the full French-language performance. The audio element's clock,
+    // Listen through the first refrain of the French-language performance. The audio element's clock,
     // not timers or document visibility, decides whether playback completed.
-    if (rewardedThisListen || !(anthemClipFinished(anthemAudio.currentTime) || (anthemAudio.ended && Number.isFinite(anthemAudio.duration) && anthemAudio.duration > 120))) return;
+    if (rewardedThisListen || !anthemClipFinished(anthemAudio.currentTime)) return;
     rewardedThisListen = true;
     stopRing();
     setRing(1);
