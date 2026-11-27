@@ -1,12 +1,12 @@
-const APP_VERSION='2026-11-27-stakhanov-double-1';
-import { ACTIVITIES, RULES } from './game-data.js?v=2026-11-27-stakhanov-double-1';
+const APP_VERSION='2026-11-27-public-shortfall-1';
+import { ACTIVITIES, RULES } from './game-data.js?v=2026-11-27-public-shortfall-1';
 import {
   createState, hydrateState, getStats, getActivity, quotePurchase,
   clickProduce, buyActivity, quoteActivityConversion, convertActivity, CONVERSION_TARGETS, getActivityCorruptionRate, CORRUPTION_PURCHASE, COMMUNISM_PURCHASE_PENALTY, getPropagandaOffer, buyPropagandaAgency, getIdeologyInstitutionOffer, buyIdeologyInstitution, advance, startPlan, claimPlan, publicProjectOffers, spendPublicBudget,
   reduceInflation, exportState, getGoals, activityBusinessRate, setTaxPolicy, TAX_POLICIES, TAX_POLICY_LABELS, getBusinessEconomyForPolicy,
-} from './engine.js?v=2026-11-27-stakhanov-double-1';
-import { COUNTRIES, MILESTONES, createWorld, hydrateWorld, chooseCountry, getCooperation, cooperate, rankCountriesByCooperationCost, getWorldStats, celebrate, rewardAnthem, getAnthemReward, START_COUNTRIES, USA_COUNTRY_ID, getVisibleCountries, getWorldStage, getCampaignWaves, getUSImportOffer, buyUSImports, convertUSImports, getBureaucracyOffer, buyBureaucracy, getBilateralOffer, buyBilateralAgreement } from './world.js?v=2026-11-27-stakhanov-double-1';
-import { ANTHEM_END_SECONDS, anthemClipFinished } from './anthem-clip.js?v=2026-11-27-stakhanov-double-1';
+} from './engine.js?v=2026-11-27-public-shortfall-1';
+import { COUNTRIES, MILESTONES, createWorld, hydrateWorld, chooseCountry, getCooperation, cooperate, rankCountriesByCooperationCost, getWorldStats, celebrate, rewardAnthem, getAnthemReward, START_COUNTRIES, USA_COUNTRY_ID, getVisibleCountries, getWorldStage, getCampaignWaves, getUSImportOffer, buyUSImports, convertUSImports, getBureaucracyOffer, buyBureaucracy, getBilateralOffer, buyBilateralAgreement } from './world.js?v=2026-11-27-public-shortfall-1';
+import { ANTHEM_END_SECONDS, anthemClipFinished } from './anthem-clip.js?v=2026-11-27-public-shortfall-1';
 
 const SAVE_KEY = 'ussr-simulator:save:v1';
 const BACKUP_KEY = 'ussr-simulator:backup:v1';
@@ -458,6 +458,17 @@ function render() {
   setText($('public-budget'),money(stats.publicBudget));
   setText($('public-budget-rate'),`+${money(stats.business.taxesCollectedPerSecond)} / s`);
   setText($('public-collected'),money(stats.publicTaxesCollected));
+  const infrastructure=stats.business.infrastructure;
+  const missingInfrastructure=Object.values(infrastructure.missing).some(count=>count>0);
+  const infrastructureStatus=$('public-infrastructure-status');
+  if(infrastructureStatus){
+    infrastructureStatus.hidden=!missingInfrastructure;
+    if(missingInfrastructure){
+      const taxes=stats.business.taxesCollectedPerSecond;
+      const shortage=Math.max(0,infrastructure.costPerSecond-taxes);
+      setText(infrastructureStatus,`⚠ Équipements insuffisants : entretien d’urgence −${money(infrastructure.costPerSecond)}/s sur la caisse publique. ${shortage>0?`Risque de perte de trésorerie : −${money(shortage)}/s après épuisement de la caisse.`:'Les recettes fiscales couvrent encore les frais, mais les moyens disponibles pour investir diminuent.'}`);
+    }
+  }
   setText($('public-crises'),stats.crisesPending?
     `⚠ ${stats.crisesPending} difficulté${stats.crisesPending>1?'s':''} en cours · les services publics ont besoin de soutien.`:
     '✓ Situation stable · aucun incident à gérer pour le moment.');
@@ -479,7 +490,7 @@ function render() {
       name==='crisis'?`${stats.crisesPending} intervention${stats.crisesPending>1?'s':''} nécessaire${stats.crisesPending>1?'s':''}`:
       name==='audit'?(offer.cooldownActive?`Prochaine inspection dans ${duration(offer.cooldownMs)}`:'Inspection disponible · réduction de la corruption'):
       name==='maintenance'?'Mission renouvelable · entretien préventif':
-      `Développement ${offer.level}/${offer.maxLevel}${offer.locked&&!offer.fullyDeveloped?' · nouveaux paliers avec la croissance':''}`;
+      `Développement ${offer.level}/${offer.maxLevel}${offer.locked&&!offer.fullyDeveloped?' · nouveaux paliers avec la croissance':''}${['services','transport','housing'].includes(name)&&infrastructure.required[name]>0?` · minimum requis ${infrastructure.required[name]}${infrastructure.missing[name]>0?' ⚠ insuffisant':' ✓'}`:''}`;
     setText($('public-project-'+name+'-level'),progress);
     if(button){
       button.disabled=!canWrite||!offer.available;
