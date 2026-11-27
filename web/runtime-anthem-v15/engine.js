@@ -28,7 +28,7 @@ const addMoney = (state, amount) => {
 export function createState(now = Date.now()) {
   return {
     version: RULES.saveVersion,
-    cash: 0, totalEarned: 0, publicBudget: 0, publicTaxesCollected: 0, publicSpent: 0, publicServicesLevel: 0, internationalAidLevel: 0, publicTransportLevel: 0, publicHousingLevel: 0, transparencyHouses: 0, citizensInspectorates: 0, publicNeedsPending: 0, publicNeedsGenerated: 0, publicNeedsResolved: 0, publicNeedNextScore: 1, publicNeedLastAt: 0, corruptionAudits: 0, lastAuditAt: 0, crisesPending: 0, crisesGenerated: 0, crisisRemainderMs: 0, clicks: 0, automaticSeconds: 0, communism: 0, corruption: 0, importsOwned: 0, bureaucracyOffices: 0, propagandaAgencies: 0, bilateralAgreements: 0, usCapitalist: true, worldEconomyEnabled: false, taxPolicy: 'balanced', secondRemainderMs: 0, communismRemainderMs: 0, economyTickMode: 'seconds-v1',
+    cash: 0, totalEarned: 0, publicBudget: 0, publicTaxesCollected: 0, publicSpent: 0, publicServicesLevel: 0, internationalAidLevel: 0, publicTransportLevel: 0, publicHousingLevel: 0, transparencyHouses: 0, citizensInspectorates: 0, publicNeedsPending: 0, publicNeedsGenerated: 0, publicNeedsResolved: 0, publicNeedNextScore: 1, publicNeedLastAt: 0, corruptionAudits: 0, lastAuditAt: 0, crisesPending: 0, crisesGenerated: 0, crisisRemainderMs: 0, clicks: 0, automaticSeconds: 0, communism: 0, corruption: 0, importsOwned: 0, bureaucracyOffices: 0, propagandaAgencies: 0, mobilizationHouses: 0, ideologyInstitutes: 0, bilateralAgreements: 0, usCapitalist: true, worldEconomyEnabled: false, taxPolicy: 'balanced', secondRemainderMs: 0, communismRemainderMs: 0, economyTickMode: 'seconds-v1',
     owned: Object.fromEntries(ACTIVITIES.map(item => [item.id, 0])),
     counters: { production: RULES.initialProduction, taxes: 0, productionBonusPercent: 0, taxBonusPercent: 0 },
     productionSteps: 0, taxSteps: 0,
@@ -87,6 +87,8 @@ export function hydrateState(raw, now = Date.now()) {
   state.importsOwned=raw.importsOwned===undefined?0:readNumber(raw.importsOwned,0,10000,true);
   state.bureaucracyOffices=raw.bureaucracyOffices===undefined?0:readNumber(raw.bureaucracyOffices,0,1000,true);
   state.propagandaAgencies=raw.propagandaAgencies===undefined?0:readNumber(raw.propagandaAgencies,0,1000,true);
+  state.mobilizationHouses=raw.mobilizationHouses===undefined?0:readNumber(raw.mobilizationHouses,0,12,true);
+  state.ideologyInstitutes=raw.ideologyInstitutes===undefined?0:readNumber(raw.ideologyInstitutes,0,8,true);
   state.bilateralAgreements=raw.bilateralAgreements===undefined?0:readNumber(raw.bilateralAgreements,0,48,true);
   state.usCapitalist=raw.usCapitalist===false?false:true;
   state.worldEconomyEnabled=raw.worldEconomyEnabled===true;
@@ -213,6 +215,7 @@ export const corruptionGrossPerMinute = state =>
   (state.usCapitalist!==false?(state.importsOwned||0)*.15:0)+
   (state.bureaucracyOffices||0)*.09+
   (state.propagandaAgencies||0)*.12+
+  (state.worldEconomyEnabled?(state.mobilizationHouses||0)*.18+(state.ideologyInstitutes||0)*.42:0)+
   (state.bilateralAgreements||0)*.10+
   (state.worldEconomyEnabled?(state.publicNeedsPending||0)*.06:0);
 /** Institutional oversight reduces incoming corruption but never erases an
@@ -245,7 +248,7 @@ export function getCommunismPerMinute(state){
    total=cap(total+cap(count,RULES.maxOwned)*item.effects.communism);
   }
  }
- return cap(total*.01+(state.worldEconomyEnabled?(state.propagandaAgencies||0)*.05:0));
+ return cap(total*.01+(state.worldEconomyEnabled?(state.propagandaAgencies||0)*.05+(state.mobilizationHouses||0)*.10+(state.ideologyInstitutes||0)*.25:0));
 }
 
 /** Public services face new needs when economic activity and the population of
@@ -504,6 +507,41 @@ export function convertActivity(state,sourceId,targetId){
  // The prior one-time awards remain, with no new free purchase award.
  // Passive income/communism/corruption derive from the replacement business.
  return {ok:true,sourceId,targetId,cost:quote.cost,tradeInValue:quote.tradeInValue,targetPrice:quote.targetPrice};
+}
+
+/** Ideological establishments generate support, but each also causes ongoing
+ * corruption; unlike public institutions they are bought with business cash.
+ * Limited quantities and increasing costs prevent buying unlimited passive gain.
+ */
+export const IDEOLOGY_INSTITUTIONS=Object.freeze({
+ mobilization:Object.freeze({
+  name:'Maisons de mobilisation',field:'mobilizationHouses',baseCost:6000,growth:1.55,
+  max:12,unlock:40,communismPerMinute:.10,corruptionPerMinute:.18,corruptionOnPurchase:1
+ }),
+ institute:Object.freeze({
+  name:'Instituts idéologiques',field:'ideologyInstitutes',baseCost:24000,growth:1.75,
+  max:8,unlock:150,communismPerMinute:.25,corruptionPerMinute:.42,corruptionOnPurchase:3
+ })
+});
+export function getIdeologyInstitutionOffer(state,id){
+ const definition=IDEOLOGY_INSTITUTIONS[id];
+ if(!definition)return null;
+ const count=Math.max(0,Math.min(definition.max,state[definition.field]||0));
+ const cost=Math.ceil(definition.baseCost*definition.growth**count);
+ const locked=!state.worldEconomyEnabled||state.communism<definition.unlock;
+ return {...definition,count,cost,locked,available:!locked&&count<definition.max&&state.cash>=cost};
+}
+export function buyIdeologyInstitution(state,id){
+ const offer=getIdeologyInstitutionOffer(state,id);
+ if(!offer)return {ok:false,reason:'invalid-institution'};
+ if(!state.worldEconomyEnabled)return {ok:false,reason:'unavailable'};
+ if(offer.count>=offer.max)return {ok:false,reason:'limit'};
+ if(offer.locked)return {ok:false,reason:'locked'};
+ if(!offer.available)return {ok:false,reason:'funds'};
+ state.cash=Math.max(0,state.cash-offer.cost);
+ state[offer.field]=offer.count+1;
+ state.corruption=Math.min(1e6,(state.corruption||0)+offer.corruptionOnPurchase);
+ return {ok:true,id,spent:offer.cost,offer};
 }
 
 /** Dubious propaganda purchase, distinct from legitimate public services. */
