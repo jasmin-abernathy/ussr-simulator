@@ -339,7 +339,7 @@ export function getGoals(state) {
   const stats = getStats(state);
   const definitions = [
     ['first-workshop', 'Le premier atelier', 'Acheter une activité.', stats.totalOwned, 1],
-    ['first-taxes', 'Des recettes régulières', 'Atteindre 10 roubles de taxes par seconde.', stats.taxesPerSecond, 10],
+    state.worldEconomyEnabled ? ['first-taxes', 'Des recettes régulières', 'Atteindre 100 roubles de taxes par minute.', stats.business.taxesCollectedPerMinute, 100] : ['first-taxes', 'Des recettes régulières', 'Atteindre 10 roubles de taxes par seconde.', stats.taxesPerSecond, 10],
     ['new-frequency', 'Une autre fréquence', 'Atteindre 25 points de communisme pour débloquer la radio.', state.communism, 25],
     ['all-activities', 'Toute une économie', 'Débloquer les 22 activités historiques.', stats.unlockedCount, ACTIVITIES.length],
     ['first-plan', 'Le plan quinquennal', 'Atteindre 10 000 points de communisme.', state.communism, RULES.planUnlock],
