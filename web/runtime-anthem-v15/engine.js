@@ -28,7 +28,7 @@ const addMoney = (state, amount) => {
 export function createState(now = Date.now()) {
   return {
     version: RULES.saveVersion,
-    cash: 0, totalEarned: 0, publicBudget: 0, publicTaxesCollected: 0, publicSpent: 0, publicServicesLevel: 0, internationalAidLevel: 0, publicTransportLevel: 0, publicHousingLevel: 0, publicNeedsPending: 0, publicNeedsGenerated: 0, publicNeedsResolved: 0, publicNeedNextScore: 1, publicNeedLastAt: 0, corruptionAudits: 0, lastAuditAt: 0, crisesPending: 0, crisesGenerated: 0, crisisRemainderMs: 0, clicks: 0, automaticSeconds: 0, communism: 0, corruption: 0, importsOwned: 0, bureaucracyOffices: 0, propagandaAgencies: 0, bilateralAgreements: 0, usCapitalist: true, worldEconomyEnabled: false, taxPolicy: 'balanced', secondRemainderMs: 0, communismRemainderMs: 0, economyTickMode: 'seconds-v1',
+    cash: 0, totalEarned: 0, publicBudget: 0, publicTaxesCollected: 0, publicSpent: 0, publicServicesLevel: 0, internationalAidLevel: 0, publicTransportLevel: 0, publicHousingLevel: 0, transparencyHouses: 0, citizensInspectorates: 0, publicNeedsPending: 0, publicNeedsGenerated: 0, publicNeedsResolved: 0, publicNeedNextScore: 1, publicNeedLastAt: 0, corruptionAudits: 0, lastAuditAt: 0, crisesPending: 0, crisesGenerated: 0, crisisRemainderMs: 0, clicks: 0, automaticSeconds: 0, communism: 0, corruption: 0, importsOwned: 0, bureaucracyOffices: 0, propagandaAgencies: 0, bilateralAgreements: 0, usCapitalist: true, worldEconomyEnabled: false, taxPolicy: 'balanced', secondRemainderMs: 0, communismRemainderMs: 0, economyTickMode: 'seconds-v1',
     owned: Object.fromEntries(ACTIVITIES.map(item => [item.id, 0])),
     counters: { production: RULES.initialProduction, taxes: 0, productionBonusPercent: 0, taxBonusPercent: 0 },
     productionSteps: 0, taxSteps: 0,
@@ -110,6 +110,8 @@ export function hydrateState(raw, now = Date.now()) {
   state.internationalAidLevel=raw.internationalAidLevel===undefined?0:readNumber(raw.internationalAidLevel,0,11,true);
   state.publicTransportLevel=raw.publicTransportLevel===undefined?0:readNumber(raw.publicTransportLevel,0,18,true);
   state.publicHousingLevel=raw.publicHousingLevel===undefined?0:readNumber(raw.publicHousingLevel,0,16,true);
+  state.transparencyHouses=raw.transparencyHouses===undefined?0:readNumber(raw.transparencyHouses,0,6,true);
+  state.citizensInspectorates=raw.citizensInspectorates===undefined?0:readNumber(raw.citizensInspectorates,0,12,true);
   state.corruptionAudits=raw.corruptionAudits===undefined?0:readNumber(raw.corruptionAudits,0,100000,true);
   state.lastAuditAt=raw.lastAuditAt===undefined?0:readNumber(raw.lastAuditAt,0,MAX_TIME,true);
   state.crisesPending=raw.crisesPending===undefined?0:readNumber(raw.crisesPending,0,3,true);
@@ -204,7 +206,7 @@ export const PASSIVE_CORRUPTION_RATIO=.05;
 export const STRUCTURAL_CORRUPTION_PER_BUSINESS=.06;
 export const RESALE_RATE=.40;
 export const getActivityCorruptionRate=id=>(CORRUPTION_PURCHASE[id]||0)*PASSIVE_CORRUPTION_RATIO;
-export const corruptionPerMinute = state =>
+export const corruptionGrossPerMinute = state =>
   (state.worldEconomyEnabled?Object.entries(CORRUPTION_PURCHASE).reduce(
     (sum,[id,risk])=>sum+(state.owned[id]||0)*risk*PASSIVE_CORRUPTION_RATIO,0):0)+
   (state.worldEconomyEnabled?Math.min(18,Object.entries(state.owned||{}).reduce((sum,[id,count])=>sum+(count>0&&ACTIVITIES.some(activity=>activity.id===id)?count:0),0)*STRUCTURAL_CORRUPTION_PER_BUSINESS):0)+
@@ -213,6 +215,18 @@ export const corruptionPerMinute = state =>
   (state.propagandaAgencies||0)*.12+
   (state.bilateralAgreements||0)*.10+
   (state.worldEconomyEnabled?(state.publicNeedsPending||0)*.06:0);
+/** Transparency houses prevent new corruption; citizen inspectorates reduce the
+ * accumulated total over time. Their effects continue while offline.
+ */
+export const TRANSPARENCY_PREVENTION_PER_HOUSE=.15;
+export const INSPECTORATE_RECOVERY_PER_MINUTE=.25;
+export function getCorruptionBreakdown(state){
+ const gross=corruptionGrossPerMinute(state);
+ const prevention=state.worldEconomyEnabled?Math.min(.90,(state.transparencyHouses||0)*TRANSPARENCY_PREVENTION_PER_HOUSE):0;
+ const recovery=state.worldEconomyEnabled?Math.min(12,state.citizensInspectorates||0)*INSPECTORATE_RECOVERY_PER_MINUTE:0;
+ return {gross,prevention,recovery,net:gross*(1-prevention)-recovery};
+}
+export const corruptionPerMinute=state=>getCorruptionBreakdown(state).net;
 
 /** Derived values only; querying never changes the state or the clock. */
 /** Industry passively yields 1% of its one-time communism bonus per minute.
@@ -267,6 +281,8 @@ export const PUBLIC_PROJECTS=Object.freeze({
  transport:Object.freeze({name:'Développer les transports publics',description:'Améliore durablement les revenus des activités grâce à une meilleure desserte.'}),
  housing:Object.freeze({name:'Construire des logements coopératifs',description:'Protège progressivement les recettes publiques pendant les crises.'}),
  audit:Object.freeze({name:'Contrôle des comptes',description:'Une inspection réduit de 20 % la corruption existante. Une nouvelle inspection est possible une heure plus tard.'}),
+ transparency:Object.freeze({name:'Maisons de la transparence',description:'Empêchent durablement une partie de la corruption nouvelle.'}),
+ inspectorates:Object.freeze({name:'Inspections citoyennes',description:'Réduisent durablement la corruption accumulée, minute après minute.'}),
  maintenance:Object.freeze({name:'Entretenir les infrastructures',description:'Remet les équipements en état et soulage les tensions économiques.'}),
  needs:Object.freeze({name:'Répondre aux besoins collectifs',description:'Finance les nouveaux besoins issus du développement du pays.'}),
 });
@@ -303,6 +319,8 @@ export function publicProjectOffers(state,now=Date.now()){
   transport:{...PUBLIC_PROJECTS.transport,level:state.publicTransportLevel||0,cost:Math.ceil(180*1.55**(state.publicTransportLevel||0)),maxLevel:caps.transport,locked:(state.publicTransportLevel||0)>=caps.transport,fullyDeveloped:caps.transport===PUBLIC_PROGRAM_CAPS.transport.hard},
   housing:{...PUBLIC_PROJECTS.housing,level:state.publicHousingLevel||0,cost:Math.ceil(220*1.65**(state.publicHousingLevel||0)),maxLevel:caps.housing,locked:(state.publicHousingLevel||0)>=caps.housing,fullyDeveloped:caps.housing===PUBLIC_PROGRAM_CAPS.housing.hard},
   audit:{...PUBLIC_PROJECTS.audit,cost:Math.ceil(600*1.38**Math.min(24,state.corruptionAudits||0)+Math.min(2000,(state.corruption||0)*18)),locked:(state.corruption||0)<.01||!auditCooldown.ready,cooldownMs:auditCooldown.remainingMs,cooldownActive:!auditCooldown.ready},
+  transparency:{...PUBLIC_PROJECTS.transparency,level:state.transparencyHouses||0,maxLevel:6,cost:Math.ceil(480*1.85**(state.transparencyHouses||0)),locked:(state.transparencyHouses||0)>=6,fullyDeveloped:true},
+  inspectorates:{...PUBLIC_PROJECTS.inspectorates,level:state.citizensInspectorates||0,maxLevel:12,cost:Math.ceil(700*1.65**(state.citizensInspectorates||0)),locked:(state.citizensInspectorates||0)>=12,fullyDeveloped:true},
   maintenance:{...PUBLIC_PROJECTS.maintenance,cost:Math.ceil(160+Math.min(900,(state.taxSteps||0)/30+(state.productionSteps||0)/40)),locked:(state.taxSteps||0)<250&&(state.productionSteps||0)<250},
   needs:{...PUBLIC_PROJECTS.needs,name:needType.name,description:needType.detail,pending:needs,
    cost:Math.ceil(150+Math.min(5000,((state.publicNeedsResolved||0)+1)*65+getPublicNeedScore(state)*25)),locked:needs===0},
@@ -322,6 +340,8 @@ export function spendPublicBudget(state,project,now=Date.now()){
  if(project==='solidarity')state.internationalAidLevel++;
  if(project==='transport')state.publicTransportLevel++;
  if(project==='housing')state.publicHousingLevel++;
+ if(project==='transparency')state.transparencyHouses++;
+ if(project==='inspectorates')state.citizensInspectorates++;
  if(project==='audit'){
   state.lastAuditAt=time(now);
   state.corruption=Math.max(0,(state.corruption||0)*(1-AUDIT_CORRUPTION_REDUCTION));
@@ -343,7 +363,7 @@ export function spendPublicBudget(state,project,now=Date.now()){
 }
 export function getStats(state) {
   return {
-    cash: state.cash, totalEarned: state.totalEarned, publicBudget:state.publicBudget||0, publicTaxesCollected:state.publicTaxesCollected||0, publicSpent:state.publicSpent||0, publicProjects:publicProjectOffers(state), crisesPending:state.crisesPending||0, communism: state.communism, communismPerMinute: getCommunismPerMinute(state), corruption: state.corruption||0, corruptionPerMinute:corruptionPerMinute(state), commerceRevenuePerSecond:commerceRevenuePerSecond(state), clicks: state.clicks,
+    cash: state.cash, totalEarned: state.totalEarned, publicBudget:state.publicBudget||0, publicTaxesCollected:state.publicTaxesCollected||0, publicSpent:state.publicSpent||0, publicProjects:publicProjectOffers(state), crisesPending:state.crisesPending||0, communism: state.communism, communismPerMinute: getCommunismPerMinute(state), corruption: state.corruption||0, corruptionPerMinute:corruptionPerMinute(state), corruptionBreakdown:getCorruptionBreakdown(state), commerceRevenuePerSecond:commerceRevenuePerSecond(state), clicks: state.clicks,
     productionPerClick: production(state), manualProductionBonus: manualProductionBonus(state), taxesPerSecond: state.worldEconomyEnabled?0:taxes(state),
     business: getBusinessEconomy(state),
     totalOwned: Object.values(state.owned).reduce((total, count) => total + count, 0),
@@ -521,7 +541,7 @@ function collectTaxes(state, seconds) {
     remaining -= segment;
   }
   const addedCorruption=corruptionPerMinute(state)*seconds/60;
-  if(addedCorruption>0)state.corruption=Math.min(1e6,(state.corruption||0)+addedCorruption);
+  if(addedCorruption!==0)state.corruption=Math.max(0,Math.min(1e6,(state.corruption||0)+addedCorruption));
   state.productionSteps = Math.max(0, state.productionSteps - seconds);
   state.automaticSeconds = cap(state.automaticSeconds + seconds, Number.MAX_SAFE_INTEGER);
   return addMoney(state, earned+seconds*commerceRevenuePerSecond(state));
@@ -567,7 +587,7 @@ export function advance(state, now = Date.now()) {
         result.taxesEarned+=taxes;
         state.automaticSeconds=cap(state.automaticSeconds+segment,Number.MAX_SAFE_INTEGER);
         const addedCorruption=corruptionPerMinute(state)*segment/60;
-        if(addedCorruption>0)state.corruption=Math.min(1e6,(state.corruption||0)+addedCorruption);
+        if(addedCorruption!==0)state.corruption=Math.max(0,Math.min(1e6,(state.corruption||0)+addedCorruption));
         remaining-=segment;
         if(runningBusiness){
           state.crisisRemainderMs+=segment*1000;
