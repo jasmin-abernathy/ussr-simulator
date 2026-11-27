@@ -3191,3 +3191,10 @@ conic-gradient(#17bd2a 0% var(--anthem-progress),#090909 var(--anthem-progress) 
 .production-ideology-cost{color:#a7352a;font-weight:700;font-size:clamp(10px,2.7vw,12px);line-height:1.35}
 .produce-button>span:not(.button-press-mark){min-width:0;line-height:1.15;text-align:left}
 @media(max-width:370px){.produce-button{gap:9px;padding-inline:12px;font-size:clamp(16px,5vw,20px)}.produce-button svg{flex-shrink:0}}
+
+
+/* Growing public-service needs are distinct from permanent upgrades. */
+.public-project-need{background:#fffaf0;border-color:#e8cda5;box-shadow:inset 3px 0 0 #c58d42}
+.public-project-need>div strong{color:#8e4d24}
+.public-project-need>div span{color:#92572b}
+.public-project[hidden]{display:none!important}
