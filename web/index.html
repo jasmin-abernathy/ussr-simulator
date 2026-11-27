@@ -9,8 +9,31 @@
   <title>Communist World Simulator — Édition de développement</title>
   <link rel="icon" href="./assets/icon.svg" type="image/svg+xml">
   <link rel="manifest" href="./manifest.webmanifest">
-  <link rel="stylesheet" href="./runtime-click-v3/styles.css?v=2026-11-27-click-balance-3">
-  <script type="module" src="./runtime-click-v3/app.js?v=2026-11-27-click-balance-3"></script>
+  <link rel="stylesheet" href="./runtime-click-v4/styles.css?v=2026-11-27-no-sw-click-v4">
+  <script type="module" src="./runtime-click-v4/app.js?v=2026-11-27-no-sw-click-v4"></script>
+<script>
+/* Web playtest: disable the previous offline service worker and its caches.
+   The game state is in localStorage and must never be touched here. */
+(() => {
+  if (!('serviceWorker' in navigator)) return;
+  navigator.serviceWorker.getRegistrations().then(async registrations => {
+    const ownScope = new URL('./', location.href).href;
+    const ours = registrations.filter(reg => reg.scope === ownScope);
+    if (!ours.length) return;
+    await Promise.all(ours.map(reg => reg.unregister()));
+    if ('caches' in window) {
+      const names = await caches.keys();
+      await Promise.all(names.filter(name =>
+        name.startsWith('ussr-simulator:')).map(name => caches.delete(name)));
+    }
+    if (navigator.serviceWorker.controller &&
+        !sessionStorage.getItem('cws-no-sw-reloaded-v4')) {
+      sessionStorage.setItem('cws-no-sw-reloaded-v4', '1');
+      location.reload();
+    }
+  }).catch(() => {});
+})();
+</script>
 </head>
 <body>
   <a class="skip-link" href="#production-panel">Aller au jeu</a>
