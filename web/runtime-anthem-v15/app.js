@@ -1,12 +1,12 @@
-const APP_VERSION='2026-11-27-audit-hourly-1';
-import { ACTIVITIES, RULES } from './game-data.js?v=2026-11-27-audit-hourly-1';
+const APP_VERSION='2026-11-27-stakhanov-cost-1';
+import { ACTIVITIES, RULES } from './game-data.js?v=2026-11-27-stakhanov-cost-1';
 import {
   createState, hydrateState, getStats, getActivity, quotePurchase,
   clickProduce, buyActivity, quoteActivityConversion, convertActivity, CONVERSION_TARGETS, getActivityCorruptionRate, CORRUPTION_PURCHASE, COMMUNISM_PURCHASE_PENALTY, getPropagandaOffer, buyPropagandaAgency, advance, startPlan, claimPlan, publicProjectOffers, spendPublicBudget,
   reduceInflation, exportState, getGoals, activityBusinessRate, setTaxPolicy, TAX_POLICY_LABELS, getBusinessEconomyForPolicy,
-} from './engine.js?v=2026-11-27-audit-hourly-1';
-import { COUNTRIES, MILESTONES, createWorld, hydrateWorld, chooseCountry, getCooperation, cooperate, rankCountriesByCooperationCost, getWorldStats, celebrate, rewardAnthem, getAnthemReward, START_COUNTRIES, USA_COUNTRY_ID, getVisibleCountries, getWorldStage, getCampaignWaves, getUSImportOffer, buyUSImports, convertUSImports, getBureaucracyOffer, buyBureaucracy, getBilateralOffer, buyBilateralAgreement } from './world.js?v=2026-11-27-audit-hourly-1';
-import { ANTHEM_END_SECONDS, anthemClipFinished } from './anthem-clip.js?v=2026-11-27-audit-hourly-1';
+} from './engine.js?v=2026-11-27-stakhanov-cost-1';
+import { COUNTRIES, MILESTONES, createWorld, hydrateWorld, chooseCountry, getCooperation, cooperate, rankCountriesByCooperationCost, getWorldStats, celebrate, rewardAnthem, getAnthemReward, START_COUNTRIES, USA_COUNTRY_ID, getVisibleCountries, getWorldStage, getCampaignWaves, getUSImportOffer, buyUSImports, convertUSImports, getBureaucracyOffer, buyBureaucracy, getBilateralOffer, buyBilateralAgreement } from './world.js?v=2026-11-27-stakhanov-cost-1';
+import { ANTHEM_END_SECONDS, anthemClipFinished } from './anthem-clip.js?v=2026-11-27-stakhanov-cost-1';
 
 const SAVE_KEY = 'ussr-simulator:save:v1';
 const BACKUP_KEY = 'ussr-simulator:backup:v1';
@@ -458,7 +458,7 @@ $('produce-button').addEventListener('click', event => {
   }
   // One concise announcement per second avoids flooding screen readers.
   if (Date.now() - lastAnnouncement > 1000) {
-    $('produce-button').setAttribute('aria-label', `Produire ${numbers.format(result.earned)} roubles`);
+    $('produce-button').setAttribute('aria-label', `Pousser la production : ${numbers.format(result.earned)} roubles gagnés, ${numbers.format(result.communismLost)} communisme perdu`);
     lastAnnouncement = Date.now();
   }
 });
