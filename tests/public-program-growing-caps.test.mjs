@@ -38,6 +38,15 @@ test('reopened levels can be funded and advanced bonuses continue with diminishi
  assert.ok(after.taxesCollectedPerSecond>before.taxesCollectedPerSecond);
  assert.ok(after.businessIncomePerSecond>before.businessIncomePerSecond);
 });
+test('additional solidarity level makes international cooperation cheaper, not more expensive',()=>{
+ const s=fresh();s.owned.matches=150;
+ const w=createWorld();assert.equal(chooseCountry(w,'0').ok,true);
+ s.internationalAidLevel=8;
+ const before=getCooperation(w,s,'1').cost;
+ s.internationalAidLevel=9;
+ const after=getCooperation(w,s,'1').cost;
+ assert.ok(after<before,`expected improvement: ${before} -> ${after}`);
+});
 test('hard upper bounds, existing owned levels and save restoration remain safe',()=>{
  const s=fresh();s.owned.matches=500;s.automaticSeconds=864000;
  assert.deepEqual(getPublicProgramCaps(s),{services:16,solidarity:11,transport:18,housing:16});
