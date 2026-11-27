@@ -1,12 +1,12 @@
-const APP_VERSION='2026-11-27-ideology-centers-1';
-import { ACTIVITIES, RULES } from './game-data.js?v=2026-11-27-ideology-centers-1';
+const APP_VERSION='2026-11-27-unified-catalog-1';
+import { ACTIVITIES, RULES } from './game-data.js?v=2026-11-27-unified-catalog-1';
 import {
   createState, hydrateState, getStats, getActivity, quotePurchase,
   clickProduce, buyActivity, quoteActivityConversion, convertActivity, CONVERSION_TARGETS, getActivityCorruptionRate, CORRUPTION_PURCHASE, COMMUNISM_PURCHASE_PENALTY, getPropagandaOffer, buyPropagandaAgency, getIdeologyInstitutionOffer, buyIdeologyInstitution, advance, startPlan, claimPlan, publicProjectOffers, spendPublicBudget,
   reduceInflation, exportState, getGoals, activityBusinessRate, setTaxPolicy, TAX_POLICIES, TAX_POLICY_LABELS, getBusinessEconomyForPolicy,
-} from './engine.js?v=2026-11-27-ideology-centers-1';
-import { COUNTRIES, MILESTONES, createWorld, hydrateWorld, chooseCountry, getCooperation, cooperate, rankCountriesByCooperationCost, getWorldStats, celebrate, rewardAnthem, getAnthemReward, START_COUNTRIES, USA_COUNTRY_ID, getVisibleCountries, getWorldStage, getCampaignWaves, getUSImportOffer, buyUSImports, convertUSImports, getBureaucracyOffer, buyBureaucracy, getBilateralOffer, buyBilateralAgreement } from './world.js?v=2026-11-27-ideology-centers-1';
-import { ANTHEM_END_SECONDS, anthemClipFinished } from './anthem-clip.js?v=2026-11-27-ideology-centers-1';
+} from './engine.js?v=2026-11-27-unified-catalog-1';
+import { COUNTRIES, MILESTONES, createWorld, hydrateWorld, chooseCountry, getCooperation, cooperate, rankCountriesByCooperationCost, getWorldStats, celebrate, rewardAnthem, getAnthemReward, START_COUNTRIES, USA_COUNTRY_ID, getVisibleCountries, getWorldStage, getCampaignWaves, getUSImportOffer, buyUSImports, convertUSImports, getBureaucracyOffer, buyBureaucracy, getBilateralOffer, buyBilateralAgreement } from './world.js?v=2026-11-27-unified-catalog-1';
+import { ANTHEM_END_SECONDS, anthemClipFinished } from './anthem-clip.js?v=2026-11-27-unified-catalog-1';
 
 const SAVE_KEY = 'ussr-simulator:save:v1';
 const BACKUP_KEY = 'ussr-simulator:backup:v1';
@@ -28,6 +28,9 @@ let sessionRequested = false;
 let filter = 'all';
 let search = '';
 let quantity = 1;
+const ACTIVITY_PAGE_SIZE=9;
+let activityPage=0;
+const specialCards=[];
 let worldFilter='all';
 let worldDisplayLimit=30;
 let lastWorldDisplayStage=0;
@@ -177,6 +180,25 @@ function createActivityCards() {
     fragment.append(card);
   }
   list.replaceChildren(fragment);
+  // Place sensitive investments among ordinary purchases, never buried below.
+  const section=document.querySelector('.investments-section');
+  if(section){
+    const special=[...section.querySelectorAll('.investment-grid > article')]
+      .filter(card=>!card.classList.contains('investment-propaganda'));
+    const insertAfter=[2,6,10,14,18];
+    for(const [index,card] of special.entries()){
+      const id=card.querySelector('button[id$="-buy"]')?.id?.replace(/-buy$/,'');
+      if(!id)continue;
+      card.classList.add('activity-card','special-activity-card');
+      card.dataset.investmentId=id;
+      const at=Math.min(list.children.length,insertAfter[index]+index+1);
+      list.insertBefore(card,list.children[at]||null);
+      specialCards.push({id,card});
+    }
+    // Legacy agencies retain their saved benefits, but new ones are merged
+    // into the poster workshop rather than sold as a second purchase.
+    section.remove();
+  }
 }
 
 function effectsText(effects) {
@@ -190,13 +212,39 @@ function effectsText(effects) {
 }
 
 function renderActivities() {
+  const list=$('activity-list');
+  const normalize=value=>value.toLocaleLowerCase('fr').normalize('NFD').replace(/\p{Diacritic}/gu,'');
+  const specialOwned=id=>id==='import'?world.usImports||0:
+    id==='bureaucracy'?state.bureaucracyOffices||0:
+    id==='bilateral'?world.bilateral.length:
+    id==='mobilization'?state.mobilizationHouses||0:
+    id==='institute'?state.ideologyInstitutes||0:0;
+  const specialUnlocked=id=>id==='import'||id==='institute'?state.communism>=150:
+    id==='bureaucracy'?state.communism>=25:
+    id==='mobilization'?state.communism>=40:
+    id==='bilateral'?!!world.origin:false;
+  const eligible=[...list.children].filter(card=>{
+    if(card.dataset.activityId){
+      const item=getActivity(state,card.dataset.activityId);
+      return (!search||normalize(item.name+' '+item.description).includes(search))&&
+        (filter==='all'||filter==='available'&&item.unlocked||filter==='owned'&&item.owned>0);
+    }
+    const id=card.dataset.investmentId;
+    if(!id)return false;
+    return (!search||normalize(card.textContent).includes(search))&&
+      (filter==='all'||filter==='available'&&specialUnlocked(id)||filter==='owned'&&specialOwned(id)>0);
+  });
+  const pages=Math.max(1,Math.ceil(eligible.length/ACTIVITY_PAGE_SIZE));
+  activityPage=Math.min(activityPage,pages-1);
+  const showing=new Set(eligible.slice(activityPage*ACTIVITY_PAGE_SIZE,(activityPage+1)*ACTIVITY_PAGE_SIZE));
+  for(const {card} of specialCards)card.hidden=!showing.has(card);
   let visible = 0;
   for (const definition of ACTIVITIES) {
     const item = getActivity(state, definition.id);
     const refs = cards.get(item.id);
     const matchesSearch = !search || `${item.name} ${item.description}`.toLocaleLowerCase('fr').normalize('NFD').replace(/\p{Diacritic}/gu, '').includes(search);
     const matchesFilter = filter === 'all' || (filter === 'available' && item.unlocked) || (filter === 'owned' && item.owned > 0);
-    refs.card.hidden = !matchesSearch || !matchesFilter;
+    refs.card.hidden = !matchesSearch || !matchesFilter || !showing.has(refs.card);
     if (refs.card.hidden) continue;
     visible++;
     const quote = quotePurchase(state, item.id, quantity);
@@ -267,8 +315,13 @@ function renderActivities() {
     refs.button.setAttribute('aria-label', !item.unlocked ? `${item.name} : déblocage à ${format(item.unlock)} de communisme` : `Acheter ${quote.quantity || 1} ${item.name}, ${format(cost)} roubles`);
     refs.button.title = !item.unlocked ? `Il manque ${format(item.unlock - state.communism)} points de communisme.` : !quote.ok ? 'Produis davantage de roubles pour cet achat.' : 'Les achats par lot utilisent le budget disponible.';
   }
-  if ($('activity-empty')) $('activity-empty').hidden = visible > 0;
-  setText($('activity-count'), `${visible} / ${ACTIVITIES.length}`);
+  if ($('activity-empty')) $('activity-empty').hidden = eligible.length > 0;
+  setText($('activity-count'),`${eligible.length} achats · page ${activityPage+1}/${pages}`);
+  setText($('activity-page-status'),`Page ${activityPage+1} sur ${pages}`);
+  const prev=$('activity-page-prev'),next=$('activity-page-next');
+  if(prev)prev.disabled=activityPage===0;
+  if(next)next.disabled=activityPage>=pages-1;
+  $('activity-pagination')?.toggleAttribute('hidden',pages===1);
 }
 
 const goalNodes = new Map();
@@ -498,6 +551,7 @@ $('produce-button').addEventListener('click', event => {
 for (const button of document.querySelectorAll('[data-filter]')) {
   button.addEventListener('click', () => {
     filter = button.dataset.filter;
+    activityPage=0;
     for (const other of document.querySelectorAll('[data-filter]')) {
       other.classList.toggle('is-active', other === button);
       other.setAttribute('aria-pressed', String(other === button));
@@ -507,8 +561,16 @@ for (const button of document.querySelectorAll('[data-filter]')) {
 }
 $('activity-search')?.addEventListener('input', event => {
   search = event.currentTarget.value.trim().toLocaleLowerCase('fr').normalize('NFD').replace(/\p{Diacritic}/gu, '');
+  activityPage=0;
   renderActivities();
 });
+for(const [id,delta] of [['activity-page-prev',-1],['activity-page-next',1]]){
+  $(id)?.addEventListener('click',()=>{
+    activityPage=Math.max(0,activityPage+delta);
+    renderActivities();
+    document.querySelector('.activity-toolbar')?.scrollIntoView({block:'start',behavior:reduceMotion.matches?'instant':'smooth'});
+  });
+}
 $('buy-quantity')?.addEventListener('change', event => {
   quantity = event.currentTarget.value === 'max' ? 'max' : Number(event.currentTarget.value);
   renderActivities();
