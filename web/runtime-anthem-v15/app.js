@@ -1,12 +1,12 @@
-const APP_VERSION='2026-11-28-player-session-repair-1';
-import { ACTIVITIES, RULES } from './game-data.js?v=2026-11-28-player-session-repair-1';
+const APP_VERSION='2026-11-28-player-session-repair-2';
+import { ACTIVITIES, RULES } from './game-data.js?v=2026-11-28-player-session-repair-2';
 import {
   createState, hydrateState, getStats, getActivity, quotePurchase,
   clickProduce, buyActivity, quoteActivityConversion, convertActivity, CONVERSION_TARGETS, getActivityCorruptionRate, CORRUPTION_PURCHASE, COMMUNISM_PURCHASE_PENALTY, getPropagandaOffer, buyPropagandaAgency, getIdeologyInstitutionOffer, buyIdeologyInstitution, advance, startPlan, claimPlan, publicProjectOffers, spendPublicBudget,
   reduceInflation, exportState, getGoals, activityBusinessRate, setTaxPolicy, TAX_POLICIES, TAX_POLICY_LABELS, getBusinessEconomyForPolicy,
-} from './engine.js?v=2026-11-28-player-session-repair-1';
-import { COUNTRIES, MILESTONES, createWorld, hydrateWorld, chooseCountry, getCooperation, cooperate, rankCountriesByCooperationCost, getWorldStats, celebrate, rewardAnthem, getAnthemReward, START_COUNTRIES, USA_COUNTRY_ID, getVisibleCountries, getWorldStage, getCampaignWaves, getUSImportOffer, buyUSImports, convertUSImports, getBureaucracyOffer, buyBureaucracy, getBilateralOffer, buyBilateralAgreement } from './world.js?v=2026-11-28-player-session-repair-1';
-import { ANTHEM_END_SECONDS, anthemClipFinished } from './anthem-clip.js?v=2026-11-28-player-session-repair-1';
+} from './engine.js?v=2026-11-28-player-session-repair-2';
+import { COUNTRIES, MILESTONES, createWorld, hydrateWorld, chooseCountry, getCooperation, cooperate, rankCountriesByCooperationCost, getWorldStats, celebrate, rewardAnthem, getAnthemReward, START_COUNTRIES, USA_COUNTRY_ID, getVisibleCountries, getWorldStage, getCampaignWaves, getUSImportOffer, buyUSImports, convertUSImports, getBureaucracyOffer, buyBureaucracy, getBilateralOffer, buyBilateralAgreement } from './world.js?v=2026-11-28-player-session-repair-2';
+import { ANTHEM_END_SECONDS, anthemClipFinished } from './anthem-clip.js?v=2026-11-28-player-session-repair-2';
 
 const SAVE_KEY = 'ussr-simulator:save:v1';
 const BACKUP_KEY = 'ussr-simulator:backup:v1';
@@ -774,7 +774,8 @@ function showSessionWarning(){
      acquireSession(true);
    });
    warning.append(message,button);
-   $('session-panel')?.append(warning);
+   // Keep recovery accessible from every screen, even if the settings panel is hidden.
+   document.body.append(warning);
  }
  warning.hidden=false;
 }
@@ -787,6 +788,8 @@ sessionChannel?.addEventListener('message',event=>{
  render();
 });
 function acquireSession(force=false){
+ // A forced takeover must not wait behind an obsolete tab's lock.
+ // The existing save is reloaded only after this tab obtains ownership.
  if(sessionRequested)return;
  sessionRequested=true;
  if(!('locks' in navigator)){
