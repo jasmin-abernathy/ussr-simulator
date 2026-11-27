@@ -285,6 +285,12 @@ function renderActivities() {
         communism.textContent=`+${format(item.effects.communism)} communisme à l’achat · progression lente et continue`;
         refs.effects.append(communism);
       }
+      if(item.id==='posters'&&(state.propagandaAgencies||0)>0){
+        const legacy=document.createElement('span');
+        legacy.className='activity-legacy-note';
+        legacy.textContent=`Anciennes agences de propagande : ×${integer.format(state.propagandaAgencies)} · effets conservés dans ta sauvegarde`;
+        refs.effects.append(legacy);
+      }
     } else setText(refs.effects,effectsText(item.effects));
     refs.unlock.hidden = item.unlocked;
     setText(refs.unlock, `Déblocage à ${format(item.unlock)} de communisme`);
@@ -568,7 +574,7 @@ for(const [id,delta] of [['activity-page-prev',-1],['activity-page-next',1]]){
   $(id)?.addEventListener('click',()=>{
     activityPage=Math.max(0,activityPage+delta);
     renderActivities();
-    document.querySelector('.activity-toolbar')?.scrollIntoView({block:'start',behavior:reduceMotion.matches?'instant':'smooth'});
+    document.querySelector('.activity-toolbar')?.scrollIntoView({block:'start',behavior:reduceMotion.matches?'auto':'smooth'});
   });
 }
 $('buy-quantity')?.addEventListener('change', event => {
