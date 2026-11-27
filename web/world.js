@@ -1,3 +1,4 @@
+import {COUNTRY_GEOGRAPHY} from './world-geography.js';
 import {ADDITIONAL_COUNTRIES,ADDITIONAL_COUNTRY_DATA} from './world-expansion.js';
 // Independent cooperative-world expansion, not part of the 2016 historical engine.
 export const INITIAL_COUNTRIES = Object.freeze("France|Europe;Allemagne|Europe;Espagne|Europe;Italie|Europe;Portugal|Europe;Belgique|Europe;Pays-Bas|Europe;Suisse|Europe;Pologne|Europe;Suède|Europe;Norvège|Europe;Grèce|Europe;Ukraine|Europe;Royaume-Uni|Europe;États-Unis|Amérique du Nord;Canada|Amérique du Nord;Mexique|Amérique du Nord;Cuba|Amérique du Nord;Brésil|Amérique du Sud;Argentine|Amérique du Sud;Chili|Amérique du Sud;Colombie|Amérique du Sud;Pérou|Amérique du Sud;Bolivie|Amérique du Sud;Venezuela|Amérique du Sud;Maroc|Afrique;Algérie|Afrique;Sénégal|Afrique;Nigeria|Afrique;Ghana|Afrique;Égypte|Afrique;Kenya|Afrique;Afrique du Sud|Afrique;Russie|Europe et Asie;Turquie|Europe et Asie;Chine|Asie;Inde|Asie;Japon|Asie;Corée du Sud|Asie;Viêt Nam|Asie;Indonésie|Asie;Pakistan|Asie;Bangladesh|Asie;Thaïlande|Asie;Philippines|Asie;Népal|Asie;Iran|Asie;Australie|Océanie;Nouvelle-Zélande|Océanie".split(';').map((line,i)=>{const [name,region]=line.split('|');return Object.freeze({id:String(i),name,region});}));
@@ -75,26 +76,82 @@ export function rankCountriesByDifficulty(countries) {
     getPoliticalDifficulty(a).threshold-getPoliticalDifficulty(b).threshold||
     a.name.localeCompare(b.name,'fr'));
 }
-/** The cooperation campaign has 4 steps. No migration needed: stage derives
- * from the original saved origin and partner IDs, which remain unchanged.
- * Stage 1: initial 48 excluding USA; 2: 146 additional countries; 3: USA.
+/** Geographic campaign: six waves of 30 states, final wave of 15.
+ * The origin is the very first country; USA is always at position 195.
+ * Bordering countries of the SAME continent come first, then the rest
+ * of that continent by distance, then other continents by distance.
+ * Distances are approximate great-circle distances between country centers.
+ * Different origins yield different deterministic campaigns.
+ * Existing save IDs never change, and stage is derived from saved partners.
  */
+export const WORLD_WAVE_SIZE=30;
+const WAVE_COUNT=Math.ceil(COUNTRIES.length/WORLD_WAVE_SIZE);
+const waveCache=new Map();
+function greatCircleKm(a,b){
+ const radians=Math.PI/180;
+ const p1=a[0]*radians,p2=b[0]*radians;
+ const dp=(b[0]-a[0])*radians,dl=(b[1]-a[1])*radians;
+ const h=Math.sin(dp/2)**2+Math.cos(p1)*Math.cos(p2)*Math.sin(dl/2)**2;
+ return 6371*2*Math.atan2(Math.sqrt(h),Math.sqrt(Math.max(0,1-h)));
+}
+function getCampaign(origin){
+ if(!byId.has(origin))return null;
+ if(waveCache.has(origin))return waveCache.get(origin);
+ const start=COUNTRY_GEOGRAPHY[origin];
+ const others=COUNTRIES.filter(c=>c.id!==origin&&c.id!==USA_COUNTRY_ID);
+ const score=c=>{
+  const geo=COUNTRY_GEOGRAPHY[c.id];
+  const sameContinent=start[2]===geo[2];
+  const landNeighbor=sameContinent&&(start[4].includes(geo[3])||geo[4].includes(start[3]));
+  return [landNeighbor?0:sameContinent?1:2,greatCircleKm(start,geo)];
+ };
+ others.sort((a,b)=>{
+  const left=score(a),right=score(b);
+  return left[0]-right[0]||left[1]-right[1]||a.name.localeCompare(b.name,'fr');
+ });
+ const order=[byId.get(origin),...others,byId.get(USA_COUNTRY_ID)];
+ const waves=[];
+ const byWave=new Map();
+ for(let offset=0;offset<order.length;offset+=WORLD_WAVE_SIZE){
+  const current=Object.freeze(order.slice(offset,offset+WORLD_WAVE_SIZE));
+  waves.push(current);
+  for(const c of current)byWave.set(c.id,waves.length);
+ }
+ const result={order:Object.freeze(order),waves:Object.freeze(waves),byWave};
+ waveCache.set(origin,result);
+ return result;
+}
+export function getCampaignOrder(world){
+ return getCampaign(world?.origin)?.order||[];
+}
+export function getCampaignWaves(world){
+ return getCampaign(world?.origin)?.waves||[];
+}
+export function getCountryWave(world,id){
+ return getCampaign(world?.origin)?.byWave.get(id)||null;
+}
 export function getWorldStage(world){
  if(!world?.origin)return 0;
  const joined=new Set(world.partners||[]);
- if(!INITIAL_COUNTRIES.every(c=>c.id===USA_COUNTRY_ID||c.id===world.origin||joined.has(c.id)))return 1;
- if(!COUNTRIES.every(c=>c.id===USA_COUNTRY_ID||c.id===world.origin||joined.has(c.id)))return 2;
- return joined.has(USA_COUNTRY_ID)?4:3;
+ const waves=getCampaignWaves(world);
+ for(let i=0;i<waves.length;i++){
+  if(waves[i].some(c=>c.id!==world.origin&&!joined.has(c.id)))return i+1;
+ }
+ return waves.length+1; // 8 = victory across 195 countries
 }
 export function isCountryVisible(world,id){
- const country=byId.get(id);
- if(!country||!world?.origin)return false;
- const stage=getWorldStage(world);
- if(id===USA_COUNTRY_ID)return stage>=3;
- return Number(id)<INITIAL_COUNTRIES.length||stage>=2;
+ if(!byId.has(id)||!world?.origin)return false;
+ const stage=getWorldStage(world),wave=getCountryWave(world,id);
+ if(!wave)return false;
+ if(id===USA_COUNTRY_ID){
+  return stage>WAVE_COUNT||COUNTRIES.every(c=>
+    c.id===USA_COUNTRY_ID||c.id===world.origin||world.partners.includes(c.id));
+ }
+ return wave<=stage||id===world.origin||world.partners.includes(id);
 }
 export function getVisibleCountries(world){
- return COUNTRIES.filter(c=>isCountryVisible(world,c.id));
+ const ordered=getCampaignOrder(world);
+ return ordered.filter(c=>isCountryVisible(world,c.id));
 }
 export const MILESTONES=Object.freeze([[5,"Premier collectif créé : chaque geste compte !"],[25,"La solidarité s'organise : garde le cap !"],[100,"Ton économie coopérative trouve son élan !"],[250,"Les premières initiatives commencent à transformer le quotidien !"],[500,"De nouveaux possibles s'ouvrent à toi !"],[1000,"La coopération traverse les frontières !"],[2500,"Les solidarités se renforcent sur plusieurs continents !"],[5000,"Ton projet commun prend une dimension internationale !"],[10000,"Une fédération de coopérations se dessine. Bravo !"],[25000,"Les solidarités se multiplient : un autre monde se construit !"],[50000,"De pays en pays, les initiatives convergent !"]].map(([threshold,message])=>({threshold,message})));
 export const ANTHEM_BONUS=3;
@@ -102,7 +159,7 @@ export const createWorld=()=>({version:1,origin:null,partners:[],celebrated:[],u
 export function hydrateWorld(raw){
   const w=createWorld();
   if(!raw||typeof raw!=='object'||Array.isArray(raw)||raw.version!==1)return w;
-  if(typeof raw.origin==='string'&&byId.has(raw.origin))w.origin=raw.origin;
+  if(typeof raw.origin==='string'&&START_COUNTRIES.some(c=>c.id===raw.origin))w.origin=raw.origin;
   if(w.origin&&Array.isArray(raw.partners))w.partners=[...new Set(raw.partners.filter(x=>typeof x==='string'&&byId.has(x)&&x!==w.origin))];
   if(Number.isSafeInteger(raw.usImports)&&raw.usImports>=0&&raw.usImports<=10000)w.usImports=raw.usImports;
   if(Array.isArray(raw.bilateral))w.bilateral=[...new Set(raw.bilateral.filter(id=>typeof id==='string'&&byId.has(id)&&id!==w.origin&&!w.partners.includes(id)))];
@@ -118,7 +175,7 @@ export function getCooperation(w,state,id){
   const cost=id===USA_COUNTRY_ID?USA_COOPERATION_COST:Math.round((1500+threshold*6.5)/50)*50;
   const joined=w.partners.includes(id),home=w.origin===id;
   const unlocked=home||joined||isCountryVisible(w,id);
-  return {...c,threshold,cost,politicalContext:political.reason,stage:id===USA_COUNTRY_ID?3:ADDITIONAL_COUNTRY_DATA[c.name]?2:1,unlocked,joined,home,productionBonus:10+index*3,taxesBonus:5+index*2,communismBonus:5+Math.floor(index/3),available:Boolean(w.origin)&&unlocked&&!home&&!joined&&state.communism>=threshold&&state.cash>=cost};
+  return {...c,threshold,cost,politicalContext:political.reason,stage:getCountryWave(w,id),unlocked,joined,home,productionBonus:10+index*3,taxesBonus:5+index*2,communismBonus:5+Math.floor(index/3),available:Boolean(w.origin)&&unlocked&&!home&&!joined&&state.communism>=threshold&&state.cash>=cost};
 }
 export function cooperate(w,state,id){
   const c=getCooperation(w,state,id);if(!w.origin||!c||c.home||c.joined)return {ok:false,reason:"unavailable"};
@@ -136,11 +193,18 @@ export function cooperate(w,state,id){
 }
 export function getWorldStats(w){
  const partners=w.partners.filter(x=>byId.has(x)&&x!==w.origin);
+ const joined=new Set(partners);
  const regions=new Set([...(w.origin?[byId.get(w.origin).region]:[]),...partners.map(id=>byId.get(id).region)]);
- const initialJoined=INITIAL_COUNTRIES.filter(c=>c.id!==USA_COUNTRY_ID&&(c.id===w.origin||partners.includes(c.id))).length;
+ const initialJoined=INITIAL_COUNTRIES.filter(c=>c.id!==USA_COUNTRY_ID&&(c.id===w.origin||joined.has(c.id))).length;
+ const stage=getWorldStage(w);
+ const waves=getCampaignWaves(w);
+ const wave=waves[Math.min(stage, waves.length)-1]||[];
+ const waveJoined=wave.filter(c=>c.id===w.origin||joined.has(c.id)).length;
  return {origin:w.origin?byId.get(w.origin):null,partners:partners.length,regions:regions.size,
- stage:getWorldStage(w),initialJoined,initialTotal:48,
- totalJoined:partners.length+(w.origin?1:0),worldTotal:COUNTRIES.length,secondWaveTotal:ADDITIONAL_COUNTRIES.length};
+ stage,initialJoined,initialTotal:48,totalJoined:partners.length+(w.origin?1:0),
+ worldTotal:COUNTRIES.length,waveNumber:Math.min(stage,waves.length),
+ waveCount:waves.length,waveTotal:wave.length,waveJoined,
+ waveRemaining:wave.length-waveJoined};
 }
 export function celebrate(w,points){const result=[];for(const m of MILESTONES)if(points>=m.threshold&&!w.celebrated.includes(m.threshold)){w.celebrated.push(m.threshold);result.push(m);}return result;}
 
