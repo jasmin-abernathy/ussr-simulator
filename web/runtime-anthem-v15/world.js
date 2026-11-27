@@ -157,6 +157,7 @@ export function getVisibleCountries(world){
 export const MILESTONES=Object.freeze([[5,"Premier collectif créé : chaque geste compte !"],[25,"La solidarité s'organise : garde le cap !"],[100,"Ton économie coopérative trouve son élan !"],[250,"Les premières initiatives commencent à transformer le quotidien !"],[500,"De nouveaux possibles s'ouvrent à toi !"],[1000,"La coopération traverse les frontières !"],[2500,"Les solidarités se renforcent sur plusieurs continents !"],[5000,"Ton projet commun prend une dimension internationale !"],[10000,"Une fédération de coopérations se dessine. Bravo !"],[25000,"Les solidarités se multiplient : un autre monde se construit !"],[50000,"De pays en pays, les initiatives convergent !"]].map(([threshold,message])=>({threshold,message})));
 /** Complete listening grants 2.5 minutes worth of passive communism. */
 export const ANTHEM_REWARD_MULTIPLIER=2.5;
+export const ANTHEM_MIN_REWARD=2;
 export const createWorld=()=>({version:1,origin:null,partners:[],celebrated:[],usImports:0,bilateral:[]});
 export function hydrateWorld(raw){
   const w=createWorld();
@@ -230,12 +231,13 @@ export function celebrate(w,points){const result=[];for(const m of MILESTONES)if
  * Pausing or starting the recording earns nothing. A full new listen earns
  * the same reward again with no cooldown or daily limit.
  */
-/** Reward is determined at audio completion and preserves fractional points.
- * No fixed minimum: the reward is proportional to current passive communism.
+/** Reward is determined at audio completion, with a baseline +2 communism.
+ * The 2.5x multiplier takes over only when it exceeds that minimum.
+ * Preserve fractional points above the threshold.
  */
 export function getAnthemReward(state){
  const rate=getCommunismPerMinute(state);
- return Math.min(1e100,Math.max(0,Number.isFinite(rate)?rate*ANTHEM_REWARD_MULTIPLIER:0));
+ return Math.max(ANTHEM_MIN_REWARD,Math.min(1e100,Number.isFinite(rate)?rate*ANTHEM_REWARD_MULTIPLIER:0));
 }
 export function rewardAnthem(world,state){
  if(!world.origin)return {ok:false,reason:'choose-origin'};
