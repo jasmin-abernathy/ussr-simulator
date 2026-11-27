@@ -1,12 +1,12 @@
-const APP_VERSION='2026-11-27-growing-public-caps-2';
-import { ACTIVITIES, RULES } from './game-data.js?v=2026-11-27-growing-public-caps-2';
+const APP_VERSION='2026-11-27-tax-rates-1';
+import { ACTIVITIES, RULES } from './game-data.js?v=2026-11-27-tax-rates-1';
 import {
   createState, hydrateState, getStats, getActivity, quotePurchase,
   clickProduce, buyActivity, quoteActivityConversion, convertActivity, CONVERSION_TARGETS, getActivityCorruptionRate, CORRUPTION_PURCHASE, COMMUNISM_PURCHASE_PENALTY, getPropagandaOffer, buyPropagandaAgency, advance, startPlan, claimPlan, publicProjectOffers, spendPublicBudget,
-  reduceInflation, exportState, getGoals, activityBusinessRate, setTaxPolicy, TAX_POLICY_LABELS, getBusinessEconomyForPolicy,
-} from './engine.js?v=2026-11-27-growing-public-caps-2';
-import { COUNTRIES, MILESTONES, createWorld, hydrateWorld, chooseCountry, getCooperation, cooperate, rankCountriesByCooperationCost, getWorldStats, celebrate, rewardAnthem, getAnthemReward, START_COUNTRIES, USA_COUNTRY_ID, getVisibleCountries, getWorldStage, getCampaignWaves, getUSImportOffer, buyUSImports, convertUSImports, getBureaucracyOffer, buyBureaucracy, getBilateralOffer, buyBilateralAgreement } from './world.js?v=2026-11-27-growing-public-caps-2';
-import { ANTHEM_END_SECONDS, anthemClipFinished } from './anthem-clip.js?v=2026-11-27-growing-public-caps-2';
+  reduceInflation, exportState, getGoals, activityBusinessRate, setTaxPolicy, TAX_POLICIES, TAX_POLICY_LABELS, getBusinessEconomyForPolicy,
+} from './engine.js?v=2026-11-27-tax-rates-1';
+import { COUNTRIES, MILESTONES, createWorld, hydrateWorld, chooseCountry, getCooperation, cooperate, rankCountriesByCooperationCost, getWorldStats, celebrate, rewardAnthem, getAnthemReward, START_COUNTRIES, USA_COUNTRY_ID, getVisibleCountries, getWorldStage, getCampaignWaves, getUSImportOffer, buyUSImports, convertUSImports, getBureaucracyOffer, buyBureaucracy, getBilateralOffer, buyBilateralAgreement } from './world.js?v=2026-11-27-tax-rates-1';
+import { ANTHEM_END_SECONDS, anthemClipFinished } from './anthem-clip.js?v=2026-11-27-tax-rates-1';
 
 const SAVE_KEY = 'ussr-simulator:save:v1';
 const BACKUP_KEY = 'ussr-simulator:backup:v1';
@@ -404,7 +404,9 @@ function render() {
     const active=button.dataset.taxPolicy===stats.business.taxPolicy;
     const forecast=getBusinessEconomyForPolicy(state,button.dataset.taxPolicy);
     const preview=button.querySelector('[data-policy-preview]');
-    if(preview)setText(preview,`${money(forecast.taxesCollectedPerSecond)}/s`);
+    if(preview)setText(preview,`${TAX_POLICIES[button.dataset.taxPolicy]} %`);
+    const estimate=button.querySelector('[data-policy-estimate]');
+    if(estimate)setText(estimate,`≈ ${money(forecast.taxesCollectedPerSecond)}/s pour la caisse`);
     button.classList.toggle('is-active',active);
     button.setAttribute('aria-pressed',String(active));button.disabled=!canWrite;
   }
