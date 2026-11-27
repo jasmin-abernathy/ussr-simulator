@@ -9,8 +9,8 @@
   <title>Communist World Simulator — Édition de développement</title>
   <link rel="icon" href="./assets/icon.svg" type="image/svg+xml">
   <link rel="manifest" href="./manifest.webmanifest">
-  <link rel="stylesheet" href="./runtime-click-v4/styles.css?v=2026-11-27-no-sw-click-v4">
-  <script type="module" src="./runtime-click-v4/app.js?v=2026-11-27-no-sw-click-v4"></script>
+  <link rel="stylesheet" href="./runtime-audio-v5/styles.css?v=2026-11-27-background-audio-1">
+  <script type="module" src="./runtime-audio-v5/app.js?v=2026-11-27-background-audio-1"></script>
 <script>
 /* Web playtest: disable the previous offline service worker and its caches.
    The game state is in localStorage and must never be touched here. */
@@ -71,7 +71,7 @@
           <span class="anthem-copy"><strong id="anthem-label">Écouter L’Internationale</strong><small id="anthem-status">+3 points communisme</small></span>
           <span id="anthem-control-symbol" aria-hidden="true">▶</span>
         </button>
-        <audio id="anthem-audio" preload="none" src="https://commons.wikimedia.org/wiki/Special:Redirect/file/L%27internationale.ogg"></audio>
+        <audio id="anthem-audio" preload="metadata" src="https://commons.wikimedia.org/wiki/Special:Redirect/file/L%27internationale.ogg"></audio>
         <p class="anthem-credit">Enregistrement CC0 · <a href="https://commons.wikimedia.org/wiki/File:L%27internationale.ogg" target="_blank" rel="noopener noreferrer">Source et licence</a></p>
       </section>
       <div class="home-shortcuts">
