@@ -7,14 +7,24 @@ const record = value => value !== null && typeof value === 'object' && !Array.is
 const cap = (value, maximum = RULES.maxNumber) => Math.min(maximum, Math.max(0, value));
 const time = value => typeof value === 'number' && Number.isFinite(value)
   ? cap(value, MAX_TIME) : Date.now();
-/** Hourly audit cooldown, persisted across reloads. No daily quota. */
+/** An audit charge accrues each hour and up to five may be saved.
+ * Reaching the cap stops the clock, so spending one cannot immediately
+ * reclaim a sixth charge accrued while the reserve was full.
+ */
 export const AUDIT_COOLDOWN_MS=60*60*1000;
+export const AUDIT_MAX_CHARGES=5;
 export const AUDIT_CORRUPTION_REDUCTION=.20;
 export function getAuditCooldown(state,now=Date.now()){
  const current=time(now);
- const last=time(state.lastAuditAt||0);
- const remainingMs=last>0?Math.min(AUDIT_COOLDOWN_MS,Math.max(0,last+AUDIT_COOLDOWN_MS-current)):0;
- return {remainingMs,ready:remainingMs===0,nextAt:last+AUDIT_COOLDOWN_MS};
+ const stored=Math.min(AUDIT_MAX_CHARGES,Math.max(0,Math.floor(state.auditCharges??1)));
+ const anchor=Number.isFinite(state.auditChargeAt)&&state.auditChargeAt>0?state.auditChargeAt:current;
+ const elapsed=Math.max(0,current-anchor);
+ const added=Math.floor(elapsed/AUDIT_COOLDOWN_MS);
+ const charges=Math.min(AUDIT_MAX_CHARGES,stored+added);
+ const full=charges===AUDIT_MAX_CHARGES;
+ const nextAt=full?null:anchor+(added+1)*AUDIT_COOLDOWN_MS;
+ const remainingMs=nextAt===null?0:Math.max(0,nextAt-current);
+ return {charges,maxCharges:AUDIT_MAX_CHARGES,remainingMs,ready:charges>0,nextAt,added,full};
 }
 const emptyOffline = () => ({ elapsedMs: 0, creditedMs: 0, earned: 0, capped: false });
 const addMoney = (state, amount) => {
@@ -28,7 +38,7 @@ const addMoney = (state, amount) => {
 export function createState(now = Date.now()) {
   return {
     version: RULES.saveVersion,
-    cash: 0, totalEarned: 0, publicBudget: 0, publicTaxesCollected: 0, publicSpent: 0, publicServicesLevel: 0, internationalAidLevel: 0, publicTransportLevel: 0, publicHousingLevel: 0, transparencyHouses: 0, citizensInspectorates: 0, publicNeedsPending: 0, publicNeedsGenerated: 0, publicNeedsResolved: 0, publicNeedNextScore: 1, publicNeedLastAt: 0, corruptionAudits: 0, lastAuditAt: 0, crisesPending: 0, crisesGenerated: 0, crisisRemainderMs: 0, clicks: 0, automaticSeconds: 0, communism: 0, corruption: 0, importsOwned: 0, bureaucracyOffices: 0, propagandaAgencies: 0, mobilizationHouses: 0, ideologyInstitutes: 0, bilateralAgreements: 0, usCapitalist: true, worldEconomyEnabled: false, taxPolicy: 'balanced', secondRemainderMs: 0, communismRemainderMs: 0, economyTickMode: 'seconds-v1',
+    cash: 0, totalEarned: 0, publicBudget: 0, publicTaxesCollected: 0, publicSpent: 0, publicServicesLevel: 0, internationalAidLevel: 0, publicTransportLevel: 0, publicHousingLevel: 0, transparencyHouses: 0, citizensInspectorates: 0, publicNeedsPending: 0, publicNeedsGenerated: 0, publicNeedsResolved: 0, publicNeedNextScore: 1, publicNeedLastAt: 0, corruptionAudits: 0, lastAuditAt: 0, auditCharges: 1, auditChargeAt: time(now), crisesPending: 0, crisesGenerated: 0, crisisRemainderMs: 0, clicks: 0, automaticSeconds: 0, communism: 0, corruption: 0, importsOwned: 0, bureaucracyOffices: 0, propagandaAgencies: 0, mobilizationHouses: 0, ideologyInstitutes: 0, bilateralAgreements: 0, usCapitalist: true, worldEconomyEnabled: false, taxPolicy: 'balanced', secondRemainderMs: 0, communismRemainderMs: 0, economyTickMode: 'seconds-v1',
     owned: Object.fromEntries(ACTIVITIES.map(item => [item.id, 0])),
     counters: { production: RULES.initialProduction, taxes: 0, productionBonusPercent: 0, taxBonusPercent: 0 },
     productionSteps: 0, taxSteps: 0,
@@ -112,10 +122,14 @@ export function hydrateState(raw, now = Date.now()) {
   state.internationalAidLevel=raw.internationalAidLevel===undefined?0:readNumber(raw.internationalAidLevel,0,11,true);
   state.publicTransportLevel=raw.publicTransportLevel===undefined?0:readNumber(raw.publicTransportLevel,0,18,true);
   state.publicHousingLevel=raw.publicHousingLevel===undefined?0:readNumber(raw.publicHousingLevel,0,16,true);
-  state.transparencyHouses=raw.transparencyHouses===undefined?0:readNumber(raw.transparencyHouses,0,6,true);
-  state.citizensInspectorates=raw.citizensInspectorates===undefined?0:readNumber(raw.citizensInspectorates,0,12,true);
+  state.transparencyHouses=raw.transparencyHouses===undefined?0:readNumber(raw.transparencyHouses,0,9,true);
+  state.citizensInspectorates=raw.citizensInspectorates===undefined?0:readNumber(raw.citizensInspectorates,0,18,true);
   state.corruptionAudits=raw.corruptionAudits===undefined?0:readNumber(raw.corruptionAudits,0,100000,true);
   state.lastAuditAt=raw.lastAuditAt===undefined?0:readNumber(raw.lastAuditAt,0,MAX_TIME,true);
+  // Migrate old single-hour cooldowns without ever erasing earned progress.
+  const legacyAnchor=state.lastAuditAt||Math.min(now,typeof raw.lastUpdate==='number'?raw.lastUpdate:now);
+  state.auditCharges=raw.auditCharges===undefined?(state.lastAuditAt?0:1):readNumber(raw.auditCharges,1,AUDIT_MAX_CHARGES,true);
+  state.auditChargeAt=raw.auditChargeAt===undefined?legacyAnchor:readNumber(raw.auditChargeAt,legacyAnchor,MAX_TIME,true);
   state.crisesPending=raw.crisesPending===undefined?0:readNumber(raw.crisesPending,0,3,true);
   state.crisesGenerated=raw.crisesGenerated===undefined?0:readNumber(raw.crisesGenerated,0,Number.MAX_SAFE_INTEGER,true);
   state.crisisRemainderMs=raw.crisisRemainderMs===undefined?0:readNumber(raw.crisisRemainderMs,0,899999.999);
@@ -240,8 +254,9 @@ export const TRANSPARENCY_PREVENTION_PER_HOUSE=.10;
 export const INSPECTORATE_FLOW_REDUCTION_PER_UNIT=.05;
 export function getCorruptionBreakdown(state){
  const gross=corruptionGrossPerMinute(state);
- const prevention=state.worldEconomyEnabled?Math.min(.60,(state.transparencyHouses||0)*TRANSPARENCY_PREVENTION_PER_HOUSE):0;
- const inspectorateReduction=state.worldEconomyEnabled?Math.min(.60,(state.citizensInspectorates||0)*INSPECTORATE_FLOW_REDUCTION_PER_UNIT):0;
+ const houses=state.transparencyHouses||0,inspectors=state.citizensInspectorates||0;
+ const prevention=state.worldEconomyEnabled?Math.min(.69,Math.min(6,houses)*TRANSPARENCY_PREVENTION_PER_HOUSE+Math.max(0,houses-6)*.03):0;
+ const inspectorateReduction=state.worldEconomyEnabled?Math.min(.72,Math.min(12,inspectors)*INSPECTORATE_FLOW_REDUCTION_PER_UNIT+Math.max(0,inspectors-12)*.02):0;
  const afterTransparency=gross*(1-prevention);
  const intercepted=afterTransparency*inspectorateReduction;
  return {gross,prevention,inspectorateReduction,intercepted,recovery:0,net:Math.max(0,afterTransparency-intercepted)};
@@ -300,7 +315,7 @@ export const PUBLIC_PROJECTS=Object.freeze({
  crisis:Object.freeze({name:'Résoudre la crise',description:'Répare une crise économique : restaure la collecte fiscale et réduit la pression de corruption.'}),
  transport:Object.freeze({name:'Développer les transports publics',description:'Améliore durablement les revenus des activités grâce à une meilleure desserte.'}),
  housing:Object.freeze({name:'Construire des logements coopératifs',description:'Protège progressivement les recettes publiques pendant les crises.'}),
- audit:Object.freeze({name:'Contrôle des comptes',description:'Une inspection réduit de 20 % la corruption existante. Une nouvelle inspection est possible une heure plus tard.'}),
+ audit:Object.freeze({name:'Contrôle des comptes',description:'Une inspection réduit de 20 % la corruption existante. Une charge revient chaque heure et cinq peuvent être mises en réserve.'}),
  transparency:Object.freeze({name:'Maisons de la transparence',description:'Réduisent durablement le risque de corruption lié aux activités.'}),
  inspectorates:Object.freeze({name:'Inspections citoyennes',description:'Freinent la corruption nouvelle en surveillant les activités ; les contrôles des comptes réduisent le stock existant.'}),
  maintenance:Object.freeze({name:'Entretenir les infrastructures',description:'Remet les équipements en état et soulage les tensions économiques.'}),
@@ -347,9 +362,21 @@ export function getPublicProgramCaps(state){
   id,Math.max(levels[id],Math.min(rule.hard,rule.base+rule.step*stages),required[id]||0)
  ]));
 }
+/** Extra civic institutions unlock gradually as the wider economy develops.
+ * Benefits above historical caps are smaller so corruption cannot vanish.
+ */
+export function getIntegrityInstitutionCaps(state){
+ const score=getPublicNeedScore(state);
+ const stages=[8,14,20].filter(threshold=>score>=threshold).length;
+ return {
+  transparency:Math.max(state.transparencyHouses||0,Math.min(9,6+stages)),
+  inspectorates:Math.max(state.citizensInspectorates||0,Math.min(18,12+2*stages))
+ };
+}
 export function publicProjectOffers(state,now=Date.now()){
  const caps=getPublicProgramCaps(state);
  const auditCooldown=getAuditCooldown(state,now);
+ const integrityCaps=getIntegrityInstitutionCaps(state);
  const services=state.publicServicesLevel||0;
  const aid=state.internationalAidLevel||0;
  const pending=state.crisesPending||0;
@@ -362,9 +389,9 @@ export function publicProjectOffers(state,now=Date.now()){
   crisis:{...PUBLIC_PROJECTS.crisis,level:pending,cost:20+15*pending,locked:pending===0},
   transport:{...PUBLIC_PROJECTS.transport,level:state.publicTransportLevel||0,cost:Math.ceil(180*1.55**(state.publicTransportLevel||0)),maxLevel:caps.transport,locked:(state.publicTransportLevel||0)>=caps.transport,fullyDeveloped:caps.transport===PUBLIC_PROGRAM_CAPS.transport.hard},
   housing:{...PUBLIC_PROJECTS.housing,level:state.publicHousingLevel||0,cost:Math.ceil(220*1.65**(state.publicHousingLevel||0)),maxLevel:caps.housing,locked:(state.publicHousingLevel||0)>=caps.housing,fullyDeveloped:caps.housing===PUBLIC_PROGRAM_CAPS.housing.hard},
-  audit:{...PUBLIC_PROJECTS.audit,cost:Math.ceil(600*1.38**Math.min(24,state.corruptionAudits||0)+Math.min(2000,(state.corruption||0)*18)),locked:(state.corruption||0)<.01||!auditCooldown.ready,cooldownMs:auditCooldown.remainingMs,cooldownActive:!auditCooldown.ready},
-  transparency:{...PUBLIC_PROJECTS.transparency,level:state.transparencyHouses||0,maxLevel:6,cost:Math.ceil(480*1.85**(state.transparencyHouses||0)),locked:(state.transparencyHouses||0)>=6,fullyDeveloped:true},
-  inspectorates:{...PUBLIC_PROJECTS.inspectorates,level:state.citizensInspectorates||0,maxLevel:12,cost:Math.ceil(700*1.65**(state.citizensInspectorates||0)),locked:(state.citizensInspectorates||0)>=12,fullyDeveloped:true},
+  audit:{...PUBLIC_PROJECTS.audit,cost:Math.ceil(600*1.38**Math.min(24,state.corruptionAudits||0)+Math.min(2000,(state.corruption||0)*18)),locked:(state.corruption||0)<.01||!auditCooldown.ready,cooldownMs:auditCooldown.remainingMs,cooldownActive:!auditCooldown.ready,charges:auditCooldown.charges,maxCharges:auditCooldown.maxCharges,nextChargeAt:auditCooldown.nextAt},
+  transparency:{...PUBLIC_PROJECTS.transparency,level:state.transparencyHouses||0,maxLevel:integrityCaps.transparency,cost:Math.ceil(480*1.85**(state.transparencyHouses||0)),locked:(state.transparencyHouses||0)>=integrityCaps.transparency,fullyDeveloped:integrityCaps.transparency===9},
+  inspectorates:{...PUBLIC_PROJECTS.inspectorates,level:state.citizensInspectorates||0,maxLevel:integrityCaps.inspectorates,cost:Math.ceil(700*1.65**(state.citizensInspectorates||0)),locked:(state.citizensInspectorates||0)>=integrityCaps.inspectorates,fullyDeveloped:integrityCaps.inspectorates===18},
   maintenance:{...PUBLIC_PROJECTS.maintenance,cost:Math.ceil(160+Math.min(900,(state.taxSteps||0)/30+(state.productionSteps||0)/40)),locked:(state.taxSteps||0)<250&&(state.productionSteps||0)<250},
   needs:{...PUBLIC_PROJECTS.needs,name:needType.name,description:needType.detail,pending:needs,
    cost:Math.ceil(150+Math.min(5000,((state.publicNeedsResolved||0)+1)*65+getPublicNeedScore(state)*25)),locked:needs===0},
@@ -387,6 +414,11 @@ export function spendPublicBudget(state,project,now=Date.now()){
  if(project==='transparency')state.transparencyHouses++;
  if(project==='inspectorates')state.citizensInspectorates++;
  if(project==='audit'){
+  const clock=getAuditCooldown(state,now);
+  state.auditCharges=clock.charges-1;
+  // At a full reserve, begin a new earning interval only when spent.
+  // Otherwise preserve elapsed fractional progress toward the next charge.
+  state.auditChargeAt=clock.full?time(now):Math.min(time(now),state.auditChargeAt||time(now))+clock.added*AUDIT_COOLDOWN_MS;
   state.lastAuditAt=time(now);
   state.corruption=Math.max(0,(state.corruption||0)*(1-AUDIT_CORRUPTION_REDUCTION));
   state.corruptionAudits=Math.min(100000,(state.corruptionAudits||0)+1);
