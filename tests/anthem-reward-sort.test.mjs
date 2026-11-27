@@ -9,34 +9,33 @@ import {
 const NOW=1700000000000;
 const start=()=>{const w=createWorld();assert.equal(chooseCountry(w,'0').ok,true);return w;};
 const state=()=>{const s=createState(NOW);s.worldEconomyEnabled=true;s.communism=1000;s.cash=1e10;return s;};
-test('anthem begins at three and increases as the automatic communism/minute rate exceeds three',()=>{
+test('passive communism accrues at 1 percent per minute and anthem never over-amplifies low rates',()=>{
  const s=state();
  assert.equal(getCommunismPerMinute(s),0);
  assert.equal(getAnthemReward(s),3);
- s.owned.matches=3;
- assert.equal(getAnthemReward(s),3);
  s.owned.matches=16;
- assert.equal(getCommunismPerMinute(s),6.4);
+ assert.equal(getCommunismPerMinute(s),.16);
+ assert.equal(getAnthemReward(s),3);
+ s.owned.matches=800;
+ assert.equal(getCommunismPerMinute(s),8);
  assert.equal(getAnthemReward(s),4);
- s.owned.matches=30;
- assert.equal(getAnthemReward(s),6);
  s.propagandaAgencies=2;
- assert.equal(getCommunismPerMinute(s),14);
- assert.equal(getAnthemReward(s),7);
+ assert.equal(getCommunismPerMinute(s),8.1);
+ assert.equal(getAnthemReward(s),5);
 });
 test('full listening earns exactly the displayed scaled reward, repeatable; absent origin earns nothing',()=>{
  const s=state(),w=start();
  s.owned.matches=20;
  const before=s.communism;
- assert.deepEqual(rewardAnthem(w,s),{ok:true,points:4});
- assert.equal(s.communism,before+4);
- assert.deepEqual(rewardAnthem(w,s),{ok:true,points:4});
- assert.equal(s.communism,before+8);
+ assert.deepEqual(rewardAnthem(w,s),{ok:true,points:3});
+ assert.equal(s.communism,before+3);
+ assert.deepEqual(rewardAnthem(w,s),{ok:true,points:3});
+ assert.equal(s.communism,before+6);
  assert.equal(rewardAnthem(createWorld(),s).ok,false);
- assert.equal(s.communism,before+8);
+ assert.equal(s.communism,before+6);
 });
 test('anthem reward follows saved existing industries and cannot mutate state while only quoted',()=>{
- const s=state();s.owned.matches=20;
+ const s=state();s.owned.matches=800;
  const loaded=hydrateState(exportState(s,NOW),NOW);
  assert.equal(getAnthemReward(loaded),4);
  const previous=loaded.communism;
