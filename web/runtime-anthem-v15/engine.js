@@ -722,7 +722,7 @@ export function getBusinessEconomy(state){
  const administrationEfficiency=1+Math.min(0.20,(state.bureaucracyOffices||0)*0.02)+Math.min(.30,(state.publicServicesLevel||0)*.03)+Math.min(.06,Math.max(0,(state.publicServicesLevel||0)-10)*.01);
  const bilateralTradeBonus=1+Math.min(0.15,(state.bilateralAgreements||0)*0.01);
  const housingProtection=Math.min(.05,(state.publicHousingLevel||0)*.005)+Math.min(.012,Math.max(0,(state.publicHousingLevel||0)-10)*.002);
- const crisisLoss=Math.max(.05,.10-housingProtection);
+ const crisisLoss=Math.max(.038,.10-housingProtection);
  const collected=taxes*(1-leakage)*administrationEfficiency*(1-crisisLoss*Math.min(3,state.crisesPending||0))*(1-.04*Math.min(3,state.publicNeedsPending||0));
  const transportBonus=1+Math.min(.18,(state.publicTransportLevel||0)*.015)+Math.min(.03,Math.max(0,(state.publicTransportLevel||0)-12)*.005);
  const businessIncome=treasury*bilateralTradeBonus*transportBonus;
