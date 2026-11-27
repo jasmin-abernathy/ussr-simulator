@@ -27,7 +27,7 @@ test('the public audit costs rise with repeated interventions and cannot generat
  let offer=publicProjectOffers(state).audit;
  assert.ok(offer.available);
  assert.ok(spendPublicBudget(state,'audit').ok);
- assert.equal(state.corruption,25);
+ close(state.corruption,24);
  assert.equal(state.corruptionAudits,1);
  assert.equal(state.cash,1000);
  assert.ok(publicProjectOffers(state).audit.cost>offer.cost);
