@@ -2834,3 +2834,23 @@ body[data-screen="plan"] .command-column,body[data-screen="plan"] .activity-colu
 .game-footer{display:none;}
 }
 @media(max-width:350px){.brand-name{font-size:16px;}.activity-list{gap:6px;}.activity-card{padding:10px 8px;}.shortcut span{width:45px;height:45px;}}
+
+/* Circular playback progress, always synced to audio.currentTime */
+.anthem-panel .anthem-button{--anthem-progress:100%;border:12px solid transparent;position:relative;
+background:radial-gradient(circle at 35% 20%,#494949,#151515 77%) padding-box,
+conic-gradient(#17bd2a 0% var(--anthem-progress),#090909 var(--anthem-progress) 100%) border-box !important;
+box-shadow:inset 0 0 0 4px #202020,0 6px 0 #113b1a,0 16px 30px #0002;}
+.anthem-panel .anthem-button.is-playing{background:radial-gradient(circle at 35% 20%,#494949,#151515 77%) padding-box,
+conic-gradient(#17bd2a 0% var(--anthem-progress),#090909 var(--anthem-progress) 100%) border-box !important;}
+.anthem-note{width:90px;height:90px;display:grid;place-items:center;}
+.anthem-note img{height:88px;width:88px;object-fit:contain;}
+.import-card{display:flex;flex-direction:column;gap:12px;margin:20px 0;padding:17px;border-radius:16px;background:#fff;border:1px solid #d5c9b8;}
+.import-card-heading{display:flex;align-items:flex-start;gap:12px;}
+.import-card-heading h3{margin:0 0 6px;font-size:17px;color:var(--ink);}
+.import-card-heading p{margin:0;font-size:12px;line-height:1.55;color:var(--muted);}
+.import-card-icon{flex:0 0 auto;display:grid;place-items:center;background:#f6eee1;border:4px solid #87d8e9;border-radius:50%;height:62px;width:62px;font-size:25px;}
+.import-card-metrics{display:flex;flex-wrap:wrap;gap:8px;}
+.import-card-metrics span{padding:7px 9px;border-radius:8px;background:#f4efe9;font-size:12px;}
+#import-risk{color:#aa3e2d;}
+.world-notice{margin:14px 0 4px;padding:12px 14px;border:1px solid #d5c9b8;border-radius:10px;font-size:13px;background:#faf5eb;}
+@media(max-width:700px){.anthem-panel .anthem-button{border-width:11px;}.anthem-note{width:78px;height:78px;}.anthem-note img{width:76px;height:76px;}.import-card{padding:14px;}}

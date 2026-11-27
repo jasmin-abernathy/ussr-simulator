@@ -19,7 +19,7 @@ const addMoney = (state, amount) => {
 export function createState(now = Date.now()) {
   return {
     version: RULES.saveVersion,
-    cash: 0, totalEarned: 0, clicks: 0, automaticSeconds: 0, communism: 0,
+    cash: 0, totalEarned: 0, clicks: 0, automaticSeconds: 0, communism: 0, corruption: 0, importsOwned: 0, usCapitalist: true, worldEconomyEnabled: false,
     owned: Object.fromEntries(ACTIVITIES.map(item => [item.id, 0])),
     counters: { production: RULES.initialProduction, taxes: 0, productionBonusPercent: 0, taxBonusPercent: 0 },
     productionSteps: 0, taxSteps: 0,
@@ -74,6 +74,10 @@ export function hydrateState(raw, now = Date.now()) {
     state.counters[key] = Math.max(minimum[key], value);
     if (state.counters[key] !== value) state.recovered = true;
   }
+  state.corruption=raw.corruption===undefined?0:readNumber(raw.corruption,0,1e6);
+  state.importsOwned=raw.importsOwned===undefined?0:readNumber(raw.importsOwned,0,10000,true);
+  state.usCapitalist=raw.usCapitalist===false?false:true;
+  state.worldEconomyEnabled=raw.worldEconomyEnabled===true;
   state.cash = readNumber(raw.cash, 0);
   state.totalEarned = Math.max(state.cash, readNumber(raw.totalEarned, state.cash));
   state.communism = Math.max(minimum.communism, readNumber(raw.communism, minimum.communism));
@@ -114,12 +118,19 @@ const inflation = (steps, size) => Math.floor(steps / size);
 const grossProduction = state => cap(state.counters.production * (1 + state.counters.productionBonusPercent / 100));
 const grossTaxes = state => cap(state.counters.taxes * (1 + state.counters.taxBonusPercent / 100));
 const production = state => grossProduction(state) * (1 - inflation(state.productionSteps, RULES.productionInflationStep) / 100);
-const taxes = state => grossTaxes(state) * (1 - inflation(state.taxSteps, RULES.taxInflationStep) / 100);
+const taxes = state => grossTaxes(state) * (1-inflation(state.taxSteps,RULES.taxInflationStep)/100)
+ * (1-Math.min(35,Math.floor((state.corruption||0)/25))/100);
+const commerceRevenuePerSecond = state => state.worldEconomyEnabled?(
+  (state.owned.gum||0)*4+(state.owned.beer||0)*8+(state.owned.trading||0)*20+
+  (state.owned.soda||0)*25+(state.owned.grocery||0)*35+
+  (state.owned['black-market']||0)*70+(state.importsOwned||0)*90):0;
+const corruptionPerMinute = state => (state.owned['black-market']||0)*0.07+(state.owned.trading||0)*0.02+
+  (state.usCapitalist!==false?(state.importsOwned||0)*0.35:0);
 
 /** Derived values only; querying never changes the state or the clock. */
 export function getStats(state) {
   return {
-    cash: state.cash, totalEarned: state.totalEarned, communism: state.communism, clicks: state.clicks,
+    cash: state.cash, totalEarned: state.totalEarned, communism: state.communism, corruption: state.corruption||0, corruptionPerMinute:corruptionPerMinute(state), commerceRevenuePerSecond:commerceRevenuePerSecond(state), clicks: state.clicks,
     productionPerClick: production(state), taxesPerSecond: taxes(state),
     totalOwned: Object.values(state.owned).reduce((total, count) => total + count, 0),
     unlockedCount: ACTIVITIES.filter(item => item.unlock <= state.communism).length,
@@ -127,7 +138,7 @@ export function getStats(state) {
     productionBonusPercent: state.counters.productionBonusPercent, taxBonusPercent: state.counters.taxBonusPercent,
     productionInflation: inflation(state.productionSteps, RULES.productionInflationStep),
     taxInflation: inflation(state.taxSteps, RULES.taxInflationStep),
-    canReduceInflation: state.taxSteps >= RULES.taxInflationStep,
+    canReduceInflation: state.taxSteps >= RULES.taxInflationStep || (state.corruption||0)>=1,
     plan: { unlocked: state.communism >= RULES.planUnlock, status: state.plan.status,
       remainingMs: state.plan.remainingMs,
       durationMs: state.plan.status === 'idle' ? planDuration(state) : state.plan.durationMs,
@@ -202,6 +213,8 @@ export function buyActivity(state, id, quantity = 1) {
     state.counters.productionBonusPercent = cap(state.counters.productionBonusPercent + effects.productionPercent);
     state.counters.taxBonusPercent = cap(state.counters.taxBonusPercent + effects.taxPercent);
     state.communism = cap(state.communism + effects.communism);
+    if(id==='black-market')state.corruption=Math.min(1e6,(state.corruption||0)+2);
+    if(id==='trading')state.corruption=Math.min(1e6,(state.corruption||0)+0.5);
     // Increment AFTER applying effects: a doubling never alters already-owned items.
     state.owned[id] += 1;
   }
@@ -220,7 +233,7 @@ export function clickProduce(state) {
 function collectTaxes(state, seconds) {
   let remaining = seconds;
   let earned = 0;
-  const base = grossTaxes(state);
+  const base = grossTaxes(state)*(1-Math.min(35,Math.floor((state.corruption||0)/25))/100);
   while (remaining > 0 && state.taxSteps < RULES.taxInflationStep * RULES.maxInflation) {
     const rate = inflation(state.taxSteps, RULES.taxInflationStep);
     const segment = Math.min(remaining, RULES.taxInflationStep - state.taxSteps % RULES.taxInflationStep);
@@ -228,9 +241,11 @@ function collectTaxes(state, seconds) {
     state.taxSteps += segment;
     remaining -= segment;
   }
+  const addedCorruption=corruptionPerMinute(state)*seconds/60;
+  if(addedCorruption>0)state.corruption=Math.min(1e6,(state.corruption||0)+addedCorruption);
   state.productionSteps = Math.max(0, state.productionSteps - seconds);
   state.automaticSeconds = cap(state.automaticSeconds + seconds, Number.MAX_SAFE_INTEGER);
-  return addMoney(state, earned);
+  return addMoney(state, earned+seconds*commerceRevenuePerSecond(state));
 }
 
 /**
@@ -280,6 +295,11 @@ export function claimPlan(state, now = Date.now()) {
 
 /** Historical anticorruption action: -1 inflation point, one tax tick, +1 communism. */
 export function reduceInflation(state) {
+  if((state.corruption||0)>=1){
+    const removed=Math.min(5,state.corruption);
+    state.corruption=Math.max(0,state.corruption-removed);
+    return {ok:true,earned:0,corruptionReduced:removed};
+  }
   if (state.taxSteps < RULES.taxInflationStep) return { ok: false, reason: 'no-inflation', earned: 0 };
   state.taxSteps -= RULES.taxInflationStep;
   const earned = addMoney(state, taxes(state));

@@ -4,7 +4,7 @@ import {
   clickProduce, buyActivity, advance, startPlan, claimPlan,
   reduceInflation, exportState, getGoals,
 } from './engine.js';
-import { COUNTRIES, MILESTONES, createWorld, hydrateWorld, chooseCountry, getCooperation, cooperate, getWorldStats, celebrate, rewardAnthem } from './world.js';
+import { COUNTRIES, MILESTONES, createWorld, hydrateWorld, chooseCountry, getCooperation, cooperate, getWorldStats, celebrate, rewardAnthem, START_COUNTRIES, USA_COUNTRY_ID, getUSImportOffer, buyUSImports } from './world.js';
 import { ANTHEM_END_SECONDS, anthemClipFinished } from './anthem-clip.js';
 
 const SAVE_KEY = 'ussr-simulator:save:v1';
@@ -47,6 +47,7 @@ try { rawSave = localStorage.getItem(SAVE_KEY); } catch { storageFailure(); }
 let state = rawSave ? hydrateState(rawSave) : createState();
 let world = createWorld();
 try { const stored=localStorage.getItem(WORLD_KEY);if(stored)world=hydrateWorld(JSON.parse(stored)); } catch { storageFailure(); }
+state.importsOwned=world.usImports;state.usCapitalist=!world.partners.includes(USA_COUNTRY_ID);state.worldEconomyEnabled=Boolean(world.origin);
 
 function notify(message) {
   const toast = $('toast');
@@ -224,6 +225,15 @@ function render() {
   setText($('home-communism'),format(stats.communism));
   setText($('home-production'),format(stats.productionPerClick));
   setText($('home-taxes'),format(stats.taxesPerSecond));
+  setText($('home-commerce'),format(stats.commerceRevenuePerSecond));
+  setText($('home-corruption'),`${format(stats.corruption)} points`);
+  setText($('corruption-value'),format(stats.corruption));
+  const offer=getUSImportOffer(world,state);
+  setText($('import-owned'),`${offer.count} commerce${offer.count>1?'s':''}`);
+  setText($('import-rate'),'+90 revenus +60 taxes / s, par commerce');
+  setText($('import-risk'),offer.capitalist?'+5 corruption par achat · +0,35/min':'Sans corruption américaine');
+  if($('import-buy')){$('import-buy').disabled=!canWrite||!offer.available;
+    setText($('import-buy'),state.communism<150?'Déblocage à 150 communisme':`Acheter · ${money(offer.cost)}`);}
   setText($('production-rate'), format(stats.productionPerClick));
   setText($('tax-rate'), format(stats.taxesPerSecond));
   setText($('communism'), format(stats.communism));
@@ -231,7 +241,7 @@ function render() {
   setText($('owned-label'), stats.totalOwned > 1 ? ' activités' : ' activité');
   setText($('produce-gain'), `+${money(stats.productionPerClick)} / clic`);
   setText($('session-stats'), `${integer.format(stats.clicks)} clics · ${format(stats.totalEarned)} roubles produits · ${integer.format(stats.plan.completed)} plans terminés`);
-  setText($('inflation-value'), `${stats.taxInflation} %`);
+  setText($('inflation-value'), `${stats.taxInflation} % inflation · ${format(stats.corruption)} corruption`);
   const inflationButton = $('inflation-button');
   if (inflationButton) inflationButton.disabled = !canWrite || !stats.canReduceInflation;
   const plan = stats.plan;
@@ -373,6 +383,7 @@ $('import-save')?.addEventListener('change', async event => {
     const imported = hydrateState(raw);
     state = imported;
     world=hydrateWorld(raw.world);
+    state.importsOwned=world.usImports;state.usCapitalist=!world.partners.includes(USA_COUNTRY_ID);state.worldEconomyEnabled=Boolean(world.origin);
     save({ backup: true });
     if(!world.origin)requestAnimationFrame(showCountryDialog);
     render();
@@ -410,7 +421,7 @@ window.addEventListener('storage', event => {
   // Keep multiple open tabs in step instead of repeatedly overwriting one save.
   try { if (localStorage.getItem(SAVE_KEY) !== event.newValue) return; } catch { return; }
   const incoming = hydrateState(event.newValue);
-  if (!incoming.recovered) { state = incoming;try { const other=localStorage.getItem(WORLD_KEY);if(other)world=hydrateWorld(JSON.parse(other)); } catch {} dirty = false; render(); }
+  if (!incoming.recovered) { state = incoming;try { const other=localStorage.getItem(WORLD_KEY);if(other)world=hydrateWorld(JSON.parse(other));state.importsOwned=world.usImports;state.usCapitalist=!world.partners.includes(USA_COUNTRY_ID);state.worldEconomyEnabled=Boolean(world.origin); } catch {} dirty = false; render(); }
 });
 
 window.addEventListener('beforeinstallprompt', event => {
@@ -481,10 +492,20 @@ function acquireSession() {
 acquireSession();
 
 
+$('import-buy')?.addEventListener('click',()=>{
+  if(!canWrite)return;advance(state);
+  const bought=buyUSImports(world,state);if(!bought.ok)return;
+  changed();notify(bought.offer.capitalist?'Importation ouverte · revenus automatiques et corruption en hausse':'Importation ouverte · revenus automatiques, sans corruption américaine');
+});
 const anthemAudio = document.getElementById('anthem-audio');
 const anthemButton = document.getElementById('anthem-button');
 if (anthemAudio && anthemButton) {
   let rewardedThisListen = false;
+  let progressFrame=null;
+  const setRing=fraction=>anthemButton.style.setProperty('--anthem-progress',`${Math.min(100,Math.max(0,fraction*100))}%`);
+  setRing(1);
+  function stopRing(){if(progressFrame!==null)cancelAnimationFrame(progressFrame);progressFrame=null;}
+  function updateRing(){setRing(anthemAudio.currentTime/ANTHEM_END_SECONDS);if(!anthemAudio.paused&&!anthemAudio.ended)progressFrame=requestAnimationFrame(updateRing);}
 
   const updateAnthem = (message) => {
     const playing = !anthemAudio.paused && !anthemAudio.ended;
@@ -500,10 +521,11 @@ if (anthemAudio && anthemButton) {
 
   function finishAnthem() {
     // The full source on the web has trailing silence after the first refrain.
-    // The Android build embeds a 76-second cut of the very same recording.
+    // The Android build can embed the same 38-second first-refrain cut.
     // The guard avoids awarding twice when timeupdate and ended both fire.
     if (rewardedThisListen || !anthemClipFinished(anthemAudio.currentTime)) return;
     rewardedThisListen = true;
+    stopRing();setRing(1);
     anthemAudio.pause();
     anthemAudio.currentTime = 0;
     if (canWrite) {
@@ -518,19 +540,21 @@ if (anthemAudio && anthemButton) {
 
   anthemButton.addEventListener('click', async () => {
     if (!anthemAudio.paused) { anthemAudio.pause(); return; }
-    if (anthemAudio.currentTime === 0) rewardedThisListen = false;
+    if (anthemAudio.currentTime === 0){rewardedThisListen = false;setRing(0);}
     try { await anthemAudio.play(); }
     catch { updateAnthem('Lecture impossible : fichier audio indisponible.'); }
   });
   anthemAudio.addEventListener('play', () => {
+    stopRing();updateRing();
     updateAnthem('Écoute le premier refrain jusqu’au bout pour gagner +3 communisme.');
   });
   anthemAudio.addEventListener('pause', () => {
+    stopRing();
     if (!rewardedThisListen) updateAnthem();
   });
   anthemAudio.addEventListener('timeupdate', finishAnthem);
   anthemAudio.addEventListener('ended', finishAnthem);
-  anthemAudio.addEventListener('error', () => updateAnthem('Fichier non chargé. Vérifie la connexion ou réessaie.'));
+  anthemAudio.addEventListener('error', () => {stopRing();setRing(0);updateAnthem('Fichier non chargé. Vérifie la connexion ou réessaie.');});
 }
 
 /* Mobile screens and international cooperation. */
@@ -547,13 +571,14 @@ function setScreen(screen) {
 for(const b of document.querySelectorAll('[data-screen]'))b.addEventListener('click',()=>setScreen(b.dataset.screen));
 setScreen('home');
 const choice=document.getElementById('country-choice');
-for(const c of COUNTRIES){const option=document.createElement('option');option.value=c.id;option.textContent=c.name;choice.append(option);}
+for(const c of START_COUNTRIES){const option=document.createElement('option');option.value=c.id;option.textContent=c.name;choice.append(option);}
 function showCountryDialog(){if(!world.origin)openDialog('country-dialog');}
 document.getElementById('country-confirm')?.addEventListener('click',()=>{
   if(!canWrite)return;
   const result=chooseCountry(world,choice.value);
   if(!result.ok)return;
   closeDialog(document.getElementById('country-dialog'));
+  state.worldEconomyEnabled=true;
   changed();notify(`Bienvenue en ${result.country.name} ! Fais grandir la coopération.`);
 });
 document.getElementById('world-filter')?.addEventListener('change',e=>{worldFilter=e.currentTarget.value;renderWorld();});
@@ -577,7 +602,7 @@ function renderWorld(){
     const heading=document.createElement('div'),name=document.createElement('strong'),region=document.createElement('small');
     name.textContent=item.name;region.textContent=item.region;heading.append(name,region);
     const status=document.createElement('p');status.className='country-status';
-    status.textContent=item.home?'Pays de départ':item.joined?'Coopération active':`Seuil : ${format(item.threshold)} communisme`;
+    status.textContent=item.home?'Pays de départ':item.joined?'Coopération active':item.id===USA_COUNTRY_ID?`Objectif final · ${format(item.threshold)} communisme`:`Seuil : ${format(item.threshold)} communisme`;
     const bonus=document.createElement('p');bonus.className='country-bonus';bonus.textContent=`+${format(item.productionBonus)} production · +${format(item.taxesBonus)} taxes · +${format(item.communismBonus)} communisme`;
     const button=document.createElement('button');button.type='button';button.className='country-action';button.disabled=!canWrite||!item.available;
     button.textContent=item.home?'Point de départ':item.joined?'Partenaire ✓':state.communism<item.threshold?'À débloquer':state.cash<item.cost?'Financement insuffisant':`Coopérer · ${money(item.cost)}`;

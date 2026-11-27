@@ -38,12 +38,13 @@
         <div><span>Communisme</span><strong class="red" id="home-communism">0</strong></div>
         <div><span>Production</span><strong class="teal"><span id="home-production">10</span> ₽ / clic</strong></div>
         <div><span>Taxes</span><strong class="green"><span id="home-taxes">0</span> ₽ / seconde</strong></div>
+        <div><span>Revenus commerciaux</span><strong class="teal"><span id="home-commerce">0</span> ₽ / seconde</strong></div><div><span>Corruption</span><strong class="red" id="home-corruption">0 point</strong></div>
       </section>
       <p class="home-hint">Les recettes automatiques continuent pendant ton absence.</p>
       <section class="anthem-panel" aria-label="L’Internationale">
         <p class="anthem-kicker">LA MUSIQUE DES CAMARADES</p>
         <button id="anthem-button" class="anthem-button" type="button" aria-pressed="false">
-          <span class="anthem-note" aria-hidden="true"><img src="./assets/icon.svg" width="82" height="82" alt=""></span>
+          <span class="anthem-note" aria-hidden="true"><img src="./assets/anthem-world.svg" width="82" height="82" alt=""></span>
           <span class="anthem-copy"><strong id="anthem-label">Jouer L’Internationale</strong><small id="anthem-status">Instrumentale · 38 secondes · +3 communisme à la fin</small></span>
           <span id="anthem-control-symbol" aria-hidden="true">▶</span>
         </button>
@@ -84,7 +85,7 @@
         <div class="economy-details">
           <div class="mini-stat"><span class="stat-label"><svg aria-hidden="true"><use href="./assets/symbols.svg#hand"></use></svg>Par action</span><span class="stat-value"><span id="production-rate">10</span><span class="stat-unit"> ₽</span></span></div>
           <div class="mini-stat"><span class="stat-label"><svg aria-hidden="true"><use href="./assets/symbols.svg#clock"></use></svg>Par seconde</span><span class="stat-value"><span id="tax-rate">0</span><span class="stat-unit"> ₽</span></span></div>
-          <div class="mini-stat communism-stat"><span class="stat-label"><svg aria-hidden="true"><use href="./assets/symbols.svg#star"></use></svg>Communisme</span><span class="stat-value" id="communism">0</span></div>
+          <div class="mini-stat"><span class="stat-label">Corruption</span><span class="stat-value" id="corruption-value">0</span></div><div class="mini-stat communism-stat"><span class="stat-label"><svg aria-hidden="true"><use href="./assets/symbols.svg#star"></use></svg>Communisme</span><span class="stat-value" id="communism">0</span></div>
         </div>
       </section>
 
@@ -105,7 +106,11 @@
       <div id="activity-list" class="activity-list" aria-label="Liste des activités">
         <div class="loading-state" role="status"><span class="loading-symbol" aria-hidden="true">✳</span>Préparation de ton économie…</div>
       </div>
-      <p id="activity-empty" class="empty-state" hidden>Aucune activité dans cette sélection pour le moment.</p>
+      <section class="import-card" aria-labelledby="import-title">
+ <div class="import-card-heading"><span class="import-card-icon" aria-hidden="true">📦</span><div><h3 id="import-title">Importation de produits américains</h3><p>Un commerce international lucratif, mais qui augmente la corruption tant que les États-Unis restent capitalistes.</p></div></div>
+ <div class="import-card-metrics"><span id="import-owned">0 commerce</span><span id="import-rate">+90 revenus et +60 taxes / s</span><span id="import-risk">+5 corruption par achat</span></div>
+ <button id="import-buy" class="country-action" type="button" disabled>Acheter · 35 000 ₽</button>
+ </section><p id="activity-empty" class="empty-state" hidden>Aucune activité dans cette sélection pour le moment.</p>
       <noscript><p class="empty-state">Active JavaScript dans ton navigateur pour jouer à Communist World Simulator.</p></noscript>
     </section>
 
@@ -113,7 +118,7 @@
       <div class="section-heading"><div><p class="eyebrow">SOLIDARITÉS SANS FRONTIÈRES</p><h2 id="world-title">Coopération mondiale</h2></div><span class="count-label" id="world-counter">0 pays partenaires</span></div>
       <p class="section-description">Choisis ton pays de départ et noue progressivement des partenariats volontaires. Les échanges apportent de nouveaux savoir-faire et améliorent la production, les recettes et le communisme.</p>
       <div class="world-dashboard"><div><span>Départ</span><strong id="world-origin">À choisir</strong></div><div><span>Partenaires</span><strong id="world-partners">0</strong></div><div><span>Régions</span><strong id="world-regions">0</strong></div></div>
-      <p id="milestone-message" class="world-milestone" role="status">Une autre économie est possible. Construis les premiers liens !</p>
+      <p class="world-notice">Les États-Unis ne sont pas un pays de départ. Ils représentent le dernier grand objectif de coopération.</p><p id="milestone-message" class="world-milestone" role="status">Une autre économie est possible. Construis les premiers liens !</p>
       <div class="world-toolbar"><label for="world-filter">Région</label><select id="world-filter"><option value="all">Toutes</option><option>Europe</option><option>Amérique du Nord</option><option>Amérique du Sud</option><option>Afrique</option><option>Europe et Asie</option><option>Asie</option><option>Océanie</option></select></div>
       <div id="world-list" class="world-list"></div>
     </section>
@@ -136,8 +141,8 @@
 
       <section class="inflation-card" aria-labelledby="inflation-title">
         <div class="small-section-heading"><h2 id="inflation-title">Garder l’équilibre</h2><strong id="inflation-value">0 %</strong></div>
-        <p>L’inflation peut réduire les recettes de ton économie.</p>
-        <button class="text-button" id="inflation-button" type="button" disabled>Lutter contre la corruption</button>
+        <p>L’inflation et la corruption peuvent réduire les recettes automatiques.</p>
+        <button class="text-button" id="inflation-button" type="button" disabled>Réduire la corruption</button>
       </section>
 
       <section class="session-card" id="session-panel" aria-labelledby="session-title">
