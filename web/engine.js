@@ -358,7 +358,7 @@ export function getGoals(state) {
  * Its turnover is divided between taxes and retained commercial profits.
  * 60% of post-tax profit is redistributed to the player's treasury.
  */
-export // Rebalance the old minute revenues to one quarter per minute.
+// Rebalance the old minute revenues to one quarter per minute.
 // A shop now pays each second, but each payment is deliberately small.
 export const BUSINESS_REBALANCE=0.25;
 const BUSINESS_TYPES=Object.freeze({
