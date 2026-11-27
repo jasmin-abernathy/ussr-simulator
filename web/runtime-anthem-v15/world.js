@@ -1,4 +1,4 @@
-import {getCommunismPerMinute} from './engine.js?v=2026-11-27-communism-1pct-1';
+import {getCommunismPerMinute,applyCommunismPenalty} from './engine.js?v=2026-11-27-politics-cost-1';
 import {COUNTRY_GEOGRAPHY} from './world-geography.js?v=2026-11-27-anthem-scaled-1';
 import {ADDITIONAL_COUNTRIES,ADDITIONAL_COUNTRY_DATA} from './world-expansion.js?v=2026-11-27-anthem-scaled-1';
 // Independent cooperative-world expansion, not part of the 2016 historical engine.
@@ -251,7 +251,7 @@ export function getUSImportOffer(w,state){
  const count=w.usImports||0;
  const cost=Math.round(35000*Math.pow(1.18,count));
  const capitalist=!w.partners.includes(USA_COUNTRY_ID);
- return {count,cost,capitalist,corruptionPerMinute:capitalist?0.15:0,corruptionOnPurchase:capitalist?5:0,
+ return {count,cost,capitalist,corruptionPerMinute:capitalist?0.15:0,corruptionOnPurchase:capitalist?5:0,communismPenalty:capitalist?5:0,
  available:count<10000&&state.cash>=cost&&state.communism>=150};
 }
 export function buyUSImports(w,state){
@@ -259,8 +259,9 @@ export function buyUSImports(w,state){
  if(!offer.available)return {ok:false,reason:state.communism<150?'locked':'funds'};
  state.cash-=offer.cost;
  if(offer.capitalist)state.corruption=Math.min(1e6,(state.corruption||0)+offer.corruptionOnPurchase);
+ const communismLost=applyCommunismPenalty(state,offer.communismPenalty);
  w.usImports+=1;state.importsOwned=w.usImports;
- return {ok:true,spent:offer.cost,offer};
+ return {ok:true,spent:offer.cost,offer,communismLost};
 }
 
 /** Keep the partner-world import count consistent with the economic save.
@@ -284,7 +285,7 @@ export function convertUSImports(w,state,targetId,convert){
 export function getBureaucracyOffer(state){
  const count=state.bureaucracyOffices||0;
  const cost=Math.round(1200*Math.pow(1.32,count));
- return {count,cost,corruptionOnPurchase:2,corruptionPerMinute:0.09,
+ return {count,cost,corruptionOnPurchase:2,corruptionPerMinute:0.09,communismPenalty:4,
   collectionBonusPercent:2,available:count<1000&&state.communism>=25&&state.cash>=cost};
 }
 export function buyBureaucracy(state){
@@ -293,14 +294,15 @@ export function buyBureaucracy(state){
  state.cash-=offer.cost;
  state.bureaucracyOffices+=1;
  state.corruption=Math.min(1e6,(state.corruption||0)+offer.corruptionOnPurchase);
- return {ok:true,offer};
+ const communismLost=applyCommunismPenalty(state,offer.communismPenalty);
+ return {ok:true,offer,communismLost};
 }
 export function getBilateralOffer(world,state,id){
  const country=byId.get(id);
  if(!country||!world.origin||!isCountryVisible(world,id)||id===world.origin||world.partners.includes(id))return null;
  const signed=world.bilateral.includes(id);
  const cost=4500+Number(id)*350;
- return {...country,cost,signed,corruptionOnPurchase:4,corruptionPerMinute:0.10,
+ return {...country,cost,signed,corruptionOnPurchase:4,corruptionPerMinute:0.10,communismPenalty:6,
   businessIncomeBonusPercent:1,
   available:!signed&&state.cash>=cost&&state.communism>=100};
 }
@@ -312,5 +314,6 @@ export function buyBilateralAgreement(world,state,id){
  world.bilateral.push(id);
  state.bilateralAgreements=world.bilateral.length;
  state.corruption=Math.min(1e6,(state.corruption||0)+offer.corruptionOnPurchase);
- return {ok:true,country:offer};
+ const communismLost=applyCommunismPenalty(state,offer.communismPenalty);
+ return {ok:true,country:offer,communismLost};
 }
