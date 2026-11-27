@@ -3389,3 +3389,6 @@ conic-gradient(#17bd2a 0% var(--anthem-progress),#090909 var(--anthem-progress) 
  .activity-pagination{padding:9px;gap:6px}
  .activity-pagination button{padding:9px 10px}
 }
+
+/* Ensure pagination and search hide every card despite explicit display:grid rules. */
+.activity-list>.activity-card[hidden]{display:none!important}
