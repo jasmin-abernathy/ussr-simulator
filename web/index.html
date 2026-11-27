@@ -9,8 +9,8 @@
   <title>Communist World Simulator — Édition de développement</title>
   <link rel="icon" href="./assets/icon.svg" type="image/svg+xml">
   <link rel="manifest" href="./manifest.webmanifest">
-  <link rel="stylesheet" href="./runtime-anthem-v15/styles.css?v=2026-11-27-audit-hourly-1">
-  <script type="module" src="./runtime-anthem-v15/app.js?v=2026-11-27-audit-hourly-1"></script>
+  <link rel="stylesheet" href="./runtime-anthem-v15/styles.css?v=2026-11-27-stakhanov-cost-1">
+  <script type="module" src="./runtime-anthem-v15/app.js?v=2026-11-27-stakhanov-cost-1"></script>
 <script>
 /* Web playtest: disable the previous offline service worker and its caches.
    The game state is in localStorage and must never be touched here. */
@@ -88,10 +88,10 @@
           <span class="scene-caption" aria-hidden="true">CHAQUE GESTE COMPTE.</span>
         </div>
         <div class="production-action">
-          <div class="production-label"><span>Ta contribution</span><span class="mono" id="produce-gain">+10 ₽</span></div>
+          <div class="production-label"><span>Stakhanovisme</span><span class="production-rewards"><span class="mono" id="produce-gain">+10 ₽</span><small class="production-ideology-cost">−0,05 communisme / clic</small></span></div>
           <button id="produce-button" class="produce-button" type="button">
             <svg aria-hidden="true"><use href="./assets/symbols.svg#industry"></use></svg>
-            <span>Produire</span>
+            <span>Pousser la production</span>
             <span class="button-press-mark" aria-hidden="true">+</span>
           </button>
           <p class="action-hint">Le camarade Stakhanov approuverait : chaque clic fait avancer la production !<br>Tes entreprises renforcent légèrement ton effort et continuent de rapporter sans toi.</p>
