@@ -46,9 +46,10 @@ test('audits and maintenance offer repeatable budget decisions with sensible loc
  assert.equal(state.taxSteps,3000);
  assert.equal(state.productionSteps,2250);
  assert.equal(spendPublicBudget(state,'unknown').ok,false);
- assert.equal(spendPublicBudget(state,'audit').ok,true);
- assert.equal(state.corruption,0);
- assert.equal(publicProjectOffers(state).audit.locked,true);
+ assert.equal(spendPublicBudget(state,'audit').reason,'daily-limit');
+ assert.equal(state.corruption,2);
+ assert.equal(publicProjectOffers(state).audit.quotaReached,true);
+ assert.equal(publicProjectOffers(state).audit.remainingToday,0);
 });
 test('previous saves recover with zero additional public-project levels',()=>{
  const state=fresh();
