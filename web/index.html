@@ -9,8 +9,8 @@
   <title>Communist World Simulator — Édition de développement</title>
   <link rel="icon" href="./assets/icon.svg" type="image/svg+xml">
   <link rel="manifest" href="./manifest.webmanifest">
-  <link rel="stylesheet" href="./styles.css?v=2026-11-27-fiscal-ui-2">
-  <script type="module" src="./app.js?v=2026-11-27-fiscal-ui-2"></script>
+  <link rel="stylesheet" href="./styles.css?v=2026-11-27-second-economy-1">
+  <script type="module" src="./app.js?v=2026-11-27-second-economy-1"></script>
 </head>
 <body>
   <a class="skip-link" href="#production-panel">Aller au jeu</a>
@@ -37,8 +37,8 @@
         <div><span>Balance</span><strong><span id="home-balance">0</span> ₽</strong></div>
         <div><span>Communisme</span><strong class="red" id="home-communism">0</strong></div>
         <div><span>Production</span><strong class="teal"><span id="home-production">10</span> ₽ / clic</strong></div>
-        <div><span>Taxes collectées</span><strong class="green"><span id="home-taxes">0</span> ₽ / minute</strong></div>
-        <div><span>Dividendes</span><strong class="teal"><span id="home-commerce">0</span> ₽ / minute</strong></div><div><span>Corruption</span><strong class="red" id="home-corruption">0 point</strong></div>
+        <div><span>Taxes collectées</span><strong class="green"><span id="home-taxes">0</span> ₽ / seconde</strong></div>
+        <div><span>Dividendes</span><strong class="teal"><span id="home-commerce">0</span> ₽ / seconde</strong></div><div><span>Corruption</span><strong class="red" id="home-corruption">0 point</strong></div>
       </section>
       <p class="home-hint">Les recettes automatiques continuent pendant ton absence.</p>
       <section class="anthem-panel" aria-label="L’Internationale">
@@ -95,10 +95,10 @@
             <span class="finance-eyebrow">TES REVENUS AUTOMATIQUES</span>
             <h3 id="finance-title">Économie</h3>
           </div>
-          <div class="finance-timer"><span>Prochain versement</span><strong id="finance-countdown">1 min</strong></div>
+          <div class="finance-timer"><span>Versement chaque seconde</span><strong id="finance-countdown">1 s</strong></div>
         </div>
         <div class="finance-net-hero">
-          <span>Versé en trésorerie chaque minute</span>
+          <span>Versé en trésorerie chaque seconde</span>
           <strong id="finance-net">0 ₽</strong>
         </div>
         <div class="finance-breakdown" aria-label="Détail des revenus">
@@ -112,18 +112,18 @@
             <p>Elle modifie la part prélevée sur chaque entreprise.</p>
           </div>
           <div class="policy-buttons" role="group" aria-label="Politique fiscale">
-            <button type="button" data-tax-policy="social" aria-pressed="false"><span class="policy-name">Allégée</span><small>−10 pts de taxe</small><strong data-policy-preview="social">0 ₽/min</strong></button>
-            <button type="button" data-tax-policy="balanced" aria-pressed="true" class="is-active"><span class="policy-name">Équilibrée</span><small>Taux par secteur</small><strong data-policy-preview="balanced">0 ₽/min</strong></button>
-            <button type="button" data-tax-policy="solidarity" aria-pressed="false"><span class="policy-name">Solidaire</span><small>+10 pts de taxe</small><strong data-policy-preview="solidarity">0 ₽/min</strong></button>
+            <button type="button" data-tax-policy="social" aria-pressed="false"><span class="policy-name">Allégée</span><small>−10 pts de taxe</small><strong data-policy-preview="social">0 ₽/s</strong></button>
+            <button type="button" data-tax-policy="balanced" aria-pressed="true" class="is-active"><span class="policy-name">Équilibrée</span><small>Taux par secteur</small><strong data-policy-preview="balanced">0 ₽/s</strong></button>
+            <button type="button" data-tax-policy="solidarity" aria-pressed="false"><span class="policy-name">Solidaire</span><small>+10 pts de taxe</small><strong data-policy-preview="solidarity">0 ₽/s</strong></button>
           </div>
-          <p class="finance-tip" id="finance-tip">Les taux diffèrent selon les entreprises ; un versement arrive toutes les 60 secondes.</p>
+          <p class="finance-tip" id="finance-tip">Les taux diffèrent selon les entreprises ; un versement arrive chaque seconde.</p>
         </div>
       </section>
       <div class="section-heading">
         <div><p class="eyebrow">L’ÉCONOMIE SE CONSTRUIT</p><h2 id="activities-title">Tes activités</h2></div>
         <span class="count-label"><span id="owned-count">0</span><span id="owned-label"> activité</span></span>
       </div>
-      <p class="section-description">Chaque entreprise rapporte automatiquement toutes les minutes. La taxe dépend du secteur et de ta politique fiscale.</p>
+      <p class="section-description">Chaque entreprise rapporte automatiquement chaque seconde. La taxe dépend du secteur et de ta politique fiscale.</p>
 
       <div class="activity-toolbar">
         <div class="filter-tabs" role="group" aria-label="Afficher les activités">

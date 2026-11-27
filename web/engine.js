@@ -1,4 +1,4 @@
-import { ACTIVITIES, RULES } from './game-data.js?v=2026-11-27-fiscal-ui-2';
+import { ACTIVITIES, RULES } from './game-data.js?v=2026-11-27-second-economy-1';
 
 const BY_ID = new Map(ACTIVITIES.map((item, index) => [item.id, { item, index }]));
 const MAX_TIME = 8.64e15;
@@ -19,7 +19,7 @@ const addMoney = (state, amount) => {
 export function createState(now = Date.now()) {
   return {
     version: RULES.saveVersion,
-    cash: 0, totalEarned: 0, clicks: 0, automaticSeconds: 0, communism: 0, corruption: 0, importsOwned: 0, usCapitalist: true, worldEconomyEnabled: false, taxPolicy: 'balanced', minuteRemainderMs: 0,
+    cash: 0, totalEarned: 0, clicks: 0, automaticSeconds: 0, communism: 0, corruption: 0, importsOwned: 0, usCapitalist: true, worldEconomyEnabled: false, taxPolicy: 'balanced', secondRemainderMs: 0, economyTickMode: 'seconds-v1',
     owned: Object.fromEntries(ACTIVITIES.map(item => [item.id, 0])),
     counters: { production: RULES.initialProduction, taxes: 0, productionBonusPercent: 0, taxBonusPercent: 0 },
     productionSteps: 0, taxSteps: 0,
@@ -79,7 +79,13 @@ export function hydrateState(raw, now = Date.now()) {
   state.usCapitalist=raw.usCapitalist===false?false:true;
   state.worldEconomyEnabled=raw.worldEconomyEnabled===true;
   state.taxPolicy=['social','balanced','solidarity'].includes(raw.taxPolicy)?raw.taxPolicy:'balanced';
-  state.minuteRemainderMs=raw.minuteRemainderMs===undefined?0:readNumber(raw.minuteRemainderMs,0,59999.999);
+  // Legacy saves used minute-long payout intervals. Preserve fractional
+  // progress but do not grant 60 seconds of retroactive income on migration.
+  const legacyRemainder=raw.minuteRemainderMs===undefined?0:readNumber(raw.minuteRemainderMs,0,59999.999);
+  state.secondRemainderMs=raw.economyTickMode==='seconds-v1'
+    ? (raw.secondRemainderMs===undefined?0:readNumber(raw.secondRemainderMs,0,999.999))
+    : legacyRemainder%1000;
+  state.economyTickMode='seconds-v1';
   state.cash = readNumber(raw.cash, 0);
   state.totalEarned = Math.max(state.cash, readNumber(raw.totalEarned, state.cash));
   state.communism = Math.max(minimum.communism, readNumber(raw.communism, minimum.communism));
@@ -263,14 +269,14 @@ export function advance(state, now = Date.now()) {
   if (elapsedMs === 0) return result;
   state.lastUpdate = now; // Discard time over the cap, rather than banking it.
   if(state.worldEconomyEnabled){
-    const elapsed=state.minuteRemainderMs+creditedMs;
-    const minutes=Math.floor(elapsed/60000);
-    state.minuteRemainderMs=elapsed-minutes*60000;
-    if(minutes>0){
+    const elapsed=state.secondRemainderMs+creditedMs;
+    const seconds=Math.floor(elapsed/1000);
+    state.secondRemainderMs=elapsed-seconds*1000;
+    if(seconds>0){
       const finances=getBusinessEconomy(state);
-      result.earned=addMoney(state,finances.netToTreasuryPerMinute*minutes);
-      state.automaticSeconds=cap(state.automaticSeconds+minutes*60,Number.MAX_SAFE_INTEGER);
-      const addedCorruption=corruptionPerMinute(state)*minutes;
+      result.earned=addMoney(state,finances.netToTreasuryPerSecond*seconds);
+      state.automaticSeconds=cap(state.automaticSeconds+seconds,Number.MAX_SAFE_INTEGER);
+      const addedCorruption=corruptionPerMinute(state)*seconds/60;
       if(addedCorruption>0)state.corruption=Math.min(1e6,(state.corruption||0)+addedCorruption);
     }
     if(state.plan.status==='running'){
@@ -339,7 +345,7 @@ export function getGoals(state) {
   const stats = getStats(state);
   const definitions = [
     ['first-workshop', 'Le premier atelier', 'Acheter une activité.', stats.totalOwned, 1],
-    state.worldEconomyEnabled ? ['first-taxes', 'Des recettes régulières', 'Atteindre 100 roubles de taxes par minute.', stats.business.taxesCollectedPerMinute, 100] : ['first-taxes', 'Des recettes régulières', 'Atteindre 10 roubles de taxes par seconde.', stats.taxesPerSecond, 10],
+    state.worldEconomyEnabled ? ['first-taxes', 'Des recettes régulières', 'Atteindre 1 rouble de taxes par seconde.', stats.business.taxesCollectedPerSecond, 1] : ['first-taxes', 'Des recettes régulières', 'Atteindre 10 roubles de taxes par seconde.', stats.taxesPerSecond, 10],
     ['new-frequency', 'Une autre fréquence', 'Atteindre 25 points de communisme pour débloquer la radio.', state.communism, 25],
     ['all-activities', 'Toute une économie', 'Débloquer les 22 activités historiques.', stats.unlockedCount, ACTIVITIES.length],
     ['first-plan', 'Le plan quinquennal', 'Atteindre 10 000 points de communisme.', state.communism, RULES.planUnlock],
@@ -352,7 +358,10 @@ export function getGoals(state) {
  * Its turnover is divided between taxes and retained commercial profits.
  * 60% of post-tax profit is redistributed to the player's treasury.
  */
-export const BUSINESS_TYPES=Object.freeze({
+export // Rebalance the old minute revenues to one quarter per minute.
+// A shop now pays each second, but each payment is deliberately small.
+export const BUSINESS_REBALANCE=0.25;
+const BUSINESS_TYPES=Object.freeze({
  matches:[150,8],gum:[240,14],beer:[480,22],radio:[750,12],
  dissidence:[900,5],trading:[1050,27],soda:[1400,24],
  grocery:[1800,16],'black-market':[2600,38],posters:[3200,10],
@@ -372,9 +381,14 @@ export function activityBusinessRate(state,id){
  const definition=BUSINESS_TYPES[id];
  if(!definition)return null;
  const rate=Math.max(5,Math.min(65,definition[1]+(TAX_POLICIES[state.taxPolicy]??0)));
- return {grossPerMinute:definition[0],taxRate:rate,
- taxesPerMinute:definition[0]*rate/100,
- dividendsPerMinute:definition[0]*(1-rate/100)*0.6};
+ const grossPerSecond=definition[0]*BUSINESS_REBALANCE/60;
+ return {grossPerSecond,taxRate:rate,
+ taxesPerSecond:grossPerSecond*rate/100,
+ dividendsPerSecond:grossPerSecond*(1-rate/100)*0.6,
+ // Keep compatibility fields for older developer tests and external consumers.
+ grossPerMinute:grossPerSecond*60,
+ taxesPerMinute:grossPerSecond*rate,
+ dividendsPerMinute:grossPerSecond*(1-rate/100)*0.6*60};
 }
 export function getBusinessEconomyForPolicy(state,policy){
   if(!Object.prototype.hasOwnProperty.call(TAX_POLICIES,policy))return getBusinessEconomy(state);
@@ -387,19 +401,23 @@ export function getBusinessEconomy(state){
   const rate=activityBusinessRate(state,id);
   if(!rate)continue;
   const units=cap(count,RULES.maxOwned);owned+=units;
-  gross+=rate.grossPerMinute*units;taxes+=rate.taxesPerMinute*units;dividends+=rate.dividendsPerMinute*units;
+  gross+=rate.grossPerSecond*units;taxes+=rate.taxesPerSecond*units;dividends+=rate.dividendsPerSecond*units;
  }
  if(state.importsOwned){
   const rate=activityBusinessRate(state,'us-imports');
-  gross+=rate.grossPerMinute*state.importsOwned;
-  taxes+=rate.taxesPerMinute*state.importsOwned;
-  dividends+=rate.dividendsPerMinute*state.importsOwned;
+  gross+=rate.grossPerSecond*state.importsOwned;
+  taxes+=rate.taxesPerSecond*state.importsOwned;
+  dividends+=rate.dividendsPerSecond*state.importsOwned;
   owned+=state.importsOwned;
  }
  const leakage=Math.min(35,Math.floor((state.corruption||0)/25))/100;
- return {grossPerMinute:cap(gross),taxesPerMinute:cap(taxes),
- taxesCollectedPerMinute:cap(taxes*(1-leakage)),dividendsPerMinute:cap(dividends),
- netToTreasuryPerMinute:cap(taxes*(1-leakage)+dividends),
+ return {grossPerSecond:cap(gross),taxesPerSecond:cap(taxes),
+ taxesCollectedPerSecond:cap(taxes*(1-leakage)),dividendsPerSecond:cap(dividends),
+ netToTreasuryPerSecond:cap(taxes*(1-leakage)+dividends),
+ grossPerMinute:cap(gross*60),taxesPerMinute:cap(taxes*60),
+ taxesCollectedPerMinute:cap(taxes*(1-leakage)*60),
+ dividendsPerMinute:cap(dividends*60),
+ netToTreasuryPerMinute:cap((taxes*(1-leakage)+dividends)*60),
  taxPolicy:state.taxPolicy||'balanced',owned,
- secondsUntilPayout:(60000-(state.minuteRemainderMs||0))/1000};
+ secondsUntilPayout:(1000-(state.secondRemainderMs||0))/1000};
 }
