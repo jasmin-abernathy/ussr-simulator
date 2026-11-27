@@ -20,6 +20,7 @@ test('American import establishments are purchased separately and corrupt only w
  assert.equal(world.usImports,1);assert.equal(state.importsOwned,1);close(state.corruption,5);
  assert.equal(getStats(state).corruptionPerMinute,.35);
  const cash=state.cash;advance(state,NOW+60000);assert.ok(state.cash>cash);assert.ok(state.corruption>5);
+ world.partners=COUNTRIES.filter(c=>c.id!==world.origin&&c.id!=='14').map(c=>c.id);
  assert.equal(cooperate(world,state,'14').ok,true);
  assert.equal(getUSImportOffer(world,state).corruptionOnPurchase,0);
  const previous=state.corruption;

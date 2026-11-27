@@ -1,8 +1,10 @@
+import {ADDITIONAL_COUNTRIES,ADDITIONAL_COUNTRY_DATA} from './world-expansion.js';
 // Independent cooperative-world expansion, not part of the 2016 historical engine.
-export const COUNTRIES = Object.freeze("France|Europe;Allemagne|Europe;Espagne|Europe;Italie|Europe;Portugal|Europe;Belgique|Europe;Pays-Bas|Europe;Suisse|Europe;Pologne|Europe;Suède|Europe;Norvège|Europe;Grèce|Europe;Ukraine|Europe;Royaume-Uni|Europe;États-Unis|Amérique du Nord;Canada|Amérique du Nord;Mexique|Amérique du Nord;Cuba|Amérique du Nord;Brésil|Amérique du Sud;Argentine|Amérique du Sud;Chili|Amérique du Sud;Colombie|Amérique du Sud;Pérou|Amérique du Sud;Bolivie|Amérique du Sud;Venezuela|Amérique du Sud;Maroc|Afrique;Algérie|Afrique;Sénégal|Afrique;Nigeria|Afrique;Ghana|Afrique;Égypte|Afrique;Kenya|Afrique;Afrique du Sud|Afrique;Russie|Europe et Asie;Turquie|Europe et Asie;Chine|Asie;Inde|Asie;Japon|Asie;Corée du Sud|Asie;Viêt Nam|Asie;Indonésie|Asie;Pakistan|Asie;Bangladesh|Asie;Thaïlande|Asie;Philippines|Asie;Népal|Asie;Iran|Asie;Australie|Océanie;Nouvelle-Zélande|Océanie".split(';').map((line,i)=>{const [name,region]=line.split('|');return Object.freeze({id:String(i),name,region});}));
+export const INITIAL_COUNTRIES = Object.freeze("France|Europe;Allemagne|Europe;Espagne|Europe;Italie|Europe;Portugal|Europe;Belgique|Europe;Pays-Bas|Europe;Suisse|Europe;Pologne|Europe;Suède|Europe;Norvège|Europe;Grèce|Europe;Ukraine|Europe;Royaume-Uni|Europe;États-Unis|Amérique du Nord;Canada|Amérique du Nord;Mexique|Amérique du Nord;Cuba|Amérique du Nord;Brésil|Amérique du Sud;Argentine|Amérique du Sud;Chili|Amérique du Sud;Colombie|Amérique du Sud;Pérou|Amérique du Sud;Bolivie|Amérique du Sud;Venezuela|Amérique du Sud;Maroc|Afrique;Algérie|Afrique;Sénégal|Afrique;Nigeria|Afrique;Ghana|Afrique;Égypte|Afrique;Kenya|Afrique;Afrique du Sud|Afrique;Russie|Europe et Asie;Turquie|Europe et Asie;Chine|Asie;Inde|Asie;Japon|Asie;Corée du Sud|Asie;Viêt Nam|Asie;Indonésie|Asie;Pakistan|Asie;Bangladesh|Asie;Thaïlande|Asie;Philippines|Asie;Népal|Asie;Iran|Asie;Australie|Océanie;Nouvelle-Zélande|Océanie".split(';').map((line,i)=>{const [name,region]=line.split('|');return Object.freeze({id:String(i),name,region});}));
+export const COUNTRIES=Object.freeze([...INITIAL_COUNTRIES,...ADDITIONAL_COUNTRIES]);
 const byId=new Map(COUNTRIES.map(c=>[c.id,c]));
 export const USA_COUNTRY_ID='14';
-export const START_COUNTRIES=Object.freeze(COUNTRIES.filter(c=>c.id!==USA_COUNTRY_ID));
+export const START_COUNTRIES=Object.freeze(INITIAL_COUNTRIES.filter(c=>c.id!==USA_COUNTRY_ID));
 export const USA_COOPERATION_COST=50000000;
 export const USA_COMMUNISM_THRESHOLD=100000;
 /** Fictional cooperation thresholds calibrated for historical traditions,
@@ -60,6 +62,9 @@ export const POLITICAL_DIFFICULTY = Object.freeze({
   "Iran": Object.freeze({threshold:2450,reason:"Institutions religieuses et contrôle politique important."}),
   "Australie": Object.freeze({threshold:2550,reason:"Système parlementaire stable et économie de marché structurée."}),
   "Nouvelle-Zélande": Object.freeze({threshold:1490,reason:"Tradition sociale-démocrate et institutions marchandes stables."}),
+  ...Object.fromEntries(Object.entries(ADDITIONAL_COUNTRY_DATA).map(
+    ([name,data])=>[name,Object.freeze({threshold:data.threshold,reason:data.reason})]
+  )),
 });
 export function getPoliticalDifficulty(country) {
   const name=typeof country==='string'?country:country?.name;
@@ -69,6 +74,27 @@ export function rankCountriesByDifficulty(countries) {
   return [...countries].sort((a,b)=>
     getPoliticalDifficulty(a).threshold-getPoliticalDifficulty(b).threshold||
     a.name.localeCompare(b.name,'fr'));
+}
+/** The cooperation campaign has 4 steps. No migration needed: stage derives
+ * from the original saved origin and partner IDs, which remain unchanged.
+ * Stage 1: initial 48 excluding USA; 2: 146 additional countries; 3: USA.
+ */
+export function getWorldStage(world){
+ if(!world?.origin)return 0;
+ const joined=new Set(world.partners||[]);
+ if(!INITIAL_COUNTRIES.every(c=>c.id===USA_COUNTRY_ID||c.id===world.origin||joined.has(c.id)))return 1;
+ if(!COUNTRIES.every(c=>c.id===USA_COUNTRY_ID||c.id===world.origin||joined.has(c.id)))return 2;
+ return joined.has(USA_COUNTRY_ID)?4:3;
+}
+export function isCountryVisible(world,id){
+ const country=byId.get(id);
+ if(!country||!world?.origin)return false;
+ const stage=getWorldStage(world);
+ if(id===USA_COUNTRY_ID)return stage>=3;
+ return Number(id)<INITIAL_COUNTRIES.length||stage>=2;
+}
+export function getVisibleCountries(world){
+ return COUNTRIES.filter(c=>isCountryVisible(world,c.id));
 }
 export const MILESTONES=Object.freeze([[5,"Premier collectif créé : chaque geste compte !"],[25,"La solidarité s'organise : garde le cap !"],[100,"Ton économie coopérative trouve son élan !"],[250,"Les premières initiatives commencent à transformer le quotidien !"],[500,"De nouveaux possibles s'ouvrent à toi !"],[1000,"La coopération traverse les frontières !"],[2500,"Les solidarités se renforcent sur plusieurs continents !"],[5000,"Ton projet commun prend une dimension internationale !"],[10000,"Une fédération de coopérations se dessine. Bravo !"],[25000,"Les solidarités se multiplient : un autre monde se construit !"],[50000,"De pays en pays, les initiatives convergent !"]].map(([threshold,message])=>({threshold,message})));
 export const ANTHEM_BONUS=3;
@@ -91,10 +117,12 @@ export function getCooperation(w,state,id){
   const threshold=political.threshold;
   const cost=id===USA_COUNTRY_ID?USA_COOPERATION_COST:Math.round((1500+threshold*6.5)/50)*50;
   const joined=w.partners.includes(id),home=w.origin===id;
-  return {...c,threshold,cost,politicalContext:political.reason,joined,home,productionBonus:10+index*3,taxesBonus:5+index*2,communismBonus:5+Math.floor(index/3),available:Boolean(w.origin)&&!home&&!joined&&state.communism>=threshold&&state.cash>=cost};
+  const unlocked=home||joined||isCountryVisible(w,id);
+  return {...c,threshold,cost,politicalContext:political.reason,stage:id===USA_COUNTRY_ID?3:ADDITIONAL_COUNTRY_DATA[c.name]?2:1,unlocked,joined,home,productionBonus:10+index*3,taxesBonus:5+index*2,communismBonus:5+Math.floor(index/3),available:Boolean(w.origin)&&unlocked&&!home&&!joined&&state.communism>=threshold&&state.cash>=cost};
 }
 export function cooperate(w,state,id){
   const c=getCooperation(w,state,id);if(!w.origin||!c||c.home||c.joined)return {ok:false,reason:"unavailable"};
+  if(!c.unlocked)return {ok:false,reason:"stage-locked"};
   if(state.communism<c.threshold)return {ok:false,reason:"locked"};
   if(state.cash<c.cost)return {ok:false,reason:"funds"};
   state.cash-=c.cost;state.counters.production+=c.productionBonus;state.counters.taxes+=c.taxesBonus;state.communism+=c.communismBonus;
@@ -106,7 +134,14 @@ export function cooperate(w,state,id){
   if(id===USA_COUNTRY_ID)state.usCapitalist=false;
   return {ok:true,country:c};
 }
-export function getWorldStats(w){const partners=w.partners.filter(x=>byId.has(x)&&x!==w.origin);const regions=new Set([...(w.origin?[byId.get(w.origin).region]:[]),...partners.map(id=>byId.get(id).region)]);return {origin:w.origin?byId.get(w.origin):null,partners:partners.length,regions:regions.size};}
+export function getWorldStats(w){
+ const partners=w.partners.filter(x=>byId.has(x)&&x!==w.origin);
+ const regions=new Set([...(w.origin?[byId.get(w.origin).region]:[]),...partners.map(id=>byId.get(id).region)]);
+ const initialJoined=INITIAL_COUNTRIES.filter(c=>c.id!==USA_COUNTRY_ID&&(c.id===w.origin||partners.includes(c.id))).length;
+ return {origin:w.origin?byId.get(w.origin):null,partners:partners.length,regions:regions.size,
+ stage:getWorldStage(w),initialJoined,initialTotal:48,
+ totalJoined:partners.length+(w.origin?1:0),worldTotal:COUNTRIES.length,secondWaveTotal:ADDITIONAL_COUNTRIES.length};
+}
 export function celebrate(w,points){const result=[];for(const m of MILESTONES)if(points>=m.threshold&&!w.celebrated.includes(m.threshold)){w.celebrated.push(m.threshold);result.push(m);}return result;}
 
 /** Call only when the audio element fires its natural "ended" event.
@@ -156,7 +191,7 @@ export function buyBureaucracy(state){
 }
 export function getBilateralOffer(world,state,id){
  const country=byId.get(id);
- if(!country||!world.origin||id===world.origin||world.partners.includes(id))return null;
+ if(!country||!world.origin||!isCountryVisible(world,id)||id===world.origin||world.partners.includes(id))return null;
  const signed=world.bilateral.includes(id);
  const cost=4500+Number(id)*350;
  return {...country,cost,signed,corruptionOnPurchase:4,corruptionPerMinute:0.16,

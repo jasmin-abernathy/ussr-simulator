@@ -2,8 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { COUNTRIES,createWorld,chooseCountry,getCooperation,rankCountriesByDifficulty,getPoliticalDifficulty,POLITICAL_DIFFICULTY,USA_COUNTRY_ID,USA_COOPERATION_COST,USA_COMMUNISM_THRESHOLD,hydrateWorld } from '../web/world.js';
 import {createState} from '../web/engine.js';
-test('every one of the 49 countries has explicit fictional political thresholds and context',()=>{
- assert.equal(COUNTRIES.length,49);
+test('every one of the 195 countries has explicit fictional political thresholds and context',()=>{
+ assert.equal(COUNTRIES.length,195);
  assert.equal(Object.keys(POLITICAL_DIFFICULTY).length,COUNTRIES.length);
  for(const country of COUNTRIES){
   const record=getPoliticalDifficulty(country);

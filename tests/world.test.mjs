@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { COUNTRIES,createWorld,hydrateWorld,chooseCountry,getCooperation,cooperate,getWorldStats,celebrate,rewardAnthem } from '../web/world.js';
+import { COUNTRIES,START_COUNTRIES,createWorld,hydrateWorld,chooseCountry,getCooperation,cooperate,getWorldStats,celebrate,rewardAnthem } from '../web/world.js';
 import {createState} from '../web/engine.js';
 test('every non-US country is a valid starting point',()=>{
-  assert.equal(COUNTRIES.length,49);
-  for(const c of COUNTRIES.filter(c=>c.name!=='États-Unis')){const w=createWorld();assert.equal(chooseCountry(w,c.id).ok,true);assert.equal(chooseCountry(w,c.id).ok,false);}
+  assert.equal(COUNTRIES.length,195);
+  for(const c of START_COUNTRIES){const w=createWorld();assert.equal(chooseCountry(w,c.id).ok,true);assert.equal(chooseCountry(w,c.id).ok,false);}
 });
 test('cooperation only once, when unlock and cost requirements are met',()=>{
   const w=createWorld(),s=createState(1700000000000);assert.equal(cooperate(w,s,'1').ok,false);

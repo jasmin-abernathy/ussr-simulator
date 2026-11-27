@@ -9,8 +9,8 @@
   <title>Communist World Simulator — Édition de développement</title>
   <link rel="icon" href="./assets/icon.svg" type="image/svg+xml">
   <link rel="manifest" href="./manifest.webmanifest">
-  <link rel="stylesheet" href="./runtime-political-v6/styles.css?v=2026-11-27-political-difficulty-1">
-  <script type="module" src="./runtime-political-v6/app.js?v=2026-11-27-political-difficulty-1"></script>
+  <link rel="stylesheet" href="./runtime-global-v7/styles.css?v=2026-11-27-global-wave-1">
+  <script type="module" src="./runtime-global-v7/app.js?v=2026-11-27-global-wave-1"></script>
 <script>
 /* Web playtest: disable the previous offline service worker and its caches.
    The game state is in localStorage and must never be touched here. */
@@ -202,9 +202,12 @@
 
     <section class="world-column" id="world-panel" aria-labelledby="world-title">
       <div class="section-heading"><div><p class="eyebrow">SOLIDARITÉS SANS FRONTIÈRES</p><h2 id="world-title">Coopération mondiale</h2></div><span class="count-label" id="world-counter">0 pays partenaires</span></div>
-      <p class="section-description">Choisis ton pays de départ et noue progressivement des partenariats volontaires. Les échanges apportent de nouveaux savoir-faire et améliorent la production, les recettes et le communisme.</p>
+      <p class="section-description">Commence avec 48 pays. Une fois la première vague réunie, 146 autres pays deviennent accessibles. Les États-Unis restent le défi final.</p>
       <div class="world-dashboard"><div><span>Départ</span><strong id="world-origin">À choisir</strong></div><div><span>Partenaires</span><strong id="world-partners">0</strong></div><div><span>Régions</span><strong id="world-regions">0</strong></div></div>
-      <p class="world-notice">Les États-Unis ne sont pas un pays de départ. Ils représentent le dernier grand objectif de coopération.</p><p id="milestone-message" class="world-milestone" role="status">Une autre économie est possible. Construis les premiers liens !</p>
+      <section class="world-stage-banner" aria-live="polite">
+        <strong id="world-stage-title">Première vague : 48 pays</strong>
+        <p id="world-stage-description">Rassemble les 48 premiers pays pour débloquer 146 nouveaux partenaires.</p>
+      </section><p id="milestone-message" class="world-milestone" role="status">Une autre économie est possible. Construis les premiers liens !</p>
       <div class="world-toolbar"><label for="world-filter">Région</label><select id="world-filter"><option value="all">Toutes</option><option>Europe</option><option>Amérique du Nord</option><option>Amérique du Sud</option><option>Afrique</option><option>Europe et Asie</option><option>Asie</option><option>Océanie</option></select></div>
       <p class="world-balance-note">Classement du plus accessible au plus difficile. Seuils de communisme fictifs inspirés de l'histoire politique des pays ; les points servent à débloquer, sans être dépensés.</p>
       <div id="world-list" class="world-list"></div>
