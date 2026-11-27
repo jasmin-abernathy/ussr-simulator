@@ -18,7 +18,7 @@ test('American import establishments are purchased separately and corrupt only w
  const offer=getUSImportOffer(world,state);assert.equal(offer.available,true);
  const purchase=buyUSImports(world,state);assert.equal(purchase.ok,true);
  assert.equal(world.usImports,1);assert.equal(state.importsOwned,1);close(state.corruption,5);
- assert.equal(getStats(state).corruptionPerMinute,.35);
+ assert.equal(getStats(state).corruptionPerMinute,.05);
  const cash=state.cash;advance(state,NOW+60000);assert.ok(state.cash>cash);assert.ok(state.corruption>5);
  world.partners=COUNTRIES.filter(c=>c.id!==world.origin&&c.id!=='14').map(c=>c.id);
  assert.equal(cooperate(world,state,'14').ok,true);
@@ -26,14 +26,14 @@ test('American import establishments are purchased separately and corrupt only w
  const previous=state.corruption;
  assert.equal(buyUSImports(world,state).ok,true);close(state.corruption,previous);
 });
-test('reinforced civil service raises corruption but increases tax collection',()=>{
+test('bribing five public agents raises corruption but increases tax collection',()=>{
  const state=createState(NOW);state.worldEconomyEnabled=true;state.cash=50000;state.communism=100;
  buyActivity(state,'matches');
  const before=getBusinessEconomy(state).taxesCollectedPerSecond;
  assert.equal(getBureaucracyOffer(state).available,true);
  assert.equal(buyBureaucracy(state).ok,true);
  assert.equal(state.bureaucracyOffices,1);close(state.corruption,2);
- close(getStats(state).corruptionPerMinute,.08);
+ close(getStats(state).corruptionPerMinute,.02);
  assert.ok(getBusinessEconomy(state).taxesCollectedPerSecond>before);
  advance(state,NOW+60000);assert.ok(state.corruption>2);
  const restored=hydrateState(exportState(state,NOW+60000),NOW+60000);
@@ -47,7 +47,7 @@ test('each capitalist country may sign one bilateral agreement; converting stops
  assert.equal(buyBilateralAgreement(world,state,'1').ok,true);
  assert.equal(buyBilateralAgreement(world,state,'1').ok,false);
  assert.equal(state.bilateralAgreements,1);close(state.corruption,4);
- close(getStats(state).corruptionPerMinute,.16);
+ close(getStats(state).corruptionPerMinute,.04);
  assert.ok(getBusinessEconomy(state).businessIncomePerSecond>businessRevenue);
  const saved=hydrateWorld(JSON.parse(JSON.stringify(world)));
  assert.deepEqual(saved.bilateral,['1']);

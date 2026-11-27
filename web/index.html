@@ -9,8 +9,8 @@
   <title>Communist World Simulator — Édition de développement</title>
   <link rel="icon" href="./assets/icon.svg" type="image/svg+xml">
   <link rel="manifest" href="./manifest.webmanifest">
-  <link rel="stylesheet" href="./runtime-income-v12/styles.css?v=2026-11-27-enterprise-income-1">
-  <script type="module" src="./runtime-income-v12/app.js?v=2026-11-27-enterprise-income-1"></script>
+  <link rel="stylesheet" href="./runtime-risk-v13/styles.css?v=2026-11-27-balanced-corruption-1">
+  <script type="module" src="./runtime-risk-v13/app.js?v=2026-11-27-balanced-corruption-1"></script>
 <script>
 /* Web playtest: disable the previous offline service worker and its caches.
    The game state is in localStorage and must never be touched here. */
@@ -135,7 +135,7 @@
           <div><p class="eyebrow">CHOIX POLITIQUES ET ÉCONOMIQUES</p><h3 id="investments-title">Investissements sensibles</h3></div>
           <div class="investment-corruption"><span>Corruption actuelle</span><strong id="investments-corruption">0</strong><small id="investments-corruption-rate">+0 / min</small></div>
         </div>
-        <p class="investments-description">Ces investissements sont indépendants des usines. Ils apportent des avantages, mais peuvent augmenter la corruption et réduire la collecte fiscale.</p>
+        <p class="investments-description">Les services publics ordinaires ne créent pas de corruption. Les achats douteux entraînent un malus immédiat et seulement 1 % de ce malus par minute tant que l’activité continue.</p>
         <div class="investment-grid">
           <article class="investment-item">
             <div class="investment-symbol" aria-hidden="true">📦</div>
@@ -143,13 +143,13 @@
               <p>Importe des produits des États-Unis. Activité rentable, mais compromettante tant que le pays reste capitaliste.</p>
               <div class="investment-stats"><span id="import-owned">0 établissement</span><span id="import-rate">CA +22,50 ₽ / min</span><span id="import-risk">+5 corruption à l'achat</span></div>
             </div>
-            <button id="import-buy" class="country-action" type="button" disabled>Acheter · 35 000 ₽</button>
+            <div class="investment-actions"><button id="import-buy" class="country-action" type="button" disabled>Acheter · 35 000 ₽</button><button id="import-sell" class="investment-sell-button" type="button" disabled>Revendre</button></div>
           </article>
           <article class="investment-item">
             <div class="investment-symbol" aria-hidden="true">🏛️</div>
-            <div class="investment-details"><h4>Fonction publique renforcée</h4>
-              <p>Renforce les capacités de collecte des impôts, mais introduit des risques de favoritisme et de corruption.</p>
-              <div class="investment-stats"><span id="bureaucracy-owned">0 renforcement</span><span>+2 % d'efficacité fiscale</span><span id="bureaucracy-risk">+2 corruption à l'achat · +0,08 / min</span></div>
+            <div class="investment-details"><h4>Corrompre 5 agents publics</h4>
+              <p>Verse des pots-de-vin à cinq agents pour augmenter la collecte fiscale. Cette pratique est distincte du financement des services publics.</p>
+              <div class="investment-stats"><span id="bureaucracy-owned">0 groupe d’agents</span><span>+2 % d'efficacité fiscale</span><span id="bureaucracy-risk">+2 corruption à l’achat · +0,02 / min (1 %)</span></div>
             </div>
             <button id="bureaucracy-buy" class="country-action" type="button" disabled>Acheter · 1 200 ₽</button>
           </article>
@@ -160,12 +160,20 @@
               <label class="bilateral-select-label" for="bilateral-country">Pays partenaire
                 <select id="bilateral-country" aria-label="Pays capitaliste pour l'accord"></select>
               </label>
-              <div class="investment-stats"><span id="bilateral-owned">0 accord</span><span>+1 % de recettes commerciales</span><span id="bilateral-risk">+4 corruption à la signature · +0,16 / min</span></div>
+              <div class="investment-stats"><span id="bilateral-owned">0 accord</span><span>+1 % de recettes commerciales</span><span id="bilateral-risk">+4 corruption à la signature · +0,04 / min (1 %)</span></div>
             </div>
             <button id="bilateral-buy" class="country-action" type="button" disabled>Signer l'accord</button>
           </article>
         </div>
-        <p class="investment-footnote">Si un pays partenaire est communisé, la corruption générée par l'accord cesse. La corruption déjà accumulée reste à traiter.</p>
+        <article class="investment-item investment-propaganda">
+          <div class="investment-symbol" aria-hidden="true">📢</div>
+          <div class="investment-details"><h4>Acheter une agence de propagande</h4>
+            <p>Diffuse un discours officiel : +2 communisme par minute et par agence, avec un coût durable en confiance politique.</p>
+            <div class="investment-stats"><span id="propaganda-owned">0 agence</span><span>+2 communisme / min</span><span>⚠ +3 corruption à l’achat · +0,03 / min (1 %)</span></div>
+          </div>
+          <button id="propaganda-buy" class="country-action" type="button" disabled>Acheter · 2 500 ₽</button>
+        </article>
+        <p class="investment-footnote">La revente arrête les revenus et la corruption future d’un commerce, sans supprimer les points déjà accumulés. Les services publics légitimes n’ajoutent aucune corruption.</p>
       </section>
       <p id="activity-empty" class="empty-state" hidden>Aucune activité dans cette sélection pour le moment.</p>
       <noscript><p class="empty-state">Active JavaScript dans ton navigateur pour jouer à Communist World Simulator.</p></noscript>

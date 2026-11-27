@@ -228,7 +228,7 @@ export function getUSImportOffer(w,state){
  const count=w.usImports||0;
  const cost=Math.round(35000*Math.pow(1.18,count));
  const capitalist=!w.partners.includes(USA_COUNTRY_ID);
- return {count,cost,capitalist,corruptionPerMinute:capitalist?0.35:0,corruptionOnPurchase:capitalist?5:0,
+ return {count,cost,capitalist,corruptionPerMinute:capitalist?0.05:0,corruptionOnPurchase:capitalist?5:0,
  available:count<10000&&state.cash>=cost&&state.communism>=150};
 }
 export function buyUSImports(w,state){
@@ -240,6 +240,17 @@ export function buyUSImports(w,state){
  return {ok:true,spent:offer.cost,offer};
 }
 
+/** Sell one import establishment, ceasing its passive corruption. */
+export function sellUSImports(w,state){
+ if(!state.worldEconomyEnabled||!w.usImports)return {ok:false,reason:'not-owned'};
+ const reference=Math.round(35000*Math.pow(1.18,w.usImports-1));
+ const refunded=Math.min(Math.max(0,1e12-state.cash),Math.round(reference*.4*100)/100);
+ w.usImports--;state.importsOwned=w.usImports;
+ state.cash=Math.min(1e12,state.cash+refunded);
+ state.totalEarned=Math.min(1e12,state.totalEarned+refunded);
+ return {ok:true,refunded,rateRemoved:state.usCapitalist===false?0:.05};
+}
+
 /** Compromises are separate investments, not additions to the 22 factories.
  * Bilateral arrangements are available only with countries that are not
  * yet cooperative partners. Their ongoing corruption ends on conversion.
@@ -247,7 +258,7 @@ export function buyUSImports(w,state){
 export function getBureaucracyOffer(state){
  const count=state.bureaucracyOffices||0;
  const cost=Math.round(1200*Math.pow(1.32,count));
- return {count,cost,corruptionOnPurchase:2,corruptionPerMinute:0.08,
+ return {count,cost,corruptionOnPurchase:2,corruptionPerMinute:0.02,
   collectionBonusPercent:2,available:count<1000&&state.communism>=25&&state.cash>=cost};
 }
 export function buyBureaucracy(state){
@@ -263,7 +274,7 @@ export function getBilateralOffer(world,state,id){
  if(!country||!world.origin||!isCountryVisible(world,id)||id===world.origin||world.partners.includes(id))return null;
  const signed=world.bilateral.includes(id);
  const cost=4500+Number(id)*350;
- return {...country,cost,signed,corruptionOnPurchase:4,corruptionPerMinute:0.16,
+ return {...country,cost,signed,corruptionOnPurchase:4,corruptionPerMinute:0.04,
   businessIncomeBonusPercent:1,
   available:!signed&&state.cash>=cost&&state.communism>=100};
 }

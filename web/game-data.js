@@ -34,7 +34,7 @@ export const ACTIVITIES = Object.freeze([
   activity('matches', 1, 'Allumettes', 'Matches',
     'Une fabrique coopérative qui verse des recettes chaque minute.', 200, 0, 10, 0, 1),
   activity('gum', 2, 'Chewing-gum', 'Bubble gum',
-    'Un kiosque qui fait entrer les premières recettes régulières.', 400, 5, 0, 10, 1),
+    'Un kiosque rentable, mais l’importation suscite des soupçons de corruption.', 400, 5, 0, 10, 1),
   activity('beer', 3, 'Brasserie', 'Beer',
     'Des ouvriers désaltérés. Chaque achat raccourcit les prochains plans de cinq minutes.', 800, 10, 20, 20, 2, 0, 0, 'plan'),
   activity('radio', 4, 'Radio étrangère', 'Voice Of America',

@@ -19,7 +19,7 @@ const addMoney = (state, amount) => {
 export function createState(now = Date.now()) {
   return {
     version: RULES.saveVersion,
-    cash: 0, totalEarned: 0, publicBudget: 0, publicTaxesCollected: 0, publicSpent: 0, publicServicesLevel: 0, internationalAidLevel: 0, crisesPending: 0, crisesGenerated: 0, crisisRemainderMs: 0, clicks: 0, automaticSeconds: 0, communism: 0, corruption: 0, importsOwned: 0, bureaucracyOffices: 0, bilateralAgreements: 0, usCapitalist: true, worldEconomyEnabled: false, taxPolicy: 'balanced', secondRemainderMs: 0, communismRemainderMs: 0, economyTickMode: 'seconds-v1',
+    cash: 0, totalEarned: 0, publicBudget: 0, publicTaxesCollected: 0, publicSpent: 0, publicServicesLevel: 0, internationalAidLevel: 0, crisesPending: 0, crisesGenerated: 0, crisisRemainderMs: 0, clicks: 0, automaticSeconds: 0, communism: 0, corruption: 0, importsOwned: 0, bureaucracyOffices: 0, propagandaAgencies: 0, bilateralAgreements: 0, usCapitalist: true, worldEconomyEnabled: false, taxPolicy: 'balanced', secondRemainderMs: 0, communismRemainderMs: 0, economyTickMode: 'seconds-v1',
     owned: Object.fromEntries(ACTIVITIES.map(item => [item.id, 0])),
     counters: { production: RULES.initialProduction, taxes: 0, productionBonusPercent: 0, taxBonusPercent: 0 },
     productionSteps: 0, taxSteps: 0,
@@ -77,6 +77,7 @@ export function hydrateState(raw, now = Date.now()) {
   state.corruption=raw.corruption===undefined?0:readNumber(raw.corruption,0,1e6);
   state.importsOwned=raw.importsOwned===undefined?0:readNumber(raw.importsOwned,0,10000,true);
   state.bureaucracyOffices=raw.bureaucracyOffices===undefined?0:readNumber(raw.bureaucracyOffices,0,1000,true);
+  state.propagandaAgencies=raw.propagandaAgencies===undefined?0:readNumber(raw.propagandaAgencies,0,1000,true);
   state.bilateralAgreements=raw.bilateralAgreements===undefined?0:readNumber(raw.bilateralAgreements,0,48,true);
   state.usCapitalist=raw.usCapitalist===false?false:true;
   state.worldEconomyEnabled=raw.worldEconomyEnabled===true;
@@ -163,10 +164,18 @@ const commerceRevenuePerSecond = state => state.worldEconomyEnabled?(
   (state.owned.gum||0)*4+(state.owned.beer||0)*8+(state.owned.trading||0)*20+
   (state.owned.soda||0)*25+(state.owned.grocery||0)*35+
   (state.owned['black-market']||0)*70+(state.importsOwned||0)*90):0;
-const corruptionPerMinute = state =>
-  (state.owned['black-market']||0)*0.07+(state.owned.trading||0)*0.02+
-  (state.usCapitalist!==false?(state.importsOwned||0)*0.35:0)+
-  (state.bureaucracyOffices||0)*0.08+(state.bilateralAgreements||0)*0.16;
+/** Corruption recurring per minute is 1% of each unit's purchase penalty. */
+export const CORRUPTION_PURCHASE=Object.freeze({gum:2,trading:0.5,'black-market':2});
+export const PASSIVE_CORRUPTION_RATIO=.01;
+export const RESALE_RATE=.40;
+export const getActivityCorruptionRate=id=>(CORRUPTION_PURCHASE[id]||0)*PASSIVE_CORRUPTION_RATIO;
+export const corruptionPerMinute = state =>
+  (state.worldEconomyEnabled?Object.entries(CORRUPTION_PURCHASE).reduce(
+    (sum,[id,risk])=>sum+(state.owned[id]||0)*risk*PASSIVE_CORRUPTION_RATIO,0):0)+
+  (state.usCapitalist!==false?(state.importsOwned||0)*.05:0)+
+  (state.bureaucracyOffices||0)*.02+
+  (state.propagandaAgencies||0)*.03+
+  (state.bilateralAgreements||0)*.04;
 
 /** Derived values only; querying never changes the state or the clock. */
 /** Each owned unit repeatedly generates its one-time communism bonus
@@ -181,7 +190,7 @@ export function getCommunismPerMinute(state){
    total=cap(total+cap(count,RULES.maxOwned)*item.effects.communism);
   }
  }
- return total;
+ return cap(total+(state.worldEconomyEnabled?(state.propagandaAgencies||0)*2:0));
 }
 
 /** Ring-fenced tax budget. Projects never spend the business treasury. */
@@ -305,13 +314,48 @@ export function buyActivity(state, id, quantity = 1) {
     state.counters.productionBonusPercent = cap(state.counters.productionBonusPercent + effects.productionPercent);
     state.counters.taxBonusPercent = cap(state.counters.taxBonusPercent + effects.taxPercent);
     state.communism = cap(state.communism + effects.communism);
-    if(id==='gum'&&state.worldEconomyEnabled)state.corruption=Math.min(1e6,(state.corruption||0)+2);
-    if(id==='black-market')state.corruption=Math.min(1e6,(state.corruption||0)+2);
-    if(id==='trading')state.corruption=Math.min(1e6,(state.corruption||0)+0.5);
+    const risk=CORRUPTION_PURCHASE[id]||0;
+    if(risk&&(state.worldEconomyEnabled||id!=='gum'))
+      state.corruption=Math.min(1e6,(state.corruption||0)+risk);
     // Increment AFTER applying effects: a doubling never alters already-owned items.
     state.owned[id] += 1;
   }
   return { ok: true, bought: quote.quantity, spent: quote.cost };
+}
+
+/** Risky enterprises only; 40% of the last owned unit's reference price. */
+export function quoteActivitySale(state,id){
+ const entry=BY_ID.get(id);
+ if(!entry||!Object.hasOwn(CORRUPTION_PURCHASE,id))return {ok:false,reason:'not-resellable'};
+ const owned=state.owned?.[id]||0;
+ if(!Number.isSafeInteger(owned)||owned<1)return {ok:false,reason:'not-owned'};
+ const original=priceFor(entry.item,entry.index,owned-1,state.owned.radio);
+ return {ok:true,id,count:owned,refund:Math.round(original*RESALE_RATE*100)/100,
+   rateRemoved:getActivityCorruptionRate(id)};
+}
+export function sellActivity(state,id){
+ if(!state.worldEconomyEnabled)return {ok:false,reason:'unavailable'};
+ const quote=quoteActivitySale(state,id);
+ if(!quote.ok)return quote;
+ state.owned[id]-=1;
+ const refunded=addMoney(state,quote.refund);
+ return {ok:true,id,refunded,rateRemoved:quote.rateRemoved};
+}
+
+/** Dubious propaganda purchase, distinct from legitimate public services. */
+export function getPropagandaOffer(state){
+ const count=state.propagandaAgencies||0;
+ const cost=Math.round(2500*Math.pow(1.35,count));
+ return {count,cost,corruptionOnPurchase:3,corruptionPerMinute:.03,
+   communismPerMinute:2,available:state.worldEconomyEnabled&&count<1000&&state.communism>=40&&state.cash>=cost};
+}
+export function buyPropagandaAgency(state){
+ const offer=getPropagandaOffer(state);
+ if(!offer.available)return {ok:false,reason:state.communism<40?'locked':'funds'};
+ state.cash-=offer.cost;
+ state.propagandaAgencies++;
+ state.corruption=Math.min(1e6,(state.corruption||0)+offer.corruptionOnPurchase);
+ return {ok:true,spent:offer.cost,offer};
 }
 
 /** Mutates state. The clock is advanced separately by the UI. */

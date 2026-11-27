@@ -6,13 +6,13 @@ import {createWorld,chooseCountry,getCooperation,cooperate} from '../web/world.j
 const NOW=1700000000000;
 const close=(a,b,tol=1e-8)=>assert.ok(Math.abs(a-b)<tol,`${a} vs ${b}`);
 const world=()=>{const s=createState(NOW);s.worldEconomyEnabled=true;s.cash=1e7;s.communism=5000;return s;};
-test('chewing gum adds exactly +2 corruption when purchased, never recurring',()=>{
+test('chewing gum gives +2 at purchase and 1% of that per minute',()=>{
  const s=world();
  assert.equal(buyActivity(s,'matches').ok,true);assert.equal(s.corruption,0);
  assert.equal(buyActivity(s,'gum',2).ok,true);assert.equal(s.corruption,4);
  const rate=getCommunismPerMinute(s);
  advance(s,NOW+60000);
- close(s.corruption,4);
+ close(s.corruption,4.04);
  assert.equal(getCommunismPerMinute(s),rate);
 });
 test('taxes go exclusively into public budget and business revenues to ordinary cash',()=>{

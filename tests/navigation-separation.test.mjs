@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 
 const html=readFileSync(new URL('../web/index.html',import.meta.url),'utf8');
-const app=readFileSync(new URL('../web/runtime-income-v12/app.js',import.meta.url),'utf8');
-const css=readFileSync(new URL('../web/runtime-income-v12/styles.css',import.meta.url),'utf8');
+const app=readFileSync(new URL('../web/runtime-risk-v13/app.js',import.meta.url),'utf8');
+const css=readFileSync(new URL('../web/runtime-risk-v13/styles.css',import.meta.url),'utf8');
 const section=(start,end)=>{
  const a=html.indexOf(start),b=html.indexOf(end,a+start.length);
  assert.ok(a>=0&&b>a,`Expected section markers: ${start}, ${end}`);
@@ -52,7 +52,7 @@ test('mobile CSS isolates the public tab and keeps five accessible destinations'
 test('save keys and public budget engine data are unchanged by navigation',()=>{
  for(const key of ['ussr-simulator:save:v1','communist-world:world:v1'])
   assert.ok(app.includes(key));
- const engine=readFileSync(new URL('../web/runtime-income-v12/engine.js',import.meta.url),'utf8');
+ const engine=readFileSync(new URL('../web/runtime-risk-v13/engine.js',import.meta.url),'utf8');
  assert.match(engine,/publicBudget: 0/);
  assert.match(engine,/export function spendPublicBudget/);
 });
