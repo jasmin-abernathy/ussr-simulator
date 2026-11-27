@@ -10,7 +10,7 @@
   <link rel="icon" href="./assets/icon.svg" type="image/svg+xml">
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="stylesheet" href="./runtime-anthem-v15/styles.css?v=2026-11-27-anthem-2x5-1">
-  <script type="module" src="./runtime-anthem-v15/app.js?v=2026-11-27-clean-activity-cards-1"></script>
+  <script type="module" src="./runtime-anthem-v15/app.js?v=2026-11-27-integrity-institutions-1"></script>
 <script>
 /* Web playtest: disable the previous offline service worker and its caches.
    The game state is in localStorage and must never be touched here. */
@@ -229,6 +229,7 @@
         <p class="public-budget-info">Les taxes collectées restent ici, séparées de la trésorerie des entreprises. À toi de décider où investir et quand intervenir.</p>
         <div class="public-budget-stats"><span id="public-budget-rate">+0 ₽ / s</span><small>Taxes cumulées : <strong id="public-collected">0 ₽</strong></small></div>
         <p class="public-crisis-status" id="public-crises">Situation stable dans les services collectifs.</p>
+        <p class="public-integrity-status" id="public-integrity-status" aria-live="polite">🛡️ Protection durable : à développer.</p>
         <div class="public-projects-heading"><h4>Décisions budgétaires</h4><p>Développe les équipements publics et réponds aux besoins qui apparaissent avec la croissance du pays.</p></div>
         <div class="public-projects">
           <article class="public-project"><div><strong>🏥 Services publics</strong><small>Renforce les équipements collectifs. De nouveaux niveaux s’ouvrent avec le développement économique.</small><span id="public-project-services-level">Niveau 0/10</span></div><button id="public-project-services" type="button" disabled>Financer</button></article>
@@ -237,6 +238,8 @@
           <article class="public-project"><div><strong>🛠️ Gestion des crises</strong><small>Mobilise les services publics pour rétablir la situation et restaurer la confiance.</small><span id="public-project-crisis-level">0 à résoudre</span></div><button id="public-project-crisis" type="button" disabled>Aucune crise</button></article>
           <article class="public-project"><div><strong>🚋 Transports publics</strong><small>Relie les quartiers et facilite l’activité économique.</small><span id="public-project-transport-level">Réseau à développer</span></div><button id="public-project-transport" type="button" disabled>Investir</button></article>
           <article class="public-project"><div><strong>🏘️ Logements coopératifs</strong><small>Un territoire mieux équipé résiste davantage aux périodes difficiles.</small><span id="public-project-housing-level">Programme à lancer</span></div><button id="public-project-housing" type="button" disabled>Investir</button></article>
+          <article class="public-project public-project-integrity"><div><strong>🏛️ Maisons de la transparence</strong><small>Évitent durablement une partie de la corruption générée par les activités.</small><span id="public-project-transparency-level">0 établissement / 6</span></div><button id="public-project-transparency" type="button" disabled>Construire</button></article>
+          <article class="public-project public-project-integrity"><div><strong>🛡️ Inspections citoyennes</strong><small>Font diminuer la corruption existante en continu, même pendant ton absence.</small><span id="public-project-inspectorates-level">0 établissement / 12</span></div><button id="public-project-inspectorates" type="button" disabled>Ouvrir</button></article>
           <article class="public-project public-project-repeatable"><div><strong>🔍 Contrôle des comptes</strong><small>Organise une inspection pour faire reculer la corruption. Une nouvelle inspection est possible toutes les heures.</small><span id="public-project-audit-level">Intervention ponctuelle</span></div><button id="public-project-audit" type="button" disabled>Inspecter</button></article>
           <article class="public-project public-project-repeatable"><div><strong>🔧 Entretien des infrastructures</strong><small>Rénove les équipements pour limiter les difficultés de production et de collecte.</small><span id="public-project-maintenance-level">Intervention ponctuelle</span></div><button id="public-project-maintenance" type="button" disabled>Entretenir</button></article>
         </div>
