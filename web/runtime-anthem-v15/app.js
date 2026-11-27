@@ -1,12 +1,12 @@
-const APP_VERSION='2026-11-27-anthem-scaled-1';
-import { ACTIVITIES, RULES } from './game-data.js?v=2026-11-27-anthem-scaled-1';
+const APP_VERSION='2026-11-27-balance-2';
+import { ACTIVITIES, RULES } from './game-data.js?v=2026-11-27-balance-2';
 import {
   createState, hydrateState, getStats, getActivity, quotePurchase,
   clickProduce, buyActivity, quoteActivityConversion, convertActivity, CONVERSION_TARGETS, getActivityCorruptionRate, CORRUPTION_PURCHASE, getPropagandaOffer, buyPropagandaAgency, advance, startPlan, claimPlan, publicProjectOffers, spendPublicBudget,
   reduceInflation, exportState, getGoals, activityBusinessRate, setTaxPolicy, TAX_POLICY_LABELS, getBusinessEconomyForPolicy,
-} from './engine.js?v=2026-11-27-anthem-scaled-1';
-import { COUNTRIES, MILESTONES, createWorld, hydrateWorld, chooseCountry, getCooperation, cooperate, rankCountriesByCooperationCost, getWorldStats, celebrate, rewardAnthem, getAnthemReward, START_COUNTRIES, USA_COUNTRY_ID, getVisibleCountries, getWorldStage, getCampaignWaves, getUSImportOffer, buyUSImports, convertUSImports, getBureaucracyOffer, buyBureaucracy, getBilateralOffer, buyBilateralAgreement } from './world.js?v=2026-11-27-anthem-scaled-1';
-import { ANTHEM_END_SECONDS, anthemClipFinished } from './anthem-clip.js?v=2026-11-27-anthem-scaled-1';
+} from './engine.js?v=2026-11-27-balance-2';
+import { COUNTRIES, MILESTONES, createWorld, hydrateWorld, chooseCountry, getCooperation, cooperate, rankCountriesByCooperationCost, getWorldStats, celebrate, rewardAnthem, getAnthemReward, START_COUNTRIES, USA_COUNTRY_ID, getVisibleCountries, getWorldStage, getCampaignWaves, getUSImportOffer, buyUSImports, convertUSImports, getBureaucracyOffer, buyBureaucracy, getBilateralOffer, buyBilateralAgreement } from './world.js?v=2026-11-27-balance-2';
+import { ANTHEM_END_SECONDS, anthemClipFinished } from './anthem-clip.js?v=2026-11-27-balance-2';
 
 const SAVE_KEY = 'ussr-simulator:save:v1';
 const BACKUP_KEY = 'ussr-simulator:backup:v1';
