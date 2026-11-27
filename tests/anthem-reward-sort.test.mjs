@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {createState,createState as blankState,exportState,hydrateState,getCommunismPerMinute} from '../web/engine.js';
+import {createState,createState as blankState,exportState,hydrateState,getCommunismPerMinute} from '../web/runtime-anthem-v15/engine.js';
 import {
  COUNTRIES,createWorld,chooseCountry,getCooperation,getVisibleCountries,
  rankCountriesByCooperationCost,getAnthemReward,rewardAnthem,
@@ -15,29 +15,30 @@ test('anthem begins at three and increases as the automatic communism/minute rat
  assert.equal(getAnthemReward(s),3);
  s.owned.matches=3;
  assert.equal(getAnthemReward(s),3);
- s.owned.matches=4;
+ s.owned.matches=16;
+ assert.equal(getCommunismPerMinute(s),6.4);
  assert.equal(getAnthemReward(s),4);
- s.owned.matches=12;
- assert.equal(getAnthemReward(s),12);
+ s.owned.matches=30;
+ assert.equal(getAnthemReward(s),6);
  s.propagandaAgencies=2;
- assert.equal(getCommunismPerMinute(s),16);
- assert.equal(getAnthemReward(s),16);
+ assert.equal(getCommunismPerMinute(s),14);
+ assert.equal(getAnthemReward(s),7);
 });
 test('full listening earns exactly the displayed scaled reward, repeatable; absent origin earns nothing',()=>{
  const s=state(),w=start();
- s.owned.matches=8;
+ s.owned.matches=20;
  const before=s.communism;
+ assert.deepEqual(rewardAnthem(w,s),{ok:true,points:4});
+ assert.equal(s.communism,before+4);
  assert.deepEqual(rewardAnthem(w,s),{ok:true,points:8});
  assert.equal(s.communism,before+8);
- assert.deepEqual(rewardAnthem(w,s),{ok:true,points:8});
- assert.equal(s.communism,before+16);
  assert.equal(rewardAnthem(createWorld(),s).ok,false);
  assert.equal(s.communism,before+16);
 });
 test('anthem reward follows saved existing industries and cannot mutate state while only quoted',()=>{
- const s=state();s.owned.matches=13;
+ const s=state();s.owned.matches=20;
  const loaded=hydrateState(exportState(s,NOW),NOW);
- assert.equal(getAnthemReward(loaded),13);
+ assert.equal(getAnthemReward(loaded),4);
  const previous=loaded.communism;
  getAnthemReward(loaded);
  assert.equal(loaded.communism,previous);
@@ -65,17 +66,17 @@ test('USA retains its final-wave lock even when sorting by cost',()=>{
  assert.equal(ranked.at(-1).name,'États-Unis');
  assert.equal(getVisibleCountries(w).some(c=>c.name==='États-Unis'),false);
 });
-test('active web page uses approved image, variable reward and cooperation cost ordering',()=>{
+test('active web page uses sharp art, live reward and origin-first cooperation cost ordering',()=>{
  const html=readFileSync(new URL('../web/index.html',import.meta.url),'utf8');
  const app=readFileSync(new URL('../web/runtime-anthem-v15/app.js',import.meta.url),'utf8');
  const css=readFileSync(new URL('../web/runtime-anthem-v15/styles.css',import.meta.url),'utf8');
- const image=readFileSync(new URL('../web/assets/anthem-approved.webp',import.meta.url));
- assert.match(html,/assets\/anthem-approved\.webp/);
+ const image=readFileSync(new URL('../web/assets/anthem-globe-traced.svg',import.meta.url),'utf8');
+ assert.match(html,/assets\/anthem-globe-traced\.svg/);
  assert.match(html,/runtime-anthem-v15\/app\.js/);
  assert.match(app,/getAnthemReward\(state\)/);
  assert.match(app,/rankCountriesByCooperationCost\(world,state/);
+ assert.match(app,/originCountry\?\[originCountry,\.\.\.otherCountries\]/);
  assert.match(css,/conic-gradient/);
- assert.equal(image.toString('ascii',0,4),'RIFF');
- assert.equal(image.toString('ascii',8,12),'WEBP');
- assert.ok(image.length>4000);
+ assert.match(image,/<svg/);
+ assert.ok(image.length>1000);
 });
