@@ -3102,3 +3102,36 @@ conic-gradient(#17bd2a 0% var(--anthem-progress),#090909 var(--anthem-progress) 
  }
  .anthem-panel .anthem-button.has-scaled-reward .anthem-copy small{font-size:clamp(12px,3.8vw,16px)}
 }
+
+
+/* Internationale: high-definition, text-free globe. All labels remain genuine, live HTML. */
+.anthem-panel .anthem-button,.anthem-panel .anthem-button.is-playing{--anthem-label-y:47%;--anthem-reward-y:67%}
+.anthem-panel .anthem-note,.anthem-panel .anthem-note img{inset:0;width:100%;height:100%;border-radius:50%}
+.anthem-panel .anthem-note img{object-fit:cover}
+.anthem-panel .anthem-copy,.anthem-panel .anthem-button.has-scaled-reward .anthem-copy{
+ position:static;display:contents;background:none;box-shadow:none;padding:0;margin:0
+}
+.anthem-panel .anthem-copy strong,.anthem-panel .anthem-button.has-scaled-reward .anthem-copy strong{
+ display:block;position:absolute;z-index:2;left:2%;top:var(--anthem-label-y);width:96%;
+ transform:translateY(-50%);color:white;text-align:center;font-size:clamp(12px,1.3vw,19px);
+ font-weight:900;line-height:1.15;white-space:normal;
+ text-shadow:-2px -2px 1px #200504,2px -2px 1px #200504,-2px 2px 1px #200504,2px 2px 1px #200504,0 3px 4px #200504
+}
+.anthem-panel .anthem-copy small,.anthem-panel .anthem-button.has-scaled-reward .anthem-copy small{
+ display:block;position:absolute;z-index:2;left:9%;top:var(--anthem-reward-y);width:82%;
+ transform:translateY(-50%);margin:0;padding:5px 3px;background:#960b08e8;
+ border:3px solid #390703a8;border-radius:12px;box-shadow:0 2px 7px #16000080;
+ color:#fff;text-align:center;font-size:clamp(11px,1.35vw,17px);
+ font-weight:900;line-height:1.12;white-space:normal;
+ text-shadow:-1px -1px #210503,1px 1px #210503
+}
+.anthem-panel #anthem-control-symbol,.anthem-panel .anthem-button.is-playing #anthem-control-symbol{
+ display:grid;place-items:center;position:absolute;z-index:3;left:50%;bottom:8%;
+ transform:translateX(-50%);width:37px;height:37px;
+ border:2px solid #390703b3;border-radius:50%;
+ background:#940800d9;color:white;font-size:26px;font-weight:800
+}
+@media(max-width:700px){
+ .anthem-panel .anthem-copy strong,.anthem-panel .anthem-button.has-scaled-reward .anthem-copy strong{font-size:clamp(11px,3.8vw,18px)}
+ .anthem-panel .anthem-copy small,.anthem-panel .anthem-button.has-scaled-reward .anthem-copy small{font-size:clamp(10px,3.45vw,16px)}
+}
