@@ -3135,3 +3135,50 @@ conic-gradient(#17bd2a 0% var(--anthem-progress),#090909 var(--anthem-progress) 
  .anthem-panel .anthem-copy strong,.anthem-panel .anthem-button.has-scaled-reward .anthem-copy strong{font-size:clamp(11px,3.8vw,18px)}
  .anthem-panel .anthem-copy small,.anthem-panel .anthem-button.has-scaled-reward .anthem-copy small{font-size:clamp(10px,3.45vw,16px)}
 }
+
+
+/* Unified mobile destinations: one visual system, one icon size and one active state. */
+@media(max-width:700px){
+ .mobile-nav{
+  display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;
+  padding:8px max(8px,env(safe-area-inset-left,0px)) calc(8px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-right,0px));
+  background:#fcfaf6f7;border-top:1px solid #ded5c9;box-shadow:0 -4px 22px #2b21120d;
+ }
+ .mobile-nav button{
+  display:flex;flex-direction:column;justify-content:center;align-items:center;
+  gap:4px;width:100%;min-width:0;min-height:60px;padding:8px 2px;
+  background:transparent;border:1px solid transparent;border-radius:12px;
+  color:#786f65;font-family:var(--body);font-size:11px;font-weight:750;
+  line-height:1.15;letter-spacing:0;overflow-wrap:normal;transition:background .15s,color .15s;
+ }
+ .mobile-nav button svg{
+  display:block;width:23px;height:23px;flex-shrink:0;
+  fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;
+ }
+ .mobile-nav button span{font-size:inherit!important;line-height:inherit!important}
+ .mobile-nav button.is-active,.mobile-nav button[aria-current="page"]{
+  background:#f7e5df;border-color:#f1d8d0;color:#a52f25;
+ }
+ .mobile-nav button:focus-visible{outline:2px solid #a52f25;outline-offset:1px}
+}
+/* Budget: clearer grouping, compact actions and readable cards on mobile. */
+.public-projects-heading{margin-top:8px;display:grid;gap:4px}
+.public-projects-heading h4{margin:0;font-size:16px;letter-spacing:-.25px}
+.public-projects-heading p{margin:0 0 3px;color:var(--muted);font-size:12px;line-height:1.5}
+.public-crisis-status{border:1px solid #dfe9db;background:#eef5e9;color:#366b3d;line-height:1.5}
+.public-crisis-status.has-crisis{background:#faeee8;border-color:#eddbd0;color:#9e3b2f}
+.public-projects{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+.public-project{min-width:0;align-content:space-between;gap:15px;padding:15px;border-radius:13px;border:1px solid #e6ddd1;background:#fff}
+.public-project>div{display:grid;align-content:start;gap:6px;min-width:0}
+.public-project strong{font-size:14px;line-height:1.3}
+.public-project small{font-size:12px;line-height:1.5;color:#71695e}
+.public-project span{font-size:11px;line-height:1.45;color:#486b50;font-weight:700}
+.public-project button{min-height:43px;width:100%;border-radius:9px;font-size:12px;line-height:1.35}
+.public-project button:not(:disabled):hover{background:#8c2922}
+.public-project button:disabled{background:#ece8e2;color:#8e877e}
+.public-project-repeatable{border-color:#d6dcd0;background:#fcfdf9}
+@media(max-width:700px){
+ .public-projects{grid-template-columns:1fr;gap:10px}
+ .public-project{grid-template-columns:minmax(0,1fr);padding:14px}
+ .public-project button{min-height:44px}
+}
