@@ -33,7 +33,7 @@ test('full listening earns exactly the displayed scaled reward, repeatable; abse
  assert.deepEqual(rewardAnthem(w,s),{ok:true,points:4});
  assert.equal(s.communism,before+8);
  assert.equal(rewardAnthem(createWorld(),s).ok,false);
- assert.equal(s.communism,before+16);
+ assert.equal(s.communism,before+8);
 });
 test('anthem reward follows saved existing industries and cannot mutate state while only quoted',()=>{
  const s=state();s.owned.matches=20;
