@@ -215,16 +215,20 @@ export const corruptionGrossPerMinute = state =>
   (state.propagandaAgencies||0)*.12+
   (state.bilateralAgreements||0)*.10+
   (state.worldEconomyEnabled?(state.publicNeedsPending||0)*.06:0);
-/** Transparency houses prevent new corruption; citizen inspectorates reduce the
- * accumulated total over time. Their effects continue while offline.
+/** Institutional oversight reduces incoming corruption but never erases an
+ * existing stock for free. Each investment has a visible incremental benefit,
+ * even at the highest level, and the total passive rate stays positive.
+ * Hourly audits remain the mechanism for reducing existing corruption.
  */
-export const TRANSPARENCY_PREVENTION_PER_HOUSE=.15;
-export const INSPECTORATE_RECOVERY_PER_MINUTE=.25;
+export const TRANSPARENCY_PREVENTION_PER_HOUSE=.10;
+export const INSPECTORATE_FLOW_REDUCTION_PER_UNIT=.05;
 export function getCorruptionBreakdown(state){
  const gross=corruptionGrossPerMinute(state);
- const prevention=state.worldEconomyEnabled?Math.min(.90,(state.transparencyHouses||0)*TRANSPARENCY_PREVENTION_PER_HOUSE):0;
- const recovery=state.worldEconomyEnabled?Math.min(12,state.citizensInspectorates||0)*INSPECTORATE_RECOVERY_PER_MINUTE:0;
- return {gross,prevention,recovery,net:gross*(1-prevention)-recovery};
+ const prevention=state.worldEconomyEnabled?Math.min(.60,(state.transparencyHouses||0)*TRANSPARENCY_PREVENTION_PER_HOUSE):0;
+ const inspectorateReduction=state.worldEconomyEnabled?Math.min(.60,(state.citizensInspectorates||0)*INSPECTORATE_FLOW_REDUCTION_PER_UNIT):0;
+ const afterTransparency=gross*(1-prevention);
+ const intercepted=afterTransparency*inspectorateReduction;
+ return {gross,prevention,inspectorateReduction,intercepted,recovery:0,net:Math.max(0,afterTransparency-intercepted)};
 }
 export const corruptionPerMinute=state=>getCorruptionBreakdown(state).net;
 
@@ -281,8 +285,8 @@ export const PUBLIC_PROJECTS=Object.freeze({
  transport:Object.freeze({name:'Développer les transports publics',description:'Améliore durablement les revenus des activités grâce à une meilleure desserte.'}),
  housing:Object.freeze({name:'Construire des logements coopératifs',description:'Protège progressivement les recettes publiques pendant les crises.'}),
  audit:Object.freeze({name:'Contrôle des comptes',description:'Une inspection réduit de 20 % la corruption existante. Une nouvelle inspection est possible une heure plus tard.'}),
- transparency:Object.freeze({name:'Maisons de la transparence',description:'Empêchent durablement une partie de la corruption nouvelle.'}),
- inspectorates:Object.freeze({name:'Inspections citoyennes',description:'Réduisent durablement la corruption accumulée, minute après minute.'}),
+ transparency:Object.freeze({name:'Maisons de la transparence',description:'Réduisent durablement le risque de corruption lié aux activités.'}),
+ inspectorates:Object.freeze({name:'Inspections citoyennes',description:'Freinent la corruption nouvelle en surveillant les activités ; les contrôles des comptes réduisent le stock existant.'}),
  maintenance:Object.freeze({name:'Entretenir les infrastructures',description:'Remet les équipements en état et soulage les tensions économiques.'}),
  needs:Object.freeze({name:'Répondre aux besoins collectifs',description:'Finance les nouveaux besoins issus du développement du pays.'}),
 });
