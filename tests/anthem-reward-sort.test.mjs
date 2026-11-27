@@ -9,13 +9,18 @@ import {
 const NOW=1700000000000;
 const start=()=>{const w=createWorld();assert.equal(chooseCountry(w,'0').ok,true);return w;};
 const state=()=>{const s=createState(NOW);s.worldEconomyEnabled=true;s.communism=1000;s.cash=1e10;return s;};
-test('anthem listening grants exactly 2.5 times the passive communism earned in a minute',()=>{
+test('anthem grants at least 2 communism, then 2.5x when passive production exceeds 0.8/min',()=>{
  const s=state();
  assert.equal(getCommunismPerMinute(s),0);
- assert.equal(getAnthemReward(s),0);
+ assert.equal(getAnthemReward(s),2);
  s.owned.matches=16;
  assert.equal(getCommunismPerMinute(s),.16);
- assert.equal(getAnthemReward(s),.4);
+ assert.equal(getAnthemReward(s),2);
+ s.owned.matches=80;
+ assert.equal(getCommunismPerMinute(s),.8);
+ assert.equal(getAnthemReward(s),2);
+ s.owned.matches=81;
+ assert.equal(getAnthemReward(s),2.025);
  s.owned.matches=800;
  assert.equal(getCommunismPerMinute(s),8);
  assert.equal(getAnthemReward(s),20);
@@ -27,11 +32,11 @@ test('full listening pays exactly the computed fractional reward and remains rep
  const s=state(),w=start();
  s.owned.matches=20;
  const before=s.communism;
- assert.equal(getAnthemReward(s),.5);
+ assert.equal(getAnthemReward(s),2);
+ assert.deepEqual(rewardAnthem(w,s),{ok:true,points:2});
+ assert.equal(s.communism,before+2);
  assert.deepEqual(rewardAnthem(w,s),{ok:true,points:.5});
- assert.equal(s.communism,before+.5);
- assert.deepEqual(rewardAnthem(w,s),{ok:true,points:.5});
- assert.equal(s.communism,before+1);
+ assert.equal(s.communism,before+4);
  assert.equal(rewardAnthem(createWorld(),s).ok,false);
  assert.equal(s.communism,before+1);
 });
