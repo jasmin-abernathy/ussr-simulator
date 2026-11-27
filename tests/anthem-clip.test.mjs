@@ -13,7 +13,8 @@ test('public player retains French recording while rewarding at the first refrai
  const html=readFileSync(new URL('../web/index.html',import.meta.url),'utf8');
  const app=readFileSync(new URL('../web/runtime-anthem-v15/app.js',import.meta.url),'utf8');
  const runtimeClip=readFileSync(new URL('../web/runtime-anthem-v15/anthem-clip.js',import.meta.url),'utf8');
- assert.match(html,/The_Internationale_%28French_Version%29\.flac\.mp3/);
+ assert.match(html,/assets\/internationale-francaise\.mp3/);
+ assert.doesNotMatch(html,/src="https:\/\/upload\.wikimedia\.org/);
  assert.match(html,/Version chantée en français · CC0/);
  assert.equal(runtimeClip.includes('ANTHEM_END_SECONDS = 70'),true);
  assert.match(app,/if \(rewardedThisListen \|\| !anthemClipFinished\(anthemAudio.currentTime\)\) return/);
