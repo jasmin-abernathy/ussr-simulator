@@ -28,7 +28,7 @@ const addMoney = (state, amount) => {
 export function createState(now = Date.now()) {
   return {
     version: RULES.saveVersion,
-    cash: 0, totalEarned: 0, publicBudget: 0, publicTaxesCollected: 0, publicSpent: 0, publicServicesLevel: 0, internationalAidLevel: 0, publicTransportLevel: 0, publicHousingLevel: 0, corruptionAudits: 0, lastAuditAt: 0, crisesPending: 0, crisesGenerated: 0, crisisRemainderMs: 0, clicks: 0, automaticSeconds: 0, communism: 0, corruption: 0, importsOwned: 0, bureaucracyOffices: 0, propagandaAgencies: 0, bilateralAgreements: 0, usCapitalist: true, worldEconomyEnabled: false, taxPolicy: 'balanced', secondRemainderMs: 0, communismRemainderMs: 0, economyTickMode: 'seconds-v1',
+    cash: 0, totalEarned: 0, publicBudget: 0, publicTaxesCollected: 0, publicSpent: 0, publicServicesLevel: 0, internationalAidLevel: 0, publicTransportLevel: 0, publicHousingLevel: 0, publicNeedsPending: 0, publicNeedsGenerated: 0, publicNeedsResolved: 0, publicNeedNextScore: 1, publicNeedLastAt: 0, corruptionAudits: 0, lastAuditAt: 0, crisesPending: 0, crisesGenerated: 0, crisisRemainderMs: 0, clicks: 0, automaticSeconds: 0, communism: 0, corruption: 0, importsOwned: 0, bureaucracyOffices: 0, propagandaAgencies: 0, bilateralAgreements: 0, usCapitalist: true, worldEconomyEnabled: false, taxPolicy: 'balanced', secondRemainderMs: 0, communismRemainderMs: 0, economyTickMode: 'seconds-v1',
     owned: Object.fromEntries(ACTIVITIES.map(item => [item.id, 0])),
     counters: { production: RULES.initialProduction, taxes: 0, productionBonusPercent: 0, taxBonusPercent: 0 },
     productionSteps: 0, taxSteps: 0,
@@ -124,6 +124,13 @@ export function hydrateState(raw, now = Date.now()) {
     : Math.max(minimum.communism,readNumber(raw.communism,minimum.communism));
   state.clicks = readNumber(raw.clicks, 0, Number.MAX_SAFE_INTEGER, true);
   state.automaticSeconds = readNumber(raw.automaticSeconds, 0, Number.MAX_SAFE_INTEGER, true);
+  state.publicNeedsPending=raw.publicNeedsPending===undefined?0:readNumber(raw.publicNeedsPending,0,3,true);
+  state.publicNeedsGenerated=raw.publicNeedsGenerated===undefined?0:readNumber(raw.publicNeedsGenerated,0,Number.MAX_SAFE_INTEGER,true);
+  state.publicNeedsResolved=raw.publicNeedsResolved===undefined?0:readNumber(raw.publicNeedsResolved,0,Number.MAX_SAFE_INTEGER,true);
+  state.publicNeedLastAt=raw.publicNeedLastAt===undefined?now:readNumber(raw.publicNeedLastAt,now,MAX_TIME,true);
+  // Existing saves start from their current level of development, not a backlog.
+  state.publicNeedNextScore=raw.publicNeedNextScore===undefined
+    ?getPublicNeedScore(state)+1:readNumber(raw.publicNeedNextScore,1,100000000,true);
   state.productionSteps = readNumber(raw.productionSteps, 0, RULES.productionInflationStep * RULES.maxInflation, true);
   state.taxSteps = readNumber(raw.taxSteps, 0, RULES.taxInflationStep * RULES.maxInflation, true);
   state.tickRemainderMs = readNumber(raw.tickRemainderMs, 0, 999.999999);
@@ -204,7 +211,8 @@ export const corruptionPerMinute = state =>
   (state.usCapitalist!==false?(state.importsOwned||0)*.15:0)+
   (state.bureaucracyOffices||0)*.09+
   (state.propagandaAgencies||0)*.12+
-  (state.bilateralAgreements||0)*.10;
+  (state.bilateralAgreements||0)*.10+
+  (state.worldEconomyEnabled?(state.publicNeedsPending||0)*.06:0);
 
 /** Derived values only; querying never changes the state or the clock. */
 /** Industry passively yields 1% of its one-time communism bonus per minute.
@@ -222,6 +230,35 @@ export function getCommunismPerMinute(state){
  return cap(total*.01+(state.worldEconomyEnabled?(state.propagandaAgencies||0)*.05:0));
 }
 
+/** Public services face new needs when economic activity and the population of
+ * enterprises expand. Milestones are deterministic, with a fifteen-minute
+ * minimum separation and no retroactive backlog for existing saves.
+ */
+export const PUBLIC_NEED_TYPES=Object.freeze([
+ Object.freeze({name:'Renforcer les centres de santé',detail:'Les nouveaux quartiers ont besoin de soins accessibles.'}),
+ Object.freeze({name:'Ouvrir des écoles de quartier',detail:'Le développement des activités demande davantage de places et de personnel.'}),
+ Object.freeze({name:'Moderniser les réseaux d’eau',detail:'La production croissante sollicite les équipements collectifs.'}),
+ Object.freeze({name:'Renforcer les services de proximité',detail:'Les habitants ont besoin d’accéder aux services essentiels.'}),
+]);
+export const PUBLIC_NEED_COOLDOWN_MS=15*60*1000;
+export function getPublicNeedScore(state){
+ const finances=getBusinessEconomy(state);
+ return Math.floor(finances.owned/12)+
+   Math.floor(Math.log2(1+finances.taxesPerSecond/20))+
+   Math.floor((state.automaticSeconds||0)/3600);
+}
+export function generatePublicNeed(state,now=Date.now()){
+ if(!state.worldEconomyEnabled||state.automaticSeconds<900||
+    (state.publicNeedsPending||0)>=3)return false;
+ const score=getPublicNeedScore(state);
+ if(score<(state.publicNeedNextScore||1))return false;
+ if(now-(state.publicNeedLastAt||0)<PUBLIC_NEED_COOLDOWN_MS)return false;
+ state.publicNeedsPending=Math.min(3,(state.publicNeedsPending||0)+1);
+ state.publicNeedsGenerated=Math.min(Number.MAX_SAFE_INTEGER,(state.publicNeedsGenerated||0)+1);
+ state.publicNeedLastAt=time(now);
+ state.publicNeedNextScore=Math.max((state.publicNeedNextScore||1)+1,score+1);
+ return true;
+}
 /** Ring-fenced tax budget. Projects never spend the business treasury. */
 export const PUBLIC_PROJECTS=Object.freeze({
  services:Object.freeze({name:'Services publics',description:'Augmente la collecte fiscale de 3 % par niveau (maximum 30 %).'}),
@@ -231,6 +268,7 @@ export const PUBLIC_PROJECTS=Object.freeze({
  housing:Object.freeze({name:'Construire des logements coopératifs',description:'Protège progressivement les recettes publiques pendant les crises.'}),
  audit:Object.freeze({name:'Contrôle des comptes',description:'Une inspection réduit de 20 % la corruption existante. Une nouvelle inspection est possible une heure plus tard.'}),
  maintenance:Object.freeze({name:'Entretenir les infrastructures',description:'Remet les équipements en état et soulage les tensions économiques.'}),
+ needs:Object.freeze({name:'Répondre aux besoins collectifs',description:'Finance les nouveaux besoins issus du développement du pays.'}),
 });
 export function publicProjectOffers(state,now=Date.now()){
  const auditCooldown=getAuditCooldown(state,now);
@@ -238,6 +276,8 @@ export function publicProjectOffers(state,now=Date.now()){
  const aid=state.internationalAidLevel||0;
  const pending=state.crisesPending||0;
  const budget=state.publicBudget||0;
+ const needs=state.publicNeedsPending||0;
+ const needType=PUBLIC_NEED_TYPES[(state.publicNeedsResolved||0)%PUBLIC_NEED_TYPES.length];
  const offers={
   services:{...PUBLIC_PROJECTS.services,level:services,cost:Math.ceil(25*1.6**services),maxLevel:10,locked:services>=10},
   solidarity:{...PUBLIC_PROJECTS.solidarity,level:aid,cost:Math.ceil(40*1.7**aid),maxLevel:8,locked:aid>=8},
@@ -246,6 +286,8 @@ export function publicProjectOffers(state,now=Date.now()){
   housing:{...PUBLIC_PROJECTS.housing,level:state.publicHousingLevel||0,cost:Math.ceil(220*1.65**(state.publicHousingLevel||0)),maxLevel:10,locked:(state.publicHousingLevel||0)>=10},
   audit:{...PUBLIC_PROJECTS.audit,cost:Math.ceil(600*1.38**Math.min(24,state.corruptionAudits||0)+Math.min(2000,(state.corruption||0)*18)),locked:(state.corruption||0)<.01||!auditCooldown.ready,cooldownMs:auditCooldown.remainingMs,cooldownActive:!auditCooldown.ready},
   maintenance:{...PUBLIC_PROJECTS.maintenance,cost:Math.ceil(160+Math.min(900,(state.taxSteps||0)/30+(state.productionSteps||0)/40)),locked:(state.taxSteps||0)<250&&(state.productionSteps||0)<250},
+  needs:{...PUBLIC_PROJECTS.needs,name:needType.name,description:needType.detail,pending:needs,
+   cost:Math.ceil(150+Math.min(5000,((state.publicNeedsResolved||0)+1)*65+getPublicNeedScore(state)*25)),locked:needs===0},
  };
  for(const offer of Object.values(offers))offer.available=!offer.locked&&budget>=offer.cost;
  return offers;
@@ -266,6 +308,10 @@ export function spendPublicBudget(state,project,now=Date.now()){
   state.lastAuditAt=time(now);
   state.corruption=Math.max(0,(state.corruption||0)*(1-AUDIT_CORRUPTION_REDUCTION));
   state.corruptionAudits=Math.min(100000,(state.corruptionAudits||0)+1);
+ }
+ if(project==='needs'){
+  state.publicNeedsPending=Math.max(0,(state.publicNeedsPending||0)-1);
+  state.publicNeedsResolved=Math.min(Number.MAX_SAFE_INTEGER,(state.publicNeedsResolved||0)+1);
  }
  if(project==='maintenance'){
   state.taxSteps=Math.max(0,(state.taxSteps||0)-1500);
@@ -516,6 +562,7 @@ export function advance(state, now = Date.now()) {
         }
       }
     }
+    if(seconds>0&&generatePublicNeed(state,now))result.publicNeedsCreated=1;
     if(state.plan.status==='running'){
       state.plan.remainingMs=Math.max(0,state.plan.remainingMs-creditedMs);
       if(state.plan.remainingMs===0)state.plan.status='ready';
@@ -658,7 +705,7 @@ export function getBusinessEconomy(state){
  const bilateralTradeBonus=1+Math.min(0.15,(state.bilateralAgreements||0)*0.01);
  const housingProtection=Math.min(.05,(state.publicHousingLevel||0)*.005);
  const crisisLoss=Math.max(.05,.10-housingProtection);
- const collected=taxes*(1-leakage)*administrationEfficiency*(1-crisisLoss*Math.min(3,state.crisesPending||0));
+ const collected=taxes*(1-leakage)*administrationEfficiency*(1-crisisLoss*Math.min(3,state.crisesPending||0))*(1-.04*Math.min(3,state.publicNeedsPending||0));
  const transportBonus=1+Math.min(.18,(state.publicTransportLevel||0)*.015);
  const businessIncome=treasury*bilateralTradeBonus*transportBonus;
  return {grossPerSecond:cap(gross),taxesPerSecond:cap(taxes),
