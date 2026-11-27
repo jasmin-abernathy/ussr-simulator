@@ -39,9 +39,9 @@ test('audits and maintenance offer repeatable budget decisions with sensible loc
  state.taxSteps=4500;
  state.productionSteps=3000;
  assert.ok(spendPublicBudget(state,'audit').ok);
- assert.equal(state.corruption,7);
+ assert.ok(Math.abs(state.corruption-9.6)<1e-10);
  assert.ok(spendPublicBudget(state,'audit').ok);
- assert.equal(state.corruption,2);
+ assert.ok(Math.abs(state.corruption-7.68)<1e-10);
  assert.ok(spendPublicBudget(state,'maintenance').ok);
  assert.equal(state.taxSteps,3000);
  assert.equal(state.productionSteps,2250);
