@@ -183,9 +183,20 @@ export function manualProductionBonus(state){
   // 25% of one second of factory turnover, rounded to the visible cent.
   return Math.round(Math.min(RULES.maxNumber,turnover*.25)*100)/100;
 }
-const production = state => state.worldEconomyEnabled
-  ? cap(RULES.initialProduction+manualProductionBonus(state))
-  : grossProduction(state) * (1 - inflation(state.productionSteps, RULES.productionInflationStep) / 100);
+/** Stakhanovism doubles one second of automatic commercial income once it
+ * exceeds 10 roubles per second; below that threshold the existing click
+ * calculation applies. The public treasury is not counted as personal income.
+ */
+export const STAKHANOV_INCOME_THRESHOLD=10;
+export const STAKHANOV_INCOME_MULTIPLIER=2;
+const production = state => {
+  if(!state.worldEconomyEnabled)
+    return grossProduction(state)*(1-inflation(state.productionSteps,RULES.productionInflationStep)/100);
+  const automaticIncome=getBusinessEconomy(state).netToTreasuryPerSecond;
+  return automaticIncome>STAKHANOV_INCOME_THRESHOLD
+    ? cap(automaticIncome*STAKHANOV_INCOME_MULTIPLIER)
+    : cap(RULES.initialProduction+manualProductionBonus(state));
+};
 const taxes = state => grossTaxes(state) * (1-inflation(state.taxSteps,RULES.taxInflationStep)/100)
  * (1-Math.min(35,Math.floor((state.corruption||0)/25))/100);
 const commerceRevenuePerSecond = state => state.worldEconomyEnabled?(
