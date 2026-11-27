@@ -1,12 +1,12 @@
-const APP_VERSION='2026-11-27-integrity-balance-1';
-import { ACTIVITIES, RULES } from './game-data.js?v=2026-11-27-integrity-balance-1';
+const APP_VERSION='2026-11-27-ideology-centers-1';
+import { ACTIVITIES, RULES } from './game-data.js?v=2026-11-27-ideology-centers-1';
 import {
   createState, hydrateState, getStats, getActivity, quotePurchase,
-  clickProduce, buyActivity, quoteActivityConversion, convertActivity, CONVERSION_TARGETS, getActivityCorruptionRate, CORRUPTION_PURCHASE, COMMUNISM_PURCHASE_PENALTY, getPropagandaOffer, buyPropagandaAgency, advance, startPlan, claimPlan, publicProjectOffers, spendPublicBudget,
+  clickProduce, buyActivity, quoteActivityConversion, convertActivity, CONVERSION_TARGETS, getActivityCorruptionRate, CORRUPTION_PURCHASE, COMMUNISM_PURCHASE_PENALTY, getPropagandaOffer, buyPropagandaAgency, getIdeologyInstitutionOffer, buyIdeologyInstitution, advance, startPlan, claimPlan, publicProjectOffers, spendPublicBudget,
   reduceInflation, exportState, getGoals, activityBusinessRate, setTaxPolicy, TAX_POLICIES, TAX_POLICY_LABELS, getBusinessEconomyForPolicy,
-} from './engine.js?v=2026-11-27-integrity-balance-1';
-import { COUNTRIES, MILESTONES, createWorld, hydrateWorld, chooseCountry, getCooperation, cooperate, rankCountriesByCooperationCost, getWorldStats, celebrate, rewardAnthem, getAnthemReward, START_COUNTRIES, USA_COUNTRY_ID, getVisibleCountries, getWorldStage, getCampaignWaves, getUSImportOffer, buyUSImports, convertUSImports, getBureaucracyOffer, buyBureaucracy, getBilateralOffer, buyBilateralAgreement } from './world.js?v=2026-11-27-integrity-balance-1';
-import { ANTHEM_END_SECONDS, anthemClipFinished } from './anthem-clip.js?v=2026-11-27-integrity-balance-1';
+} from './engine.js?v=2026-11-27-ideology-centers-1';
+import { COUNTRIES, MILESTONES, createWorld, hydrateWorld, chooseCountry, getCooperation, cooperate, rankCountriesByCooperationCost, getWorldStats, celebrate, rewardAnthem, getAnthemReward, START_COUNTRIES, USA_COUNTRY_ID, getVisibleCountries, getWorldStage, getCampaignWaves, getUSImportOffer, buyUSImports, convertUSImports, getBureaucracyOffer, buyBureaucracy, getBilateralOffer, buyBilateralAgreement } from './world.js?v=2026-11-27-ideology-centers-1';
+import { ANTHEM_END_SECONDS, anthemClipFinished } from './anthem-clip.js?v=2026-11-27-ideology-centers-1';
 
 const SAVE_KEY = 'ussr-simulator:save:v1';
 const BACKUP_KEY = 'ussr-simulator:backup:v1';
@@ -353,6 +353,20 @@ function render() {
   if($('propaganda-buy')){
     $('propaganda-buy').disabled=!canWrite||!propaganda.available;
     setText($('propaganda-buy'),state.communism<40?'Déblocage à 40 communisme':`Acheter · ${money(propaganda.cost)}`);
+  }
+  for(const id of ['mobilization','institute']){
+    const offer=getIdeologyInstitutionOffer(state,id);
+    if(!offer)continue;
+    setText($(id+'-owned'),`${offer.count} établissement${offer.count>1?'s':''} / ${offer.max}`);
+    setText($(id+'-benefit'),`+${format(offer.communismPerMinute)} communisme/min par établissement`);
+    setText($(id+'-risk'),`⚠ +${format(offer.corruptionOnPurchase)} corruption à l’achat · +${format(offer.corruptionPerMinute)}/min par établissement`);
+    const button=$(id+'-buy');
+    if(button){
+      button.disabled=!canWrite||!offer.available;
+      setText(button,offer.count>=offer.max?'Maximum atteint':
+        offer.locked?`Déblocage à ${format(offer.unlock)} communisme`:
+        `Construire · ${money(offer.cost)}`);
+    }
   }
   setText($('bilateral-owned'),`${world.bilateral.length} accord${world.bilateral.length>1?'s':''}`);
   setText($('bilateral-risk'),'⚠ Corruption accrue · −6 communisme à la signature');
@@ -731,6 +745,16 @@ $('import-convert')?.addEventListener('click',()=>{
   const target=ACTIVITIES.find(activity=>activity.id===targetId);
   notify(`Importation transformée en ${target?.name||targetId} · frais ${money(result.cost)}`);
 });
+for(const id of ['mobilization','institute']){
+  $(id+'-buy')?.addEventListener('click',()=>{
+    if(!canWrite)return;
+    advance(state);
+    const result=buyIdeologyInstitution(state,id);
+    if(!result.ok){render();return;}
+    changed();
+    notify(`${result.offer.name} : +${format(result.offer.communismPerMinute)} communisme/min · +${format(result.offer.corruptionPerMinute)} corruption/min.`);
+  });
+}
 $('propaganda-buy')?.addEventListener('click',()=>{
   if(!canWrite)return;advance(state);
   const result=buyPropagandaAgency(state);
