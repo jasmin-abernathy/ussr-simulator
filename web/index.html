@@ -9,8 +9,8 @@
   <title>Communist World Simulator — Édition de développement</title>
   <link rel="icon" href="./assets/icon.svg" type="image/svg+xml">
   <link rel="manifest" href="./manifest.webmanifest">
-  <link rel="stylesheet" href="./styles.css?v=2026-11-27-second-economy-1">
-  <script type="module" src="./app.js?v=2026-11-27-second-economy-1"></script>
+  <link rel="stylesheet" href="./styles.css?v=2026-11-27-investments-1">
+  <script type="module" src="./app.js?v=2026-11-27-investments-1"></script>
 </head>
 <body>
   <a class="skip-link" href="#production-panel">Aller au jeu</a>
@@ -136,11 +136,44 @@
       <div id="activity-list" class="activity-list" aria-label="Liste des activités">
         <div class="loading-state" role="status"><span class="loading-symbol" aria-hidden="true">✳</span>Préparation de ton économie…</div>
       </div>
-      <section class="import-card" aria-labelledby="import-title">
- <div class="import-card-heading"><span class="import-card-icon" aria-hidden="true">📦</span><div><h3 id="import-title">Importation de produits américains</h3><p>Un commerce international lucratif, mais qui augmente la corruption tant que les États-Unis restent capitalistes.</p></div></div>
- <div class="import-card-metrics"><span id="import-owned">0 commerce</span><span id="import-rate">+90 revenus et +60 taxes / s</span><span id="import-risk">+5 corruption par achat</span></div>
- <button id="import-buy" class="country-action" type="button" disabled>Acheter · 35 000 ₽</button>
- </section><p id="activity-empty" class="empty-state" hidden>Aucune activité dans cette sélection pour le moment.</p>
+      <section class="investments-section" aria-labelledby="investments-title">
+        <div class="investments-intro">
+          <div><p class="eyebrow">CHOIX POLITIQUES ET ÉCONOMIQUES</p><h3 id="investments-title">Investissements sensibles</h3></div>
+          <div class="investment-corruption"><span>Corruption actuelle</span><strong id="investments-corruption">0</strong><small id="investments-corruption-rate">+0 / min</small></div>
+        </div>
+        <p class="investments-description">Ces investissements sont indépendants des usines. Ils apportent des avantages, mais peuvent augmenter la corruption et réduire la collecte fiscale.</p>
+        <div class="investment-grid">
+          <article class="investment-item">
+            <div class="investment-symbol" aria-hidden="true">📦</div>
+            <div class="investment-details"><h4>Établissement d'importation américaine</h4>
+              <p>Importe des produits des États-Unis. Activité rentable, mais compromettante tant que le pays reste capitaliste.</p>
+              <div class="investment-stats"><span id="import-owned">0 établissement</span><span id="import-rate">CA +22,50 ₽ / min</span><span id="import-risk">+5 corruption à l'achat</span></div>
+            </div>
+            <button id="import-buy" class="country-action" type="button" disabled>Acheter · 35 000 ₽</button>
+          </article>
+          <article class="investment-item">
+            <div class="investment-symbol" aria-hidden="true">🏛️</div>
+            <div class="investment-details"><h4>Fonction publique renforcée</h4>
+              <p>Renforce les capacités de collecte des impôts, mais introduit des risques de favoritisme et de corruption.</p>
+              <div class="investment-stats"><span id="bureaucracy-owned">0 renforcement</span><span>+2 % d'efficacité fiscale</span><span id="bureaucracy-risk">+2 corruption à l'achat · +0,08 / min</span></div>
+            </div>
+            <button id="bureaucracy-buy" class="country-action" type="button" disabled>Acheter · 1 200 ₽</button>
+          </article>
+          <article class="investment-item investment-bilateral">
+            <div class="investment-symbol" aria-hidden="true">🤝</div>
+            <div class="investment-details"><h4>Accord bilatéral avec un pays capitaliste</h4>
+              <p>Développe les échanges avec un pays non encore communisé. Augmente les dividendes, mais aussi la corruption.</p>
+              <label class="bilateral-select-label" for="bilateral-country">Pays partenaire
+                <select id="bilateral-country" aria-label="Pays capitaliste pour l'accord"></select>
+              </label>
+              <div class="investment-stats"><span id="bilateral-owned">0 accord</span><span>+1 % de dividendes</span><span id="bilateral-risk">+4 corruption à la signature · +0,16 / min</span></div>
+            </div>
+            <button id="bilateral-buy" class="country-action" type="button" disabled>Signer l'accord</button>
+          </article>
+        </div>
+        <p class="investment-footnote">Si un pays partenaire est communisé, la corruption générée par l'accord cesse. La corruption déjà accumulée reste à traiter.</p>
+      </section>
+      <p id="activity-empty" class="empty-state" hidden>Aucune activité dans cette sélection pour le moment.</p>
       <noscript><p class="empty-state">Active JavaScript dans ton navigateur pour jouer à Communist World Simulator.</p></noscript>
     </section>
 

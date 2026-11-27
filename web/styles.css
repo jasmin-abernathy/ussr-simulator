@@ -2922,3 +2922,27 @@ conic-gradient(#17bd2a 0% var(--anthem-progress),#090909 var(--anthem-progress) 
 .finance-panel .policy-buttons button .policy-name{font-size:12px;}
 .activity-effects{grid-template-columns:repeat(2,minmax(0,1fr));}
 }
+
+/* Economic and political investments are separate from regular factories. */
+.investments-section{margin:28px 0 16px;padding:18px;border:1px solid #e4d7cb;background:#fbf6ef;border-radius:20px;}
+.investments-intro{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;}
+.investments-intro h3{margin:2px 0 0;font-size:22px;}
+.investment-corruption{padding:9px 11px;background:#fff0ed;border-radius:11px;display:grid;gap:2px;text-align:right;min-width:110px;}
+.investment-corruption span,.investment-corruption small{font-size:10px;color:#8f4b43;}
+.investment-corruption strong{font-size:20px;color:#aa3327;}
+.investments-description{font-size:12px;line-height:1.55;color:#776c61;margin:12px 0 16px;}
+.investment-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;}
+.investment-item{min-width:0;display:grid;grid-template-columns:46px minmax(0,1fr);grid-template-rows:1fr auto;gap:10px;padding:14px;border:1px solid #e4d8c9;border-radius:15px;background:#fff;}
+.investment-symbol{width:44px;height:44px;border-radius:50%;border:3px solid #84d8e6;display:grid;place-items:center;background:#f4f4ed;font-size:22px;}
+.investment-details{min-width:0;}
+.investment-details h4{margin:0 0 7px;font-size:15px;line-height:1.3;}
+.investment-details p{margin:0 0 9px;color:#746b61;font-size:12px;line-height:1.45;}
+.investment-stats{display:flex;flex-wrap:wrap;gap:5px;}
+.investment-stats span{font-size:11px;padding:5px 7px;border-radius:7px;background:#f5efe8;}
+.investment-stats span:last-child{background:#fff0ec;color:#a33d2b;}
+.investment-item>.country-action{grid-column:1/-1;width:100%;margin-top:5px;min-height:44px;}
+.investment-bilateral{grid-column:1/-1;}
+.investment-footnote{font-size:11px;line-height:1.5;color:#777067;margin:13px 0 0;}
+.bilateral-select-label{display:grid;gap:5px;margin:10px 0;font-size:11px;font-weight:700;color:#5a4a40;}
+.bilateral-select-label select{min-width:0;width:100%;padding:10px;border:1px solid #d5c9b9;border-radius:9px;background:#fff;font-size:14px;color:#312c27;}
+@media(max-width:700px){.investments-section{padding:14px;margin:22px 0;}.investment-grid{grid-template-columns:1fr;}.investment-bilateral{grid-column:auto;}.investments-intro h3{font-size:19px;}.investment-corruption{min-width:95px;}}

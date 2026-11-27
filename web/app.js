@@ -1,11 +1,11 @@
-import { ACTIVITIES, RULES } from './game-data.js?v=2026-11-27-second-economy-1';
+import { ACTIVITIES, RULES } from './game-data.js?v=2026-11-27-investments-1';
 import {
   createState, hydrateState, getStats, getActivity, quotePurchase,
   clickProduce, buyActivity, advance, startPlan, claimPlan,
   reduceInflation, exportState, getGoals, activityBusinessRate, setTaxPolicy, TAX_POLICY_LABELS, getBusinessEconomyForPolicy,
-} from './engine.js?v=2026-11-27-second-economy-1';
-import { COUNTRIES, MILESTONES, createWorld, hydrateWorld, chooseCountry, getCooperation, cooperate, getWorldStats, celebrate, rewardAnthem, START_COUNTRIES, USA_COUNTRY_ID, getUSImportOffer, buyUSImports } from './world.js?v=2026-11-27-second-economy-1';
-import { ANTHEM_END_SECONDS, anthemClipFinished } from './anthem-clip.js?v=2026-11-27-second-economy-1';
+} from './engine.js?v=2026-11-27-investments-1';
+import { COUNTRIES, MILESTONES, createWorld, hydrateWorld, chooseCountry, getCooperation, cooperate, getWorldStats, celebrate, rewardAnthem, START_COUNTRIES, USA_COUNTRY_ID, getUSImportOffer, buyUSImports, getBureaucracyOffer, buyBureaucracy, getBilateralOffer, buyBilateralAgreement } from './world.js?v=2026-11-27-investments-1';
+import { ANTHEM_END_SECONDS, anthemClipFinished } from './anthem-clip.js?v=2026-11-27-investments-1';
 
 const SAVE_KEY = 'ussr-simulator:save:v1';
 const BACKUP_KEY = 'ussr-simulator:backup:v1';
@@ -28,6 +28,7 @@ let filter = 'all';
 let search = '';
 let quantity = 1;
 let worldFilter='all';
+let selectedBilateralCountry='';
 let toastTimeout;
 let installPrompt;
 let dirty = false;
@@ -47,7 +48,7 @@ try { rawSave = localStorage.getItem(SAVE_KEY); } catch { storageFailure(); }
 let state = rawSave ? hydrateState(rawSave) : createState();
 let world = createWorld();
 try { const stored=localStorage.getItem(WORLD_KEY);if(stored)world=hydrateWorld(JSON.parse(stored)); } catch { storageFailure(); }
-state.importsOwned=world.usImports;state.usCapitalist=!world.partners.includes(USA_COUNTRY_ID);state.worldEconomyEnabled=true;
+state.importsOwned=world.usImports;state.usCapitalist=!world.partners.includes(USA_COUNTRY_ID);state.bilateralAgreements=world.bilateral.length;state.worldEconomyEnabled=true;
 
 function notify(message) {
   const toast = $('toast');
@@ -250,12 +251,31 @@ function render() {
   setText($('home-corruption'),`${format(stats.corruption)} points`);
   setText($('corruption-value'),format(stats.corruption));
   const offer=getUSImportOffer(world,state);
-  setText($('import-owned'),`${offer.count} commerce${offer.count>1?'s':''}`);
+  setText($('import-owned'),`${offer.count} établissement${offer.count>1?'s':''}`);
   const importRate=activityBusinessRate(state,'us-imports');
   setText($('import-rate'),`CA ${money(importRate.grossPerSecond)} / s · taxe ${importRate.taxRate} %`);
-  setText($('import-risk'),offer.capitalist?'+5 corruption par achat · +0,35/min':'Sans corruption américaine');
-  if($('import-buy')){$('import-buy').disabled=!canWrite||!offer.available;
-    setText($('import-buy'),state.communism<150?'Déblocage à 150 communisme':`Acheter · ${money(offer.cost)}`);}
+  setText($('import-risk'),offer.capitalist?'+5 corruption à l’achat · +0,35 / min':'Commerce sans corruption liée aux États-Unis');
+  if($('import-buy')){
+    $('import-buy').disabled=!canWrite||!offer.available;
+    setText($('import-buy'),state.communism<150?'Déblocage à 150 communisme':`Acheter · ${money(offer.cost)}`);
+  }
+  const bureau=getBureaucracyOffer(state);
+  setText($('bureaucracy-owned'),`${bureau.count} renforcement${bureau.count>1?'s':''}`);
+  if($('bureaucracy-buy')){
+    $('bureaucracy-buy').disabled=!canWrite||!bureau.available;
+    setText($('bureaucracy-buy'),state.communism<25?'Déblocage à 25 communisme':`Renforcer · ${money(bureau.cost)}`);
+  }
+  setText($('bilateral-owned'),`${world.bilateral.length} accord${world.bilateral.length>1?'s':''}`);
+  setText($('investments-corruption'),format(stats.corruption));
+  setText($('investments-corruption-rate'),`+${format(stats.corruptionPerMinute)} / min`);
+  refreshBilateralSelector();
+  const bilateralId=$('bilateral-country')?.value;
+  const agreement=bilateralId?getBilateralOffer(world,state,bilateralId):null;
+  if($('bilateral-buy')){
+    $('bilateral-buy').disabled=!canWrite||!agreement?.available;
+    setText($('bilateral-buy'),!agreement?'Aucun pays disponible':agreement.signed?'Accord déjà conclu':
+      state.communism<100?'Déblocage à 100 communisme':`Signer · ${money(agreement.cost)}`);
+  }
   setText($('production-rate'), format(stats.productionPerClick));
   setText($('tax-rate'), format(stats.business.netToTreasuryPerSecond));
   setText($('communism'), format(stats.communism));
@@ -388,6 +408,7 @@ $('reset-confirm')?.addEventListener('click', () => {
   if (!canWrite) return;
   state = createState();
   world = createWorld();
+  selectedBilateralCountry='';
   save({ backup: true });
   requestAnimationFrame(showCountryDialog);
   render();
@@ -421,7 +442,7 @@ $('import-save')?.addEventListener('change', async event => {
     const imported = hydrateState(raw);
     state = imported;
     world=hydrateWorld(raw.world);
-    state.importsOwned=world.usImports;state.usCapitalist=!world.partners.includes(USA_COUNTRY_ID);state.worldEconomyEnabled=true;
+    state.importsOwned=world.usImports;state.usCapitalist=!world.partners.includes(USA_COUNTRY_ID);state.bilateralAgreements=world.bilateral.length;state.worldEconomyEnabled=true;
     save({ backup: true });
     if(!world.origin)requestAnimationFrame(showCountryDialog);
     render();
@@ -459,7 +480,7 @@ window.addEventListener('storage', event => {
   // Keep multiple open tabs in step instead of repeatedly overwriting one save.
   try { if (localStorage.getItem(SAVE_KEY) !== event.newValue) return; } catch { return; }
   const incoming = hydrateState(event.newValue);
-  if (!incoming.recovered) { state = incoming;try { const other=localStorage.getItem(WORLD_KEY);if(other)world=hydrateWorld(JSON.parse(other));state.importsOwned=world.usImports;state.usCapitalist=!world.partners.includes(USA_COUNTRY_ID);state.worldEconomyEnabled=true; } catch {} dirty = false; render(); }
+  if (!incoming.recovered) { state = incoming;try { const other=localStorage.getItem(WORLD_KEY);if(other)world=hydrateWorld(JSON.parse(other));state.importsOwned=world.usImports;state.usCapitalist=!world.partners.includes(USA_COUNTRY_ID);state.bilateralAgreements=world.bilateral.length;state.worldEconomyEnabled=true; } catch {} dirty = false; render(); }
 });
 
 window.addEventListener('beforeinstallprompt', event => {
@@ -534,6 +555,45 @@ $('import-buy')?.addEventListener('click',()=>{
   if(!canWrite)return;advance(state);
   const bought=buyUSImports(world,state);if(!bought.ok)return;
   changed();notify(bought.offer.capitalist?'Importation ouverte · revenus automatiques et corruption en hausse':'Importation ouverte · revenus automatiques, sans corruption américaine');
+});
+function refreshBilateralSelector(){
+  const select=$('bilateral-country');
+  if(!select)return;
+  const choices=COUNTRIES.filter(c=>c.id!==world.origin&&!world.partners.includes(c.id));
+  const signature=JSON.stringify([world.origin,world.partners]);
+  if(select.dataset.signature!==signature){
+    select.dataset.signature=signature;
+    const frag=document.createDocumentFragment();
+    for(const c of choices){
+      const option=document.createElement('option');
+      option.value=c.id;
+      option.textContent=c.name+(world.bilateral.includes(c.id)?' · accord actif':'');
+      frag.append(option);
+    }
+    select.replaceChildren(frag);
+    if(choices.some(c=>c.id===selectedBilateralCountry))select.value=selectedBilateralCountry;
+    else if(choices.length)select.value=choices.find(c=>!world.bilateral.includes(c.id))?.id||choices[0].id;
+  }
+}
+$('bilateral-country')?.addEventListener('change',()=>{
+  selectedBilateralCountry=$('bilateral-country').value;
+  render();
+});
+$('bureaucracy-buy')?.addEventListener('click',()=>{
+  if(!canWrite)return;
+  advance(state);
+  const result=buyBureaucracy(state);
+  if(!result.ok){render();return;}
+  changed();notify('Fonction publique renforcée : collecte améliorée, mais corruption en hausse.');
+});
+$('bilateral-buy')?.addEventListener('click',()=>{
+  if(!canWrite)return;
+  advance(state);
+  const id=$('bilateral-country')?.value;
+  const result=buyBilateralAgreement(world,state,id);
+  if(!result.ok){render();return;}
+  selectedBilateralCountry=id;
+  changed();notify(`Accord signé avec ${result.country.name} : dividendes améliorés, corruption en hausse.`);
 });
 for(const button of document.querySelectorAll('[data-tax-policy]'))button.addEventListener('click',()=>{
   if(!canWrite)return;advance(state);
@@ -635,7 +695,7 @@ function renderWorld(){
   const reached=MILESTONES.filter(m=>m.threshold<=state.communism);
   if(reached.length)setText(document.getElementById('milestone-message'),reached.at(-1).message);
   const items=COUNTRIES.filter(c=>worldFilter==='all'||c.region===worldFilter).map(c=>getCooperation(world,state,c.id));
-  const signature=JSON.stringify([world.origin,world.partners,state.communism,Math.floor(state.cash),worldFilter]);
+  const signature=JSON.stringify([world.origin,world.partners,world.bilateral,state.communism,Math.floor(state.cash),worldFilter]);
   if(target.dataset.signature===signature)return;
   target.dataset.signature=signature;
   const frag=document.createDocumentFragment();

@@ -1,0 +1,65 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {createState,advance,exportState,hydrateState,getBusinessEconomy,getStats,buyActivity} from '../web/engine.js';
+import {COUNTRIES,createWorld,hydrateWorld,chooseCountry,getBureaucracyOffer,buyBureaucracy,getBilateralOffer,buyBilateralAgreement,getUSImportOffer,buyUSImports,cooperate} from '../web/world.js';
+const NOW=1700000000000;
+const close=(a,b)=>assert.ok(Math.abs(a-b)<1e-8,`${a} vs ${b}`);
+test('ordinary factories do not silently purchase import establishments or public-sector investments',()=>{
+ const state=createState(NOW),world=createWorld();state.worldEconomyEnabled=true;chooseCountry(world,'0');
+ state.cash=20000;state.communism=500;
+ assert.equal(buyActivity(state,'matches').ok,true);
+ assert.equal(state.importsOwned,0);assert.equal(world.usImports,0);
+ assert.equal(state.bureaucracyOffices,0);assert.equal(world.bilateral.length,0);
+ assert.equal(state.corruption,0);assert.equal(getStats(state).corruptionPerMinute,0);
+});
+test('American import establishments are purchased separately and corrupt only while US is capitalist',()=>{
+ const state=createState(NOW),world=createWorld();state.worldEconomyEnabled=true;
+ chooseCountry(world,'0');state.cash=100000000;state.communism=100001;
+ const offer=getUSImportOffer(world,state);assert.equal(offer.available,true);
+ const purchase=buyUSImports(world,state);assert.equal(purchase.ok,true);
+ assert.equal(world.usImports,1);assert.equal(state.importsOwned,1);close(state.corruption,5);
+ assert.equal(getStats(state).corruptionPerMinute,.35);
+ const cash=state.cash;advance(state,NOW+60000);assert.ok(state.cash>cash);assert.ok(state.corruption>5);
+ assert.equal(cooperate(world,state,'14').ok,true);
+ assert.equal(getUSImportOffer(world,state).corruptionOnPurchase,0);
+ const previous=state.corruption;
+ assert.equal(buyUSImports(world,state).ok,true);close(state.corruption,previous);
+});
+test('reinforced civil service raises corruption but increases tax collection',()=>{
+ const state=createState(NOW);state.worldEconomyEnabled=true;state.cash=50000;state.communism=100;
+ buyActivity(state,'matches');
+ const before=getBusinessEconomy(state).taxesCollectedPerSecond;
+ assert.equal(getBureaucracyOffer(state).available,true);
+ assert.equal(buyBureaucracy(state).ok,true);
+ assert.equal(state.bureaucracyOffices,1);close(state.corruption,2);
+ close(getStats(state).corruptionPerMinute,.08);
+ assert.ok(getBusinessEconomy(state).taxesCollectedPerSecond>before);
+ advance(state,NOW+60000);assert.ok(state.corruption>2);
+ const restored=hydrateState(exportState(state,NOW+60000),NOW+60000);
+ assert.equal(restored.bureaucracyOffices,1);
+});
+test('each capitalist country may sign one bilateral agreement; converting stops recurring corruption',()=>{
+ const state=createState(NOW),world=createWorld();state.worldEconomyEnabled=true;
+ chooseCountry(world,'0');state.cash=100000000;state.communism=100001;
+ buyActivity(state,'matches');const dividends=getBusinessEconomy(state).dividendsPerSecond;
+ const offer=getBilateralOffer(world,state,'1');assert.equal(offer.available,true);
+ assert.equal(buyBilateralAgreement(world,state,'1').ok,true);
+ assert.equal(buyBilateralAgreement(world,state,'1').ok,false);
+ assert.equal(state.bilateralAgreements,1);close(state.corruption,4);
+ close(getStats(state).corruptionPerMinute,.16);
+ assert.ok(getBusinessEconomy(state).dividendsPerSecond>dividends);
+ const saved=hydrateWorld(JSON.parse(JSON.stringify(world)));
+ assert.deepEqual(saved.bilateral,['1']);
+ const corruption=state.corruption;
+ assert.equal(cooperate(world,state,'1').ok,true);
+ assert.equal(state.bilateralAgreements,0);
+ assert.deepEqual(world.bilateral,[]);
+ close(getStats(state).corruptionPerMinute,0);
+ assert.equal(getBilateralOffer(world,state,'1'),null);
+ close(state.corruption,corruption);
+});
+test('world hydration ignores unknown, duplicated and already-cooperating bilateral partners',()=>{
+ const world=hydrateWorld({version:1,origin:'0',partners:['1'],usImports:2,bilateral:['2','2','1','fake','0']});
+ assert.deepEqual(world.bilateral,['2']);assert.equal(world.usImports,2);
+ assert.equal(world.bilateral.includes('1'),false);
+});

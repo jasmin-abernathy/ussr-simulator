@@ -7,13 +7,14 @@ export const USA_COOPERATION_COST=50000000;
 export const USA_COMMUNISM_THRESHOLD=100000;
 export const MILESTONES=Object.freeze([[5,"Premier collectif créé : chaque geste compte !"],[25,"La solidarité s'organise : garde le cap !"],[100,"Ton économie coopérative trouve son élan !"],[250,"Les premières initiatives commencent à transformer le quotidien !"],[500,"De nouveaux possibles s'ouvrent à toi !"],[1000,"La coopération traverse les frontières !"],[2500,"Les solidarités se renforcent sur plusieurs continents !"],[5000,"Ton projet commun prend une dimension internationale !"],[10000,"Une fédération de coopérations se dessine. Bravo !"],[25000,"Les solidarités se multiplient : un autre monde se construit !"],[50000,"De pays en pays, les initiatives convergent !"]].map(([threshold,message])=>({threshold,message})));
 export const ANTHEM_BONUS=3;
-export const createWorld=()=>({version:1,origin:null,partners:[],celebrated:[],usImports:0});
+export const createWorld=()=>({version:1,origin:null,partners:[],celebrated:[],usImports:0,bilateral:[]});
 export function hydrateWorld(raw){
   const w=createWorld();
   if(!raw||typeof raw!=='object'||Array.isArray(raw)||raw.version!==1)return w;
   if(typeof raw.origin==='string'&&byId.has(raw.origin))w.origin=raw.origin;
   if(w.origin&&Array.isArray(raw.partners))w.partners=[...new Set(raw.partners.filter(x=>typeof x==='string'&&byId.has(x)&&x!==w.origin))];
   if(Number.isSafeInteger(raw.usImports)&&raw.usImports>=0&&raw.usImports<=10000)w.usImports=raw.usImports;
+  if(Array.isArray(raw.bilateral))w.bilateral=[...new Set(raw.bilateral.filter(id=>typeof id==='string'&&byId.has(id)&&id!==w.origin&&!w.partners.includes(id)))];
   if(Array.isArray(raw.celebrated))w.celebrated=[...new Set(raw.celebrated.filter(x=>Number.isInteger(x)&&MILESTONES.some(m=>m.threshold===x)))];
   return w;
 }
@@ -30,6 +31,10 @@ export function cooperate(w,state,id){
   if(state.cash<c.cost)return {ok:false,reason:"funds"};
   state.cash-=c.cost;state.counters.production+=c.productionBonus;state.counters.taxes+=c.taxesBonus;state.communism+=c.communismBonus;
   w.partners.push(id);
+  if(w.bilateral.includes(id)){
+    w.bilateral=w.bilateral.filter(x=>x!==id);
+    state.bilateralAgreements=w.bilateral.length;
+  }
   if(id===USA_COUNTRY_ID)state.usCapitalist=false;
   return {ok:true,country:c};
 }
@@ -51,15 +56,52 @@ export function getUSImportOffer(w,state){
  const count=w.usImports||0;
  const cost=Math.round(35000*Math.pow(1.18,count));
  const capitalist=!w.partners.includes(USA_COUNTRY_ID);
- return {count,cost,capitalist,taxesPerSecond:60,revenuePerSecond:90,corruptionOnPurchase:capitalist?5:0,
+ return {count,cost,capitalist,corruptionPerMinute:capitalist?0.35:0,corruptionOnPurchase:capitalist?5:0,
  available:count<10000&&state.cash>=cost&&state.communism>=150};
 }
 export function buyUSImports(w,state){
  const offer=getUSImportOffer(w,state);
  if(!offer.available)return {ok:false,reason:state.communism<150?'locked':'funds'};
  state.cash-=offer.cost;
- state.counters.taxes=Math.min(1e100,state.counters.taxes+offer.taxesPerSecond);
  if(offer.capitalist)state.corruption=Math.min(1e6,(state.corruption||0)+offer.corruptionOnPurchase);
  w.usImports+=1;state.importsOwned=w.usImports;
  return {ok:true,spent:offer.cost,offer};
+}
+
+/** Compromises are separate investments, not additions to the 22 factories.
+ * Bilateral arrangements are available only with countries that are not
+ * yet cooperative partners. Their ongoing corruption ends on conversion.
+ */
+export function getBureaucracyOffer(state){
+ const count=state.bureaucracyOffices||0;
+ const cost=Math.round(1200*Math.pow(1.32,count));
+ return {count,cost,corruptionOnPurchase:2,corruptionPerMinute:0.08,
+  collectionBonusPercent:2,available:count<1000&&state.communism>=25&&state.cash>=cost};
+}
+export function buyBureaucracy(state){
+ const offer=getBureaucracyOffer(state);
+ if(!offer.available)return {ok:false,reason:state.communism<25?'locked':'funds'};
+ state.cash-=offer.cost;
+ state.bureaucracyOffices+=1;
+ state.corruption=Math.min(1e6,(state.corruption||0)+offer.corruptionOnPurchase);
+ return {ok:true,offer};
+}
+export function getBilateralOffer(world,state,id){
+ const country=byId.get(id);
+ if(!country||!world.origin||id===world.origin||world.partners.includes(id))return null;
+ const signed=world.bilateral.includes(id);
+ const cost=4500+Number(id)*350;
+ return {...country,cost,signed,corruptionOnPurchase:4,corruptionPerMinute:0.16,
+  dividendBonusPercent:1,
+  available:!signed&&state.cash>=cost&&state.communism>=100};
+}
+export function buyBilateralAgreement(world,state,id){
+ const offer=getBilateralOffer(world,state,id);
+ if(!offer||offer.signed)return {ok:false,reason:'unavailable'};
+ if(!offer.available)return {ok:false,reason:state.communism<100?'locked':'funds'};
+ state.cash-=offer.cost;
+ world.bilateral.push(id);
+ state.bilateralAgreements=world.bilateral.length;
+ state.corruption=Math.min(1e6,(state.corruption||0)+offer.corruptionOnPurchase);
+ return {ok:true,country:offer};
 }

@@ -1,4 +1,4 @@
-import { ACTIVITIES, RULES } from './game-data.js?v=2026-11-27-second-economy-1';
+import { ACTIVITIES, RULES } from './game-data.js?v=2026-11-27-investments-1';
 
 const BY_ID = new Map(ACTIVITIES.map((item, index) => [item.id, { item, index }]));
 const MAX_TIME = 8.64e15;
@@ -19,7 +19,7 @@ const addMoney = (state, amount) => {
 export function createState(now = Date.now()) {
   return {
     version: RULES.saveVersion,
-    cash: 0, totalEarned: 0, clicks: 0, automaticSeconds: 0, communism: 0, corruption: 0, importsOwned: 0, usCapitalist: true, worldEconomyEnabled: false, taxPolicy: 'balanced', secondRemainderMs: 0, economyTickMode: 'seconds-v1',
+    cash: 0, totalEarned: 0, clicks: 0, automaticSeconds: 0, communism: 0, corruption: 0, importsOwned: 0, bureaucracyOffices: 0, bilateralAgreements: 0, usCapitalist: true, worldEconomyEnabled: false, taxPolicy: 'balanced', secondRemainderMs: 0, economyTickMode: 'seconds-v1',
     owned: Object.fromEntries(ACTIVITIES.map(item => [item.id, 0])),
     counters: { production: RULES.initialProduction, taxes: 0, productionBonusPercent: 0, taxBonusPercent: 0 },
     productionSteps: 0, taxSteps: 0,
@@ -76,6 +76,8 @@ export function hydrateState(raw, now = Date.now()) {
   }
   state.corruption=raw.corruption===undefined?0:readNumber(raw.corruption,0,1e6);
   state.importsOwned=raw.importsOwned===undefined?0:readNumber(raw.importsOwned,0,10000,true);
+  state.bureaucracyOffices=raw.bureaucracyOffices===undefined?0:readNumber(raw.bureaucracyOffices,0,1000,true);
+  state.bilateralAgreements=raw.bilateralAgreements===undefined?0:readNumber(raw.bilateralAgreements,0,48,true);
   state.usCapitalist=raw.usCapitalist===false?false:true;
   state.worldEconomyEnabled=raw.worldEconomyEnabled===true;
   state.taxPolicy=['social','balanced','solidarity'].includes(raw.taxPolicy)?raw.taxPolicy:'balanced';
@@ -132,8 +134,10 @@ const commerceRevenuePerSecond = state => state.worldEconomyEnabled?(
   (state.owned.gum||0)*4+(state.owned.beer||0)*8+(state.owned.trading||0)*20+
   (state.owned.soda||0)*25+(state.owned.grocery||0)*35+
   (state.owned['black-market']||0)*70+(state.importsOwned||0)*90):0;
-const corruptionPerMinute = state => (state.owned['black-market']||0)*0.07+(state.owned.trading||0)*0.02+
-  (state.usCapitalist!==false?(state.importsOwned||0)*0.35:0);
+const corruptionPerMinute = state =>
+  (state.owned['black-market']||0)*0.07+(state.owned.trading||0)*0.02+
+  (state.usCapitalist!==false?(state.importsOwned||0)*0.35:0)+
+  (state.bureaucracyOffices||0)*0.08+(state.bilateralAgreements||0)*0.16;
 
 /** Derived values only; querying never changes the state or the clock. */
 export function getStats(state) {
@@ -411,13 +415,17 @@ export function getBusinessEconomy(state){
   owned+=state.importsOwned;
  }
  const leakage=Math.min(35,Math.floor((state.corruption||0)/25))/100;
+ const administrationEfficiency=1+Math.min(0.20,(state.bureaucracyOffices||0)*0.02);
+ const bilateralDividendBonus=1+Math.min(0.15,(state.bilateralAgreements||0)*0.01);
+ const collected=taxes*(1-leakage)*administrationEfficiency;
+ const distributed=dividends*bilateralDividendBonus;
  return {grossPerSecond:cap(gross),taxesPerSecond:cap(taxes),
- taxesCollectedPerSecond:cap(taxes*(1-leakage)),dividendsPerSecond:cap(dividends),
- netToTreasuryPerSecond:cap(taxes*(1-leakage)+dividends),
+ taxesCollectedPerSecond:cap(collected),dividendsPerSecond:cap(distributed),
+ netToTreasuryPerSecond:cap(collected+distributed),
  grossPerMinute:cap(gross*60),taxesPerMinute:cap(taxes*60),
- taxesCollectedPerMinute:cap(taxes*(1-leakage)*60),
- dividendsPerMinute:cap(dividends*60),
- netToTreasuryPerMinute:cap((taxes*(1-leakage)+dividends)*60),
+ taxesCollectedPerMinute:cap(collected*60),
+ dividendsPerMinute:cap(distributed*60),
+ netToTreasuryPerMinute:cap((collected+distributed)*60),
  taxPolicy:state.taxPolicy||'balanced',owned,
  secondsUntilPayout:(1000-(state.secondRemainderMs||0))/1000};
 }
