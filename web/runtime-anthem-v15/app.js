@@ -1,12 +1,12 @@
-const APP_VERSION='2026-11-27-anthem-2x5-1';
-import { ACTIVITIES, RULES } from './game-data.js?v=2026-11-27-anthem-2x5-1';
+const APP_VERSION='2026-11-27-clean-activity-cards-1';
+import { ACTIVITIES, RULES } from './game-data.js?v=2026-11-27-clean-activity-cards-1';
 import {
   createState, hydrateState, getStats, getActivity, quotePurchase,
   clickProduce, buyActivity, quoteActivityConversion, convertActivity, CONVERSION_TARGETS, getActivityCorruptionRate, CORRUPTION_PURCHASE, COMMUNISM_PURCHASE_PENALTY, getPropagandaOffer, buyPropagandaAgency, advance, startPlan, claimPlan, publicProjectOffers, spendPublicBudget,
   reduceInflation, exportState, getGoals, activityBusinessRate, setTaxPolicy, TAX_POLICIES, TAX_POLICY_LABELS, getBusinessEconomyForPolicy,
-} from './engine.js?v=2026-11-27-anthem-2x5-1';
-import { COUNTRIES, MILESTONES, createWorld, hydrateWorld, chooseCountry, getCooperation, cooperate, rankCountriesByCooperationCost, getWorldStats, celebrate, rewardAnthem, getAnthemReward, START_COUNTRIES, USA_COUNTRY_ID, getVisibleCountries, getWorldStage, getCampaignWaves, getUSImportOffer, buyUSImports, convertUSImports, getBureaucracyOffer, buyBureaucracy, getBilateralOffer, buyBilateralAgreement } from './world.js?v=2026-11-27-anthem-2x5-1';
-import { ANTHEM_END_SECONDS, anthemClipFinished } from './anthem-clip.js?v=2026-11-27-anthem-2x5-1';
+} from './engine.js?v=2026-11-27-clean-activity-cards-1';
+import { COUNTRIES, MILESTONES, createWorld, hydrateWorld, chooseCountry, getCooperation, cooperate, rankCountriesByCooperationCost, getWorldStats, celebrate, rewardAnthem, getAnthemReward, START_COUNTRIES, USA_COUNTRY_ID, getVisibleCountries, getWorldStage, getCampaignWaves, getUSImportOffer, buyUSImports, convertUSImports, getBureaucracyOffer, buyBureaucracy, getBilateralOffer, buyBilateralAgreement } from './world.js?v=2026-11-27-clean-activity-cards-1';
+import { ANTHEM_END_SECONDS, anthemClipFinished } from './anthem-clip.js?v=2026-11-27-clean-activity-cards-1';
 
 const SAVE_KEY = 'ussr-simulator:save:v1';
 const BACKUP_KEY = 'ussr-simulator:backup:v1';
@@ -220,12 +220,18 @@ function renderActivities() {
         metric('Taxe',`${rate.taxRate} %`),
         metric('Trésorerie / s',money(rate.treasuryPerSecond),'activity-metric-net'),
       );
+      const politicalPenalty=state.worldEconomyEnabled?(COMMUNISM_PURCHASE_PENALTY[item.id]||0):0;
       if(Object.hasOwn(CORRUPTION_PURCHASE,item.id)){
-        const risk=document.createElement('span');risk.className='activity-corruption';
-        risk.textContent=`⚠ Corruption en hausse · −${COMMUNISM_PURCHASE_PENALTY[item.id]} communisme à l’achat`;
+        const risk=document.createElement('span');
+        risk.className='activity-corruption';
+        const corruption=CORRUPTION_PURCHASE[item.id];
+        const perMinute=getActivityCorruptionRate(item.id);
+        risk.textContent=politicalPenalty
+          ? `⚠ À l’achat : −${format(politicalPenalty)} communisme · +${format(corruption)} corruption. Ensuite +${format(perMinute)} corruption/min.`
+          : `⚠ Corruption : +${format(corruption)} à l’achat, puis +${format(perMinute)}/min.`;
         refs.effects.append(risk);
       }
-      if(item.effects.communism){
+      if(item.effects.communism&&!politicalPenalty){
         const communism=document.createElement('span');
         communism.className='activity-communism';
         communism.textContent=`+${format(item.effects.communism)} communisme à l’achat · progression lente et continue`;
@@ -235,7 +241,7 @@ function renderActivities() {
     refs.unlock.hidden = item.unlocked;
     setText(refs.unlock, `Déblocage à ${format(item.unlock)} de communisme`);
     const convertible=Object.hasOwn(CONVERSION_TARGETS,item.id);
-    refs.conversionBox.hidden=!convertible;
+    refs.conversionBox.hidden=!convertible||item.owned===0;
     if(convertible){
       // Targets stay visible but unavailable until unlocked. Ownership is
       // preserved when the player chooses a different destination.
