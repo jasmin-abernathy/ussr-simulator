@@ -9,8 +9,8 @@
   <title>Communist World Simulator — Édition de développement</title>
   <link rel="icon" href="./assets/icon.svg" type="image/svg+xml">
   <link rel="manifest" href="./manifest.webmanifest">
-  <link rel="stylesheet" href="./runtime-anthem-v15/styles.css?v=2026-11-27-balance-2">
-  <script type="module" src="./runtime-anthem-v15/app.js?v=2026-11-27-balance-2"></script>
+  <link rel="stylesheet" href="./runtime-anthem-v15/styles.css?v=2026-11-27-public-ux-1">
+  <script type="module" src="./runtime-anthem-v15/app.js?v=2026-11-27-public-ux-1"></script>
 <script>
 /* Web playtest: disable the previous offline service worker and its caches.
    The game state is in localStorage and must never be touched here. */
@@ -190,7 +190,7 @@
         <div><p class="eyebrow">GÉRER LE BIEN COMMUN</p><h2 id="public-screen-title">Finances publiques</h2></div>
         <span class="count-label">Budget collectif</span>
       </div>
-      <p class="section-description">Les activités produisent des recettes après impôt pour la trésorerie et des taxes pour la caisse publique. Ici, règle la fiscalité et finance les services publics, la solidarité et la résolution des crises.</p>
+      <p class="section-description">Les activités produisent des recettes après impôt pour la trésorerie et des taxes pour la caisse publique. Ici, choisis tes priorités : services collectifs, équipements, prévention et contrôle des comptes.</p>
       <section class="finance-panel" aria-labelledby="finance-title">
         <div class="finance-panel-heading">
           <div>
@@ -214,9 +214,9 @@
             <p>Elle modifie la collecte de la caisse publique et les recettes commerciales disponibles.</p>
           </div>
           <div class="policy-buttons" role="group" aria-label="Politique fiscale">
-            <button type="button" data-tax-policy="social" aria-pressed="false"><span class="policy-name">Allégée</span><small>−10 pts de taxe</small><strong data-policy-preview="social">0 ₽/s</strong></button>
-            <button type="button" data-tax-policy="balanced" aria-pressed="true" class="is-active"><span class="policy-name">Équilibrée</span><small>Taux par secteur</small><strong data-policy-preview="balanced">0 ₽/s</strong></button>
-            <button type="button" data-tax-policy="solidarity" aria-pressed="false"><span class="policy-name">Solidaire</span><small>+10 pts de taxe</small><strong data-policy-preview="solidarity">0 ₽/s</strong></button>
+            <button type="button" data-tax-policy="social" aria-pressed="false"><span class="policy-name">Allégée</span><small>Moins de prélèvements</small><strong data-policy-preview="social">0 ₽/s</strong></button>
+            <button type="button" data-tax-policy="balanced" aria-pressed="true" class="is-active"><span class="policy-name">Équilibrée</span><small>Un compromis durable</small><strong data-policy-preview="balanced">0 ₽/s</strong></button>
+            <button type="button" data-tax-policy="solidarity" aria-pressed="false"><span class="policy-name">Solidaire</span><small>Plus de moyens publics</small><strong data-policy-preview="solidarity">0 ₽/s</strong></button>
           </div>
           <p class="finance-tip" id="finance-tip">Les taux diffèrent selon les entreprises ; un versement arrive chaque seconde.</p>
         </div>
@@ -226,13 +226,18 @@
           <div><p class="eyebrow">BUDGET COLLECTIF</p><h3 id="public-title">Caisse publique</h3></div>
           <strong id="public-budget">0 ₽</strong>
         </div>
-        <p class="public-budget-info">Les taxes collectées restent ici, séparées de la trésorerie des entreprises. Elles financent trois actions.</p>
+        <p class="public-budget-info">Les taxes collectées restent ici, séparées de la trésorerie des entreprises. À toi de décider où investir et quand intervenir.</p>
         <div class="public-budget-stats"><span id="public-budget-rate">+0 ₽ / s</span><small>Taxes cumulées : <strong id="public-collected">0 ₽</strong></small></div>
-        <p class="public-crisis-status" id="public-crises">Aucune crise en cours</p>
+        <p class="public-crisis-status" id="public-crises">Situation stable dans les services collectifs.</p>
+        <div class="public-projects-heading"><h4>Décisions budgétaires</h4><p>Développe les équipements publics ou mobilise les équipes quand la situation l’exige.</p></div>
         <div class="public-projects">
-          <article class="public-project"><div><strong>🏥 Services publics</strong><small>+3 % de taxes collectées par niveau, jusqu’à +30 %.</small><span id="public-project-services-level">Niveau 0/10</span></div><button id="public-project-services" type="button" disabled>Financer</button></article>
-          <article class="public-project"><div><strong>🌍 Solidarité internationale</strong><small>−5 % sur le coût en roubles des coopérations par niveau, jusqu’à −40 %.</small><span id="public-project-solidarity-level">Niveau 0/8</span></div><button id="public-project-solidarity" type="button" disabled>Financer</button></article>
-          <article class="public-project"><div><strong>🛠️ Gestion des crises</strong><small>Une crise survient toutes les 15 min d’activité, jusqu’à 3. Chaque crise réduit la collecte de 10 % et augmente la corruption de 1. Sa résolution rétablit la collecte et retire 1 point de corruption.</small><span id="public-project-crisis-level">0 à résoudre</span></div><button id="public-project-crisis" type="button" disabled>Aucune crise</button></article>
+          <article class="public-project"><div><strong>🏥 Services publics</strong><small>Renforce les équipements collectifs et les recettes qui les financent.</small><span id="public-project-services-level">Niveau 0/10</span></div><button id="public-project-services" type="button" disabled>Financer</button></article>
+          <article class="public-project"><div><strong>🌍 Solidarité internationale</strong><small>Facilite les futurs partenariats avec d’autres pays.</small><span id="public-project-solidarity-level">Niveau 0/8</span></div><button id="public-project-solidarity" type="button" disabled>Financer</button></article>
+          <article class="public-project"><div><strong>🛠️ Gestion des crises</strong><small>Mobilise les services publics pour rétablir la situation et restaurer la confiance.</small><span id="public-project-crisis-level">0 à résoudre</span></div><button id="public-project-crisis" type="button" disabled>Aucune crise</button></article>
+          <article class="public-project"><div><strong>🚋 Transports publics</strong><small>Relie les quartiers et facilite l’activité économique.</small><span id="public-project-transport-level">Réseau à développer</span></div><button id="public-project-transport" type="button" disabled>Investir</button></article>
+          <article class="public-project"><div><strong>🏘️ Logements coopératifs</strong><small>Un territoire mieux équipé résiste davantage aux périodes difficiles.</small><span id="public-project-housing-level">Programme à lancer</span></div><button id="public-project-housing" type="button" disabled>Investir</button></article>
+          <article class="public-project public-project-repeatable"><div><strong>🔍 Contrôle des comptes</strong><small>Organise une inspection pour faire reculer la corruption.</small><span id="public-project-audit-level">Intervention ponctuelle</span></div><button id="public-project-audit" type="button" disabled>Inspecter</button></article>
+          <article class="public-project public-project-repeatable"><div><strong>🔧 Entretien des infrastructures</strong><small>Rénove les équipements pour limiter les difficultés de production et de collecte.</small><span id="public-project-maintenance-level">Intervention ponctuelle</span></div><button id="public-project-maintenance" type="button" disabled>Entretenir</button></article>
         </div>
       </section>
     </section>
@@ -288,11 +293,11 @@
   <footer class="game-footer"><span>COMMUNIST WORLD SIMULATOR</span><p>Un petit commencement. De grandes possibilités.</p><a href="https://github.com/jasmin-abernathy/ussr-simulator" target="_blank" rel="noopener noreferrer">Le projet</a></footer>
 
   <nav class="mobile-nav" aria-label="Navigation principale">
-    <button class="is-active" type="button" data-screen="home" aria-current="page"><span>⌂</span>Accueil</button>
-    <button type="button" data-screen="work"><span>⚙</span>Activités</button>
-    <button type="button" data-screen="public"><span>🏛</span>Caisse</button>
-    <button type="button" data-screen="world"><span>◎</span>Monde</button>
-    <button type="button" data-screen="plan"><span>★</span>Plan</button>
+    <button class="is-active" type="button" data-screen="home" aria-current="page"><svg aria-hidden="true"><use href="./assets/symbols.svg#nav-home"></use></svg><span>Accueil</span></button>
+    <button type="button" data-screen="work"><svg aria-hidden="true"><use href="./assets/symbols.svg#industry"></use></svg><span>Activités</span></button>
+    <button type="button" data-screen="public"><svg aria-hidden="true"><use href="./assets/symbols.svg#nav-public"></use></svg><span>Caisse</span></button>
+    <button type="button" data-screen="world"><svg aria-hidden="true"><use href="./assets/symbols.svg#nav-world"></use></svg><span>Monde</span></button>
+    <button type="button" data-screen="plan"><svg aria-hidden="true"><use href="./assets/symbols.svg#nav-plan"></use></svg><span>Plan</span></button>
   </nav>
   <dialog id="country-dialog" class="game-dialog country-dialog" aria-labelledby="country-title">
     <div class="dialog-heading"><p class="eyebrow">TON POINT DE DÉPART</p><span>🌍</span></div>
