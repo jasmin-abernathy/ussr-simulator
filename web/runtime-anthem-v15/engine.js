@@ -106,10 +106,10 @@ export function hydrateState(raw, now = Date.now()) {
   state.publicBudget=raw.publicBudget===undefined?0:readNumber(raw.publicBudget,0);
   state.publicTaxesCollected=raw.publicTaxesCollected===undefined?0:readNumber(raw.publicTaxesCollected,0);
   state.publicSpent=raw.publicSpent===undefined?0:readNumber(raw.publicSpent,0);
-  state.publicServicesLevel=raw.publicServicesLevel===undefined?0:readNumber(raw.publicServicesLevel,0,10,true);
-  state.internationalAidLevel=raw.internationalAidLevel===undefined?0:readNumber(raw.internationalAidLevel,0,8,true);
-  state.publicTransportLevel=raw.publicTransportLevel===undefined?0:readNumber(raw.publicTransportLevel,0,12,true);
-  state.publicHousingLevel=raw.publicHousingLevel===undefined?0:readNumber(raw.publicHousingLevel,0,10,true);
+  state.publicServicesLevel=raw.publicServicesLevel===undefined?0:readNumber(raw.publicServicesLevel,0,16,true);
+  state.internationalAidLevel=raw.internationalAidLevel===undefined?0:readNumber(raw.internationalAidLevel,0,11,true);
+  state.publicTransportLevel=raw.publicTransportLevel===undefined?0:readNumber(raw.publicTransportLevel,0,18,true);
+  state.publicHousingLevel=raw.publicHousingLevel===undefined?0:readNumber(raw.publicHousingLevel,0,16,true);
   state.corruptionAudits=raw.corruptionAudits===undefined?0:readNumber(raw.corruptionAudits,0,100000,true);
   state.lastAuditAt=raw.lastAuditAt===undefined?0:readNumber(raw.lastAuditAt,0,MAX_TIME,true);
   state.crisesPending=raw.crisesPending===undefined?0:readNumber(raw.crisesPending,0,3,true);
@@ -261,8 +261,8 @@ export function generatePublicNeed(state,now=Date.now()){
 }
 /** Ring-fenced tax budget. Projects never spend the business treasury. */
 export const PUBLIC_PROJECTS=Object.freeze({
- services:Object.freeze({name:'Services publics',description:'Augmente la collecte fiscale de 3 % par niveau (maximum 30 %).'}),
- solidarity:Object.freeze({name:'Solidarité internationale',description:'Réduit le coût des futures coopérations de 5 % par niveau (maximum 40 %).'}),
+ services:Object.freeze({name:'Services publics',description:'Renforce progressivement la collecte fiscale, selon le développement du pays.'}),
+ solidarity:Object.freeze({name:'Solidarité internationale',description:'Facilite les coopérations, avec de nouvelles possibilités au fil du développement.'}),
  crisis:Object.freeze({name:'Résoudre la crise',description:'Répare une crise économique : restaure la collecte fiscale et réduit la pression de corruption.'}),
  transport:Object.freeze({name:'Développer les transports publics',description:'Améliore durablement les revenus des activités grâce à une meilleure desserte.'}),
  housing:Object.freeze({name:'Construire des logements coopératifs',description:'Protège progressivement les recettes publiques pendant les crises.'}),
@@ -270,7 +270,25 @@ export const PUBLIC_PROJECTS=Object.freeze({
  maintenance:Object.freeze({name:'Entretenir les infrastructures',description:'Remet les équipements en état et soulage les tensions économiques.'}),
  needs:Object.freeze({name:'Répondre aux besoins collectifs',description:'Finance les nouveaux besoins issus du développement du pays.'}),
 });
+/** Public-program capacity grows with economic milestones; benefits above the
+ * original cap are deliberately smaller. Reached levels are never taken away.
+ */
+export const PUBLIC_PROGRAM_CAPS=Object.freeze({
+ services:Object.freeze({base:10,step:2,hard:16}),
+ solidarity:Object.freeze({base:8,step:1,hard:11}),
+ transport:Object.freeze({base:12,step:2,hard:18}),
+ housing:Object.freeze({base:10,step:2,hard:16}),
+});
+export function getPublicProgramCaps(state){
+ const score=getPublicNeedScore(state);
+ const stages=[5,10,16].filter(threshold=>score>=threshold).length;
+ const levels={services:state.publicServicesLevel||0,solidarity:state.internationalAidLevel||0,transport:state.publicTransportLevel||0,housing:state.publicHousingLevel||0};
+ return Object.fromEntries(Object.entries(PUBLIC_PROGRAM_CAPS).map(([id,rule])=>[
+  id,Math.max(levels[id],Math.min(rule.hard,rule.base+rule.step*stages))
+ ]));
+}
 export function publicProjectOffers(state,now=Date.now()){
+ const caps=getPublicProgramCaps(state);
  const auditCooldown=getAuditCooldown(state,now);
  const services=state.publicServicesLevel||0;
  const aid=state.internationalAidLevel||0;
@@ -279,11 +297,11 @@ export function publicProjectOffers(state,now=Date.now()){
  const needs=state.publicNeedsPending||0;
  const needType=PUBLIC_NEED_TYPES[(state.publicNeedsResolved||0)%PUBLIC_NEED_TYPES.length];
  const offers={
-  services:{...PUBLIC_PROJECTS.services,level:services,cost:Math.ceil(25*1.6**services),maxLevel:10,locked:services>=10},
-  solidarity:{...PUBLIC_PROJECTS.solidarity,level:aid,cost:Math.ceil(40*1.7**aid),maxLevel:8,locked:aid>=8},
+  services:{...PUBLIC_PROJECTS.services,level:services,cost:Math.ceil(25*1.6**services),maxLevel:caps.services,locked:services>=caps.services,fullyDeveloped:caps.services===PUBLIC_PROGRAM_CAPS.services.hard},
+  solidarity:{...PUBLIC_PROJECTS.solidarity,level:aid,cost:Math.ceil(40*1.7**aid),maxLevel:caps.solidarity,locked:aid>=caps.solidarity,fullyDeveloped:caps.solidarity===PUBLIC_PROGRAM_CAPS.solidarity.hard},
   crisis:{...PUBLIC_PROJECTS.crisis,level:pending,cost:20+15*pending,locked:pending===0},
-  transport:{...PUBLIC_PROJECTS.transport,level:state.publicTransportLevel||0,cost:Math.ceil(180*1.55**(state.publicTransportLevel||0)),maxLevel:12,locked:(state.publicTransportLevel||0)>=12},
-  housing:{...PUBLIC_PROJECTS.housing,level:state.publicHousingLevel||0,cost:Math.ceil(220*1.65**(state.publicHousingLevel||0)),maxLevel:10,locked:(state.publicHousingLevel||0)>=10},
+  transport:{...PUBLIC_PROJECTS.transport,level:state.publicTransportLevel||0,cost:Math.ceil(180*1.55**(state.publicTransportLevel||0)),maxLevel:caps.transport,locked:(state.publicTransportLevel||0)>=caps.transport,fullyDeveloped:caps.transport===PUBLIC_PROGRAM_CAPS.transport.hard},
+  housing:{...PUBLIC_PROJECTS.housing,level:state.publicHousingLevel||0,cost:Math.ceil(220*1.65**(state.publicHousingLevel||0)),maxLevel:caps.housing,locked:(state.publicHousingLevel||0)>=caps.housing,fullyDeveloped:caps.housing===PUBLIC_PROGRAM_CAPS.housing.hard},
   audit:{...PUBLIC_PROJECTS.audit,cost:Math.ceil(600*1.38**Math.min(24,state.corruptionAudits||0)+Math.min(2000,(state.corruption||0)*18)),locked:(state.corruption||0)<.01||!auditCooldown.ready,cooldownMs:auditCooldown.remainingMs,cooldownActive:!auditCooldown.ready},
   maintenance:{...PUBLIC_PROJECTS.maintenance,cost:Math.ceil(160+Math.min(900,(state.taxSteps||0)/30+(state.productionSteps||0)/40)),locked:(state.taxSteps||0)<250&&(state.productionSteps||0)<250},
   needs:{...PUBLIC_PROJECTS.needs,name:needType.name,description:needType.detail,pending:needs,
@@ -701,12 +719,12 @@ export function getBusinessEconomy(state){
   owned+=state.importsOwned;
  }
  const leakage=Math.min(35,Math.floor((state.corruption||0)/25))/100;
- const administrationEfficiency=1+Math.min(0.20,(state.bureaucracyOffices||0)*0.02)+Math.min(.30,(state.publicServicesLevel||0)*.03);
+ const administrationEfficiency=1+Math.min(0.20,(state.bureaucracyOffices||0)*0.02)+Math.min(.30,(state.publicServicesLevel||0)*.03)+Math.min(.06,Math.max(0,(state.publicServicesLevel||0)-10)*.01);
  const bilateralTradeBonus=1+Math.min(0.15,(state.bilateralAgreements||0)*0.01);
- const housingProtection=Math.min(.05,(state.publicHousingLevel||0)*.005);
+ const housingProtection=Math.min(.05,(state.publicHousingLevel||0)*.005)+Math.min(.012,Math.max(0,(state.publicHousingLevel||0)-10)*.002);
  const crisisLoss=Math.max(.05,.10-housingProtection);
  const collected=taxes*(1-leakage)*administrationEfficiency*(1-crisisLoss*Math.min(3,state.crisesPending||0))*(1-.04*Math.min(3,state.publicNeedsPending||0));
- const transportBonus=1+Math.min(.18,(state.publicTransportLevel||0)*.015);
+ const transportBonus=1+Math.min(.18,(state.publicTransportLevel||0)*.015)+Math.min(.03,Math.max(0,(state.publicTransportLevel||0)-12)*.005);
  const businessIncome=treasury*bilateralTradeBonus*transportBonus;
  return {grossPerSecond:cap(gross),taxesPerSecond:cap(taxes),
  taxesCollectedPerSecond:cap(collected),businessIncomePerSecond:cap(businessIncome),
