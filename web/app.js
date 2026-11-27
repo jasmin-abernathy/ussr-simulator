@@ -4,9 +4,11 @@ import {
   clickProduce, buyActivity, advance, startPlan, claimPlan,
   reduceInflation, exportState, getGoals,
 } from './engine.js';
+import { COUNTRIES, MILESTONES, createWorld, hydrateWorld, chooseCountry, getCooperation, cooperate, getWorldStats, celebrate } from './world.js';
 
 const SAVE_KEY = 'ussr-simulator:save:v1';
 const BACKUP_KEY = 'ussr-simulator:backup:v1';
+const WORLD_KEY = 'communist-world:world:v1';
 const $ = id => document.getElementById(id);
 const numbers = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 });
 const compact = new Intl.NumberFormat('fr-FR', { notation: 'compact', maximumFractionDigits: 2 });
@@ -24,6 +26,7 @@ let sessionRequested = false;
 let filter = 'all';
 let search = '';
 let quantity = 1;
+let worldFilter='all';
 let toastTimeout;
 let installPrompt;
 let dirty = false;
@@ -41,6 +44,8 @@ function storageFailure() {
 
 try { rawSave = localStorage.getItem(SAVE_KEY); } catch { storageFailure(); }
 let state = rawSave ? hydrateState(rawSave) : createState();
+let world = createWorld();
+try { const stored=localStorage.getItem(WORLD_KEY);if(stored)world=hydrateWorld(JSON.parse(stored)); } catch { storageFailure(); }
 
 function notify(message) {
   const toast = $('toast');
@@ -76,6 +81,7 @@ function save({ backup = false } = {}) {
       if (previous) localStorage.setItem(BACKUP_KEY, previous);
     }
     localStorage.setItem(SAVE_KEY, JSON.stringify(exportState(state)));
+    localStorage.setItem(WORLD_KEY, JSON.stringify(world));
     dirty = false;
     if ($('storage-warning')) $('storage-warning').hidden = true;
     setText($('save-status'), 'Partie sauvegardée sur cet appareil');
@@ -83,6 +89,8 @@ function save({ backup = false } = {}) {
 }
 
 function changed() {
+  const reached=world.origin?celebrate(world,state.communism):[];
+  if(reached.length)notify(reached[reached.length-1].message);
   dirty = true;
   render();
   save();
@@ -211,6 +219,10 @@ function render() {
   $('produce-button').disabled = !canWrite;
   for (const id of ['import-save', 'reset-open', 'reset-confirm']) { if ($(id)) $(id).disabled = !canWrite; }
   setText($('balance'), format(stats.cash));
+  setText($('home-balance'),format(stats.cash));
+  setText($('home-communism'),format(stats.communism));
+  setText($('home-production'),format(stats.productionPerClick));
+  setText($('home-taxes'),format(stats.taxesPerSecond));
   setText($('production-rate'), format(stats.productionPerClick));
   setText($('tax-rate'), format(stats.taxesPerSecond));
   setText($('communism'), format(stats.communism));
@@ -238,6 +250,7 @@ function render() {
   setText($('plan-countdown'), !plan.unlocked ? `${format(stats.communism)} / ${format(RULES.planUnlock)}` : plan.status === 'ready' ? 'Terminé' : plan.status === 'running' ? duration(plan.remainingMs) : duration(plan.durationMs));
   renderActivities();
   renderGoals();
+  renderWorld();
 }
 
 function showOffline(info) {
@@ -325,14 +338,16 @@ $('reset-open')?.addEventListener('click', () => { closeDialog($('settings-dialo
 $('reset-confirm')?.addEventListener('click', () => {
   if (!canWrite) return;
   state = createState();
+  world = createWorld();
   save({ backup: true });
+  requestAnimationFrame(showCountryDialog);
   render();
   closeDialog($('reset-dialog'));
   notify('Nouvelle partie. La première fabrique t’attend.');
 });
 
 $('export-save')?.addEventListener('click', () => {
-  const blob = new Blob([JSON.stringify(exportState(state), null, 2) + '\n'], { type: 'application/json' });
+  const blob = new Blob([JSON.stringify({...exportState(state),world}, null, 2) + '\n'], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
@@ -356,7 +371,9 @@ $('import-save')?.addEventListener('change', async event => {
     if (!canWrite) throw new Error('La partie est active dans un autre onglet. Ferme-le avant de réessayer.');
     const imported = hydrateState(raw);
     state = imported;
+    world=hydrateWorld(raw.world);
     save({ backup: true });
+    if(!world.origin)requestAnimationFrame(showCountryDialog);
     render();
     closeDialog($('settings-dialog'));
     notify(imported.recovered ? 'Partie importée. Quelques valeurs invalides ont été corrigées.' : 'Partie importée. Bon retour !');
@@ -392,7 +409,7 @@ window.addEventListener('storage', event => {
   // Keep multiple open tabs in step instead of repeatedly overwriting one save.
   try { if (localStorage.getItem(SAVE_KEY) !== event.newValue) return; } catch { return; }
   const incoming = hydrateState(event.newValue);
-  if (!incoming.recovered) { state = incoming; dirty = false; render(); }
+  if (!incoming.recovered) { state = incoming;try { const other=localStorage.getItem(WORLD_KEY);if(other)world=hydrateWorld(JSON.parse(other)); } catch {} dirty = false; render(); }
 });
 
 window.addEventListener('beforeinstallprompt', event => {
@@ -445,7 +462,7 @@ function acquireSession() {
   warning.hidden = false;
   render();
   navigator.locks.request(SAVE_KEY, async () => {
-    try { const current = localStorage.getItem(SAVE_KEY); if (current) state = hydrateState(current); } catch { storageFailure(); }
+    try { const current = localStorage.getItem(SAVE_KEY);if(current)state=hydrateState(current);const other=localStorage.getItem(WORLD_KEY);if(other)world=hydrateWorld(JSON.parse(other)); } catch { storageFailure(); }
     canWrite = true;
     warning.hidden = true;
     render();
@@ -484,3 +501,62 @@ if (anthemAudio && anthemButton) {
   anthemAudio.addEventListener('ended', () => { anthemAudio.currentTime = 0; updateAnthem(); });
   anthemAudio.addEventListener('error', () => updateAnthem('Fichier non chargé. Vérifie la connexion ou réessaie.'));
 }
+
+/* Mobile screens and international cooperation. */
+function setScreen(screen) {
+  if(!['home','work','world','plan'].includes(screen))return;
+  document.body.dataset.screen=screen;
+  for(const b of document.querySelectorAll('.mobile-nav [data-screen]')){
+    const yes=b.dataset.screen===screen;
+    b.classList.toggle('is-active',yes);
+    if(yes)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');
+  }
+  window.scrollTo({top:0,behavior:'instant'});
+}
+for(const b of document.querySelectorAll('[data-screen]'))b.addEventListener('click',()=>setScreen(b.dataset.screen));
+setScreen('home');
+const choice=document.getElementById('country-choice');
+for(const c of COUNTRIES){const option=document.createElement('option');option.value=c.id;option.textContent=c.name;choice.append(option);}
+function showCountryDialog(){if(!world.origin)openDialog('country-dialog');}
+document.getElementById('country-confirm')?.addEventListener('click',()=>{
+  if(!canWrite)return;
+  const result=chooseCountry(world,choice.value);
+  if(!result.ok)return;
+  closeDialog(document.getElementById('country-dialog'));
+  changed();notify(`Bienvenue en ${result.country.name} ! Fais grandir la coopération.`);
+});
+document.getElementById('world-filter')?.addEventListener('change',e=>{worldFilter=e.currentTarget.value;renderWorld();});
+function renderWorld(){
+  const target=document.getElementById('world-list');if(!target)return;
+  const stats=getWorldStats(world);
+  setText(document.getElementById('world-origin'),stats.origin?.name||'À choisir');
+  setText(document.getElementById('world-partners'),stats.partners);
+  setText(document.getElementById('world-regions'),stats.regions);
+  setText(document.getElementById('world-counter'),`${stats.partners} / ${COUNTRIES.length-1} pays partenaires`);
+  const reached=MILESTONES.filter(m=>m.threshold<=state.communism);
+  if(reached.length)setText(document.getElementById('milestone-message'),reached.at(-1).message);
+  const items=COUNTRIES.filter(c=>worldFilter==='all'||c.region===worldFilter).map(c=>getCooperation(world,state,c.id));
+  const signature=JSON.stringify([world.origin,world.partners,state.communism,Math.floor(state.cash),worldFilter]);
+  if(target.dataset.signature===signature)return;
+  target.dataset.signature=signature;
+  const frag=document.createDocumentFragment();
+  for(const item of items){
+    const card=document.createElement('article');card.className='country-card';
+    if(item.home)card.classList.add('is-home');if(item.joined)card.classList.add('is-partner');
+    const heading=document.createElement('div'),name=document.createElement('strong'),region=document.createElement('small');
+    name.textContent=item.name;region.textContent=item.region;heading.append(name,region);
+    const status=document.createElement('p');status.className='country-status';
+    status.textContent=item.home?'Pays de départ':item.joined?'Coopération active':`Seuil : ${format(item.threshold)} communisme`;
+    const bonus=document.createElement('p');bonus.className='country-bonus';bonus.textContent=`+${format(item.productionBonus)} production · +${format(item.taxesBonus)} taxes · +${format(item.communismBonus)} communisme`;
+    const button=document.createElement('button');button.type='button';button.className='country-action';button.disabled=!canWrite||!item.available;
+    button.textContent=item.home?'Point de départ':item.joined?'Partenaire ✓':state.communism<item.threshold?'À débloquer':state.cash<item.cost?'Financement insuffisant':`Coopérer · ${money(item.cost)}`;
+    button.addEventListener('click',()=>{
+      if(!canWrite)return;advance(state);const result=cooperate(world,state,item.id);
+      if(!result.ok){renderWorld();return;}
+      changed();notify(`Coopération avec ${item.name} : +${result.country.communismBonus} communisme !`);
+    });
+    card.append(heading,status,bonus,button);frag.append(card);
+  }
+  target.replaceChildren(frag);
+}
+if(!world.origin)requestAnimationFrame(showCountryDialog);

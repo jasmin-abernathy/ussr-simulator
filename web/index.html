@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#b9382a">
   <meta name="description" content="Un jeu de gestion à ton rythme. Produis, développe tes activités et prépare le prochain plan quinquennal.">
   <meta name="robots" content="noindex,nofollow">
-  <title>USSR Simulator — Édition personnelle</title>
+  <title>Communist World Simulator — Édition de développement</title>
   <link rel="icon" href="./assets/icon.svg" type="image/svg+xml">
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="stylesheet" href="./styles.css">
@@ -15,9 +15,9 @@
 <body>
   <a class="skip-link" href="#production-panel">Aller au jeu</a>
   <header class="site-header">
-    <a class="wordmark" href="./" aria-label="USSR Simulator, accueil du jeu">
+    <a class="wordmark" href="./" aria-label="Communist World Simulator, accueil du jeu">
       <span class="brand-mark" aria-hidden="true"><svg><use href="./assets/symbols.svg#star"></use></svg></span>
-      <span class="brand-name">USSR<span>SIMULATOR</span></span>
+      <span class="brand-name">COMMUNIST<span>WORLD SIMULATOR</span></span>
     </a>
     <p class="edition-label"><span class="edition-line"></span>ÉDITION PERSONNELLE</p>
     <div class="header-actions">
@@ -32,6 +32,29 @@
         <p class="eyebrow">TOUT COMMENCE ICI</p>
         <h1 id="command-title">À toi de <br>faire tourner <br><em>l’histoire.</em></h1>
         <p class="intro-description">Une activité après l’autre,<br>construis ton avenir.</p>
+      </div>
+      <section class="home-summary" aria-label="État de ton économie">
+        <div><span>Balance</span><strong><span id="home-balance">0</span> ₽</strong></div>
+        <div><span>Communisme</span><strong class="red" id="home-communism">0</strong></div>
+        <div><span>Production</span><strong class="teal"><span id="home-production">10</span> ₽ / clic</strong></div>
+        <div><span>Taxes</span><strong class="green"><span id="home-taxes">0</span> ₽ / seconde</strong></div>
+      </section>
+      <p class="home-hint">Les recettes automatiques continuent pendant ton absence.</p>
+      <section class="anthem-panel" aria-label="L’Internationale">
+        <p class="anthem-kicker">LA MUSIQUE DES CAMARADES</p>
+        <button id="anthem-button" class="anthem-button" type="button" aria-pressed="false">
+          <span class="anthem-note" aria-hidden="true"><img src="./assets/icon.svg" width="82" height="82" alt=""></span>
+          <span class="anthem-copy"><strong id="anthem-label">Jouer L’Internationale</strong><small id="anthem-status">Version instrumentale · sans paroles</small></span>
+          <span id="anthem-control-symbol" aria-hidden="true">▶</span>
+        </button>
+        <audio id="anthem-audio" preload="none" src="https://commons.wikimedia.org/wiki/Special:Redirect/file/L%27internationale.ogg"></audio>
+        <p class="anthem-credit">Enregistrement CC0 · <a href="https://commons.wikimedia.org/wiki/File:L%27internationale.ogg" target="_blank" rel="noopener noreferrer">Source et licence</a></p>
+      </section>
+      <div class="home-shortcuts">
+        <button type="button" class="shortcut" data-screen="work"><span>⚙</span>Travail</button>
+        <button type="button" class="shortcut" data-screen="world"><span>🌐</span>Monde</button>
+        <button type="button" class="shortcut" data-screen="plan"><span>★</span>Plan en 5 ans</button>
+        <button type="button" class="shortcut" data-open-dialog="settings-dialog"><span>☷</span>Ma partie</button>
       </div>
       <div class="production-console" id="command-panel">
         <div class="factory-scene">
@@ -49,16 +72,6 @@
           <p class="action-hint">Touche pour produire.<br>Les recettes s’accumulent toutes seules.</p>
         </div>
       </div>
-      <section class="anthem-panel" aria-label="L’Internationale">
-        <p class="anthem-kicker">LA MUSIQUE DES CAMARADES</p>
-        <button id="anthem-button" class="anthem-button" type="button" aria-pressed="false">
-          <span class="anthem-note" aria-hidden="true">♫</span>
-          <span class="anthem-copy"><strong id="anthem-label">Jouer L’Internationale</strong><small id="anthem-status">Version instrumentale · sans paroles</small></span>
-          <span id="anthem-control-symbol" aria-hidden="true">▶</span>
-        </button>
-        <audio id="anthem-audio" preload="none" src="https://commons.wikimedia.org/wiki/Special:Redirect/file/L%27internationale.ogg"></audio>
-        <p class="anthem-credit">Enregistrement CC0 · <a href="https://commons.wikimedia.org/wiki/File:L%27internationale.ogg" target="_blank" rel="noopener noreferrer">Source et licence</a></p>
-      </section>
       <p class="quiet-note"><svg aria-hidden="true"><use href="./assets/symbols.svg#leaf"></use></svg>À ton rythme. Sans publicité.</p>
     </section>
 
@@ -93,9 +106,17 @@
         <div class="loading-state" role="status"><span class="loading-symbol" aria-hidden="true">✳</span>Préparation de ton économie…</div>
       </div>
       <p id="activity-empty" class="empty-state" hidden>Aucune activité dans cette sélection pour le moment.</p>
-      <noscript><p class="empty-state">Active JavaScript dans ton navigateur pour jouer à USSR Simulator.</p></noscript>
+      <noscript><p class="empty-state">Active JavaScript dans ton navigateur pour jouer à Communist World Simulator.</p></noscript>
     </section>
 
+    <section class="world-column" id="world-panel" aria-labelledby="world-title">
+      <div class="section-heading"><div><p class="eyebrow">SOLIDARITÉS SANS FRONTIÈRES</p><h2 id="world-title">Coopération mondiale</h2></div><span class="count-label" id="world-counter">0 pays partenaires</span></div>
+      <p class="section-description">Choisis ton pays de départ et noue progressivement des partenariats volontaires. Les échanges apportent de nouveaux savoir-faire et améliorent la production, les recettes et le communisme.</p>
+      <div class="world-dashboard"><div><span>Départ</span><strong id="world-origin">À choisir</strong></div><div><span>Partenaires</span><strong id="world-partners">0</strong></div><div><span>Régions</span><strong id="world-regions">0</strong></div></div>
+      <p id="milestone-message" class="world-milestone" role="status">Une autre économie est possible. Construis les premiers liens !</p>
+      <div class="world-toolbar"><label for="world-filter">Région</label><select id="world-filter"><option value="all">Toutes</option><option>Europe</option><option>Amérique du Nord</option><option>Amérique du Sud</option><option>Afrique</option><option>Europe et Asie</option><option>Asie</option><option>Océanie</option></select></div>
+      <div id="world-list" class="world-list"></div>
+    </section>
     <aside class="planning-column" aria-label="Plan et progression">
       <section class="plan-card" id="plan-panel" aria-labelledby="plan-title">
         <div class="plan-topline"><span class="eyebrow">VOIR PLUS GRAND</span><svg class="plan-star" aria-hidden="true"><use href="./assets/symbols.svg#star"></use></svg></div>
@@ -130,14 +151,21 @@
     </aside>
   </main>
 
-  <footer class="game-footer"><span>USSR SIMULATOR</span><p>Un petit commencement. De grandes possibilités.</p><a href="https://github.com/jasmin-abernathy/ussr-simulator" target="_blank" rel="noopener noreferrer">Le projet</a></footer>
+  <footer class="game-footer"><span>COMMUNIST WORLD SIMULATOR</span><p>Un petit commencement. De grandes possibilités.</p><a href="https://github.com/jasmin-abernathy/ussr-simulator" target="_blank" rel="noopener noreferrer">Le projet</a></footer>
 
-  <nav class="mobile-nav" aria-label="Navigation dans le jeu">
-    <a class="is-active" href="#command-panel"><svg aria-hidden="true"><use href="./assets/symbols.svg#industry"></use></svg><span>Production</span></a>
-    <a href="#plan-panel"><svg aria-hidden="true"><use href="./assets/symbols.svg#star"></use></svg><span>Le plan</span></a>
-    <a href="#session-panel"><svg aria-hidden="true"><use href="./assets/symbols.svg#save"></use></svg><span>Ma partie</span></a>
+  <nav class="mobile-nav" aria-label="Navigation principale">
+    <button class="is-active" type="button" data-screen="home" aria-current="page"><span>⌂</span>Accueil</button>
+    <button type="button" data-screen="work"><span>⚙</span>Travail</button>
+    <button type="button" data-screen="world"><span>◎</span>Monde</button>
+    <button type="button" data-screen="plan"><span>★</span>Plan</button>
   </nav>
-
+  <dialog id="country-dialog" class="game-dialog country-dialog" aria-labelledby="country-title">
+    <div class="dialog-heading"><p class="eyebrow">TON POINT DE DÉPART</p><span>🌍</span></div>
+    <h2 id="country-title">Où commence l’aventure ?</h2>
+    <p>Choisis ton pays de départ : tu pourras ensuite créer des coopérations avec les autres pays. Ce choix sera conservé avec ta sauvegarde.</p>
+    <label class="country-choice" for="country-choice">Pays de départ<select id="country-choice"></select></label>
+    <button id="country-confirm" type="button" class="primary-button full-width">Commencer dans ce pays</button>
+  </dialog>
   <dialog id="help-dialog" class="game-dialog" aria-labelledby="help-title">
     <div class="dialog-heading"><p class="eyebrow">BIENVENUE, CAMARADE</p><button class="icon-button dialog-close" type="button" data-close-dialog aria-label="Fermer l’aide"><svg aria-hidden="true"><use href="./assets/symbols.svg#close"></use></svg></button></div>
     <h2 id="help-title">Les grandes choses<br>commencent petit.</h2>

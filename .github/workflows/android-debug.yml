@@ -18,7 +18,10 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      - uses: android-actions/setup-android@v3
+      - name: Prepare Android SDK
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platform-tools" "platforms;android-36" "build-tools;36.0.0"
       - name: Install dependencies
         run: npm install --no-audit --no-fund
       - name: Retrieve public-domain instrumental recording
@@ -44,6 +47,6 @@ jobs:
       - name: Upload installable debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: ussr-simulator-android-debug
+          name: communist-world-simulator-android-debug
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error

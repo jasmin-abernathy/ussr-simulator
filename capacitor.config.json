@@ -1,6 +1,6 @@
 {
-  "appId": "org.lepotager.ussrsimulator",
-  "appName": "USSR Simulator",
+  "appId": "org.lepotager.communistworld",
+  "appName": "Communist World Simulator",
   "webDir": "web",
   "server": {
     "androidScheme": "https"
