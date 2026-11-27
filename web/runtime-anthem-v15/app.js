@@ -1,12 +1,12 @@
-const APP_VERSION='2026-11-28-anthem-min-2-1';
-import { ACTIVITIES, RULES } from './game-data.js?v=2026-11-28-anthem-min-2-1';
+const APP_VERSION='2026-11-28-player-session-repair-1';
+import { ACTIVITIES, RULES } from './game-data.js?v=2026-11-28-player-session-repair-1';
 import {
   createState, hydrateState, getStats, getActivity, quotePurchase,
   clickProduce, buyActivity, quoteActivityConversion, convertActivity, CONVERSION_TARGETS, getActivityCorruptionRate, CORRUPTION_PURCHASE, COMMUNISM_PURCHASE_PENALTY, getPropagandaOffer, buyPropagandaAgency, getIdeologyInstitutionOffer, buyIdeologyInstitution, advance, startPlan, claimPlan, publicProjectOffers, spendPublicBudget,
   reduceInflation, exportState, getGoals, activityBusinessRate, setTaxPolicy, TAX_POLICIES, TAX_POLICY_LABELS, getBusinessEconomyForPolicy,
-} from './engine.js?v=2026-11-28-anthem-min-2-1';
-import { COUNTRIES, MILESTONES, createWorld, hydrateWorld, chooseCountry, getCooperation, cooperate, rankCountriesByCooperationCost, getWorldStats, celebrate, rewardAnthem, getAnthemReward, START_COUNTRIES, USA_COUNTRY_ID, getVisibleCountries, getWorldStage, getCampaignWaves, getUSImportOffer, buyUSImports, convertUSImports, getBureaucracyOffer, buyBureaucracy, getBilateralOffer, buyBilateralAgreement } from './world.js?v=2026-11-28-anthem-min-2-1';
-import { ANTHEM_END_SECONDS, anthemClipFinished } from './anthem-clip.js?v=2026-11-28-anthem-min-2-1';
+} from './engine.js?v=2026-11-28-player-session-repair-1';
+import { COUNTRIES, MILESTONES, createWorld, hydrateWorld, chooseCountry, getCooperation, cooperate, rankCountriesByCooperationCost, getWorldStats, celebrate, rewardAnthem, getAnthemReward, START_COUNTRIES, USA_COUNTRY_ID, getVisibleCountries, getWorldStage, getCampaignWaves, getUSImportOffer, buyUSImports, convertUSImports, getBureaucracyOffer, buyBureaucracy, getBilateralOffer, buyBilateralAgreement } from './world.js?v=2026-11-28-player-session-repair-1';
+import { ANTHEM_END_SECONDS, anthemClipFinished } from './anthem-clip.js?v=2026-11-28-player-session-repair-1';
 
 const SAVE_KEY = 'ussr-simulator:save:v1';
 const BACKUP_KEY = 'ussr-simulator:backup:v1';
@@ -25,6 +25,7 @@ const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 let canWrite = !('locks' in navigator);
 let releaseSession;
 let sessionRequested = false;
+const sessionChannel=typeof BroadcastChannel==='function'?new BroadcastChannel('ussr-simulator-active-tab'):null;
 let filter = 'all';
 let search = '';
 let quantity = 1;
@@ -755,37 +756,72 @@ if (state.recovered) {
 }
 // A single writer prevents two game tabs from overwriting each other's actions.
 // Web Locks are origin-scoped and are automatically released with the page.
-function acquireSession() {
-  if (sessionRequested) return;
-  sessionRequested = true;
-  if (!('locks' in navigator)) { canWrite = true; showOffline(getStats(state).offline); save(); return; }
-  let warning = $('other-tab-warning');
-  if (!warning) {
-    warning = document.createElement('p');
-    warning.id = 'other-tab-warning';
-    warning.className = 'storage-warning';
-    warning.setAttribute('role', 'status');
-    warning.textContent = 'Si le jeu est déjà ouvert dans un autre onglet, ferme cet onglet pour jouer ici. La progression reste synchronisée.';
-    $('session-panel').append(warning);
-  }
-  canWrite = false;
-  warning.hidden = false;
-  render();
-  navigator.locks.request(SAVE_KEY, async () => {
-    try { const current = localStorage.getItem(SAVE_KEY);if(current)state=hydrateState(current);const other=localStorage.getItem(WORLD_KEY);if(other)world=hydrateWorld(JSON.parse(other)); } catch { storageFailure(); }
-    canWrite = true;
-    warning.hidden = true;
-    render();
-    showOffline(getStats(state).offline);
-    save();
-    await new Promise(resolve => { releaseSession = resolve; });
-  }).catch(() => {
-    // Browsers that restrict this API still support a single-tab local game.
-    canWrite = true;
-    warning.hidden = true;
-    render();
-    save();
-  });
+function showSessionWarning(){
+ let warning=$('other-tab-warning');
+ if(!warning){
+   warning=document.createElement('div');
+   warning.id='other-tab-warning';
+   warning.className='storage-warning game-session-warning';
+   warning.setAttribute('role','status');
+   const message=document.createElement('p');
+   message.textContent='Une autre page garde la main sur cette partie. Tu peux reprendre les achats ici sans effacer ta sauvegarde.';
+   const button=document.createElement('button');
+   button.id='takeover-session';
+   button.type='button';
+   button.textContent='Reprendre la partie sur cet onglet';
+   button.addEventListener('click',()=>{
+     sessionChannel?.postMessage({type:'release-request'});
+     acquireSession(true);
+   });
+   warning.append(message,button);
+   $('session-panel')?.append(warning);
+ }
+ warning.hidden=false;
+}
+sessionChannel?.addEventListener('message',event=>{
+ if(event.data?.type!=='release-request'||!canWrite)return;
+ save();
+ canWrite=false;
+ if(releaseSession){const resolve=releaseSession;releaseSession=null;resolve();}
+ showSessionWarning();
+ render();
+});
+function acquireSession(force=false){
+ if(sessionRequested)return;
+ sessionRequested=true;
+ if(!('locks' in navigator)){
+   canWrite=true;sessionRequested=false;render();showOffline(getStats(state).offline);save();return;
+ }
+ if(!canWrite)showSessionWarning();
+ const options=force?{steal:true}:{ifAvailable:true};
+ navigator.locks.request(SAVE_KEY,options,async lock=>{
+   if(!lock){sessionRequested=false;showSessionWarning();return;}
+   try{
+     const current=localStorage.getItem(SAVE_KEY);
+     if(current)state=hydrateState(current);
+     const other=localStorage.getItem(WORLD_KEY);
+     if(other)world=hydrateWorld(JSON.parse(other));
+     state.importsOwned=world.usImports;
+     state.usCapitalist=!world.partners.includes(USA_COUNTRY_ID);
+     state.bilateralAgreements=world.bilateral.length;
+     state.worldEconomyEnabled=true;
+   }catch{storageFailure();}
+   canWrite=true;
+   const warning=$('other-tab-warning');if(warning)warning.hidden=true;
+   render();
+   showOffline(getStats(state).offline);
+   save();
+   await new Promise(resolve=>{releaseSession=resolve;});
+   canWrite=false;
+   sessionRequested=false;
+ }).catch(()=>{
+   // Browser APIs may be restricted; retain the ability to play locally.
+   sessionRequested=false;
+   canWrite=true;
+   const warning=$('other-tab-warning');if(warning)warning.hidden=true;
+   render();
+   save();
+ });
 }
 acquireSession();
 
@@ -952,6 +988,9 @@ if (anthemAudio && anthemButton) {
   }
 
   async function startAnthem() {
+    // Ensure the player element itself is not muted after a device or page switch.
+    anthemAudio.muted=false;
+    anthemAudio.volume=1;
     if (anthemAudio.currentTime === 0) {
       rewardedThisListen = false;
       setRing(0);
