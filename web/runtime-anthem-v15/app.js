@@ -817,7 +817,7 @@ if (anthemAudio && anthemButton) {
       if (bonus.ok) {
         // changed() persists the reward immediately, even in a hidden tab.
         changed();
-        notify(`🎵 Premier refrain terminé : +${bonus.points} communisme !`);
+        notify(`Camaraderie renforcée : +${format(bonus.points)} points de communisme !`);
       }
     }
     updateAnthem();
