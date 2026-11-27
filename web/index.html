@@ -9,8 +9,8 @@
   <title>Communist World Simulator — Édition de développement</title>
   <link rel="icon" href="./assets/icon.svg" type="image/svg+xml">
   <link rel="manifest" href="./manifest.webmanifest">
-  <link rel="stylesheet" href="./runtime-audio-v5/styles.css?v=2026-11-27-background-audio-1">
-  <script type="module" src="./runtime-audio-v5/app.js?v=2026-11-27-background-audio-1"></script>
+  <link rel="stylesheet" href="./runtime-political-v6/styles.css?v=2026-11-27-political-difficulty-1">
+  <script type="module" src="./runtime-political-v6/app.js?v=2026-11-27-political-difficulty-1"></script>
 <script>
 /* Web playtest: disable the previous offline service worker and its caches.
    The game state is in localStorage and must never be touched here. */
@@ -206,6 +206,7 @@
       <div class="world-dashboard"><div><span>Départ</span><strong id="world-origin">À choisir</strong></div><div><span>Partenaires</span><strong id="world-partners">0</strong></div><div><span>Régions</span><strong id="world-regions">0</strong></div></div>
       <p class="world-notice">Les États-Unis ne sont pas un pays de départ. Ils représentent le dernier grand objectif de coopération.</p><p id="milestone-message" class="world-milestone" role="status">Une autre économie est possible. Construis les premiers liens !</p>
       <div class="world-toolbar"><label for="world-filter">Région</label><select id="world-filter"><option value="all">Toutes</option><option>Europe</option><option>Amérique du Nord</option><option>Amérique du Sud</option><option>Afrique</option><option>Europe et Asie</option><option>Asie</option><option>Océanie</option></select></div>
+      <p class="world-balance-note">Classement du plus accessible au plus difficile. Seuils de communisme fictifs inspirés de l'histoire politique des pays ; les points servent à débloquer, sans être dépensés.</p>
       <div id="world-list" class="world-list"></div>
     </section>
     <aside class="planning-column" aria-label="Plan et progression">

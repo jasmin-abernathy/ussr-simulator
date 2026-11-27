@@ -5,6 +5,71 @@ export const USA_COUNTRY_ID='14';
 export const START_COUNTRIES=Object.freeze(COUNTRIES.filter(c=>c.id!==USA_COUNTRY_ID));
 export const USA_COOPERATION_COST=50000000;
 export const USA_COMMUNISM_THRESHOLD=100000;
+/** Fictional cooperation thresholds calibrated for historical traditions,
+ * contemporary institutions and game balance, not an opinion poll or forecast.
+ * All 49 states are named explicitly; country array position never determines
+ * difficulty. See docs/political-difficulty.md for methodology and sources.
+ */
+export const POLITICAL_DIFFICULTY = Object.freeze({
+  "France": Object.freeze({threshold:580,reason:"Gauche et syndicats historiques, mais institutions pluralistes solides."}),
+  "Allemagne": Object.freeze({threshold:1450,reason:"Héritage de la RDA et Die Linke, face à une économie sociale de marché ancrée."}),
+  "Espagne": Object.freeze({threshold:260,reason:"PCE, Izquierda Unida et mouvements contre l’austérité."}),
+  "Italie": Object.freeze({threshold:420,reason:"Héritage du PCI, des syndicats et des coopératives."}),
+  "Portugal": Object.freeze({threshold:160,reason:"Révolution des Œillets, PCP et fortes traditions syndicales."}),
+  "Belgique": Object.freeze({threshold:810,reason:"PTB/PVDA et syndicats, mais politique de coalition complexe."}),
+  "Pays-Bas": Object.freeze({threshold:1320,reason:"Culture de coalition et économie marchande bien installée."}),
+  "Suisse": Object.freeze({threshold:1970,reason:"Fédéralisme, démocratie directe et puissant secteur privé."}),
+  "Pologne": Object.freeze({threshold:1800,reason:"Mémoire de la période socialiste et institutions conservatrices."}),
+  "Suède": Object.freeze({threshold:1240,reason:"État social développé, mais modèle social-démocrate de marché."}),
+  "Norvège": Object.freeze({threshold:1430,reason:"Protection sociale étendue et économie pétrolière marchande."}),
+  "Grèce": Object.freeze({threshold:210,reason:"Héritage du KKE, de Syriza et des mobilisations sociales."}),
+  "Ukraine": Object.freeze({threshold:2700,reason:"Contexte de guerre et grandes contraintes de reconstruction."}),
+  "Royaume-Uni": Object.freeze({threshold:1750,reason:"Tradition travailliste, mais institutions financières puissantes."}),
+  "États-Unis": Object.freeze({threshold:100000,reason:"Poids financier mondial et institutions fédérales : défi final."}),
+  "Canada": Object.freeze({threshold:1720,reason:"Traditions syndicales, fédéralisme et économie marchande."}),
+  "Mexique": Object.freeze({threshold:640,reason:"Longue histoire de mobilisations populaires et de politiques sociales."}),
+  "Cuba": Object.freeze({threshold:85,reason:"Parti communiste au pouvoir ; coopération internationale à construire."}),
+  "Brésil": Object.freeze({threshold:610,reason:"Mouvements syndicaux, PT et fortes disparités régionales."}),
+  "Argentine": Object.freeze({threshold:560,reason:"Mobilisations syndicales et histoire de conflits économiques."}),
+  "Chili": Object.freeze({threshold:440,reason:"Gauche organisée, héritage d’Allende et mouvements sociaux."}),
+  "Colombie": Object.freeze({threshold:510,reason:"Mouvements sociaux et gauche parlementaire, pays fragmenté."}),
+  "Pérou": Object.freeze({threshold:350,reason:"Traditions populaires et gauche plurielle, institutions instables."}),
+  "Bolivie": Object.freeze({threshold:410,reason:"Héritage du MAS, mais alternance et recomposition politiques en 2025."}),
+  "Venezuela": Object.freeze({threshold:650,reason:"Héritage chaviste et fortes tensions politiques et économiques."}),
+  "Maroc": Object.freeze({threshold:1500,reason:"Gauche et syndicats présents, institutions monarchiques fortes."}),
+  "Algérie": Object.freeze({threshold:750,reason:"Héritage de l’indépendance, intervention publique et mouvements sociaux."}),
+  "Sénégal": Object.freeze({threshold:1170,reason:"Mobilisations civiques et pluralisme électoral."}),
+  "Nigeria": Object.freeze({threshold:2200,reason:"Fédéralisme, grande diversité et disparités territoriales."}),
+  "Ghana": Object.freeze({threshold:1300,reason:"Pluralisme électoral établi et économie mixte."}),
+  "Égypte": Object.freeze({threshold:2100,reason:"Poids de l’appareil d’État et espace politique restreint."}),
+  "Kenya": Object.freeze({threshold:1690,reason:"Économie régionale dynamique et coalitions politiques mouvantes."}),
+  "Afrique du Sud": Object.freeze({threshold:540,reason:"Héritage anti-apartheid, ANC, SACP et syndicats."}),
+  "Russie": Object.freeze({threshold:2500,reason:"Héritage soviétique, pouvoir centralisé et obstacles institutionnels."}),
+  "Turquie": Object.freeze({threshold:2180,reason:"Mouvement ouvrier historique, forte polarisation et centralisation."}),
+  "Chine": Object.freeze({threshold:780,reason:"Parti communiste au pouvoir, mais modèle économique et échelle singuliers."}),
+  "Inde": Object.freeze({threshold:1450,reason:"Partis communistes régionaux, fédéralisme et immense diversité."}),
+  "Japon": Object.freeze({threshold:3000,reason:"Parti communiste ancien, mais domination conservatrice prolongée."}),
+  "Corée du Sud": Object.freeze({threshold:2710,reason:"Syndicalisme actif, contexte sécuritaire et institutions concurrentielles."}),
+  "Viêt Nam": Object.freeze({threshold:110,reason:"Parti communiste au pouvoir et longue histoire de planification."}),
+  "Indonésie": Object.freeze({threshold:1790,reason:"Héritage anticommuniste et diversité politique et insulaire."}),
+  "Pakistan": Object.freeze({threshold:2300,reason:"Institutions puissantes, instabilité et priorités sécuritaires."}),
+  "Bangladesh": Object.freeze({threshold:890,reason:"Mobilisations sociales et profondes transformations politiques."}),
+  "Thaïlande": Object.freeze({threshold:2050,reason:"Influence militaire et alternances institutionnelles complexes."}),
+  "Philippines": Object.freeze({threshold:1600,reason:"Mouvements de gauche, mais élites politiques enracinées."}),
+  "Népal": Object.freeze({threshold:280,reason:"Partis communistes importants, mais divisions et recompositions."}),
+  "Iran": Object.freeze({threshold:2450,reason:"Institutions religieuses et contrôle politique important."}),
+  "Australie": Object.freeze({threshold:2550,reason:"Système parlementaire stable et économie de marché structurée."}),
+  "Nouvelle-Zélande": Object.freeze({threshold:1490,reason:"Tradition sociale-démocrate et institutions marchandes stables."}),
+});
+export function getPoliticalDifficulty(country) {
+  const name=typeof country==='string'?country:country?.name;
+  return POLITICAL_DIFFICULTY[name]||null;
+}
+export function rankCountriesByDifficulty(countries) {
+  return [...countries].sort((a,b)=>
+    getPoliticalDifficulty(a).threshold-getPoliticalDifficulty(b).threshold||
+    a.name.localeCompare(b.name,'fr'));
+}
 export const MILESTONES=Object.freeze([[5,"Premier collectif créé : chaque geste compte !"],[25,"La solidarité s'organise : garde le cap !"],[100,"Ton économie coopérative trouve son élan !"],[250,"Les premières initiatives commencent à transformer le quotidien !"],[500,"De nouveaux possibles s'ouvrent à toi !"],[1000,"La coopération traverse les frontières !"],[2500,"Les solidarités se renforcent sur plusieurs continents !"],[5000,"Ton projet commun prend une dimension internationale !"],[10000,"Une fédération de coopérations se dessine. Bravo !"],[25000,"Les solidarités se multiplient : un autre monde se construit !"],[50000,"De pays en pays, les initiatives convergent !"]].map(([threshold,message])=>({threshold,message})));
 export const ANTHEM_BONUS=3;
 export const createWorld=()=>({version:1,origin:null,partners:[],celebrated:[],usImports:0,bilateral:[]});
@@ -21,9 +86,12 @@ export function hydrateWorld(raw){
 export function chooseCountry(w,id){if(id===USA_COUNTRY_ID||w.origin||!byId.has(id))return {ok:false};w.origin=id;return {ok:true,country:byId.get(id)};}
 export function getCooperation(w,state,id){
   const c=byId.get(id);if(!c)return null;
-  const index=Number(id),threshold=id===USA_COUNTRY_ID?USA_COMMUNISM_THRESHOLD:50+index*75,cost=id===USA_COUNTRY_ID?USA_COOPERATION_COST:1500+index*650;
+  const index=Number(id);
+  const political=getPoliticalDifficulty(c);
+  const threshold=political.threshold;
+  const cost=id===USA_COUNTRY_ID?USA_COOPERATION_COST:Math.round((1500+threshold*6.5)/50)*50;
   const joined=w.partners.includes(id),home=w.origin===id;
-  return {...c,threshold,cost,joined,home,productionBonus:10+index*3,taxesBonus:5+index*2,communismBonus:5+Math.floor(index/3),available:Boolean(w.origin)&&!home&&!joined&&state.communism>=threshold&&state.cash>=cost};
+  return {...c,threshold,cost,politicalContext:political.reason,joined,home,productionBonus:10+index*3,taxesBonus:5+index*2,communismBonus:5+Math.floor(index/3),available:Boolean(w.origin)&&!home&&!joined&&state.communism>=threshold&&state.cash>=cost};
 }
 export function cooperate(w,state,id){
   const c=getCooperation(w,state,id);if(!w.origin||!c||c.home||c.joined)return {ok:false,reason:"unavailable"};
