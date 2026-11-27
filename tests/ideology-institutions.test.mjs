@@ -24,7 +24,7 @@ test('two political institution types make passive communism AND passive corrupt
  close(getCommunismPerMinute(s),.35);
  close(corruptionGrossPerMinute(s),.60);
  close(corruptionPerMinute(s),.60);
- close(getAnthemReward(s),.875);
+ close(getAnthemReward(s),2);
  const before=s.communism;
  advance(s,NOW+60000);
  close(s.communism,before+.35);
