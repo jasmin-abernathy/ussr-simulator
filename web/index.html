@@ -10,7 +10,7 @@
   <link rel="icon" href="./assets/icon.svg" type="image/svg+xml">
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="stylesheet" href="./runtime-anthem-v15/styles.css?v=2026-11-28-player-session-repair-2">
-  <script type="module" src="./runtime-anthem-v15/app.js?v=2026-11-28-player-session-repair-2"></script>
+  <script type="module" src="./runtime-anthem-v15/app.js?v=2026-11-28-audit-reserve-1"></script>
 <script>
 /* Web playtest: disable the previous offline service worker and its caches.
    The game state is in localStorage and must never be touched here. */
@@ -250,7 +250,7 @@
           <article class="public-project"><div><strong>🏘️ Logements coopératifs</strong><small>Accueille la population. Le manque de logements impose des frais supplémentaires.</small><span id="public-project-housing-level">Programme à lancer</span></div><button id="public-project-housing" type="button" disabled>Investir</button></article>
           <article class="public-project public-project-integrity"><div><strong>🏛️ Maisons de la transparence</strong><small>Réduisent durablement de 10 % par établissement la corruption nouvelle (60 % maximum).</small><span id="public-project-transparency-level">0 établissement / 6</span></div><button id="public-project-transparency" type="button" disabled>Construire</button></article>
           <article class="public-project public-project-integrity"><div><strong>🛡️ Inspections citoyennes</strong><small>Évitent 5 % supplémentaires par établissement de la corruption nouvelle restante (60 % maximum).</small><span id="public-project-inspectorates-level">0 établissement / 12</span></div><button id="public-project-inspectorates" type="button" disabled>Ouvrir</button></article>
-          <article class="public-project public-project-repeatable"><div><strong>🔍 Contrôle des comptes</strong><small>Organise une inspection pour faire reculer la corruption. Une nouvelle inspection est possible toutes les heures.</small><span id="public-project-audit-level">Intervention ponctuelle</span></div><button id="public-project-audit" type="button" disabled>Inspecter</button></article>
+          <article class="public-project public-project-repeatable"><div><strong>🔍 Contrôle des comptes</strong><small>Organise une inspection pour faire reculer la corruption. Une charge d’inspection est ajoutée chaque heure, jusqu’à cinq en réserve. Chaque inspection retire 30 % de la corruption restante.</small><span id="public-project-audit-level">Intervention ponctuelle</span></div><button id="public-project-audit" type="button" disabled>Inspecter</button></article>
           <article class="public-project public-project-repeatable"><div><strong>🔧 Entretien des infrastructures</strong><small>Rénove les équipements pour limiter les difficultés de production et de collecte.</small><span id="public-project-maintenance-level">Intervention ponctuelle</span></div><button id="public-project-maintenance" type="button" disabled>Entretenir</button></article>
         </div>
       </section>
