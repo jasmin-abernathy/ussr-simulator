@@ -1,10 +1,10 @@
 // Bump VERSION whenever a published asset changes. Only this game's scope is used.
-const VERSION = '2026-11-27-anthem-full-1';
+const VERSION = '2026-11-27-anthem-cut-1';
 const SCOPE = new URL(self.registration.scope);
 const PREFIX = `ussr-simulator:${SCOPE.pathname}:`;
 const CACHE = `${PREFIX}${VERSION}`;
 const FILES = [
-  './', './index.html', './styles.css', './app.js', './engine.js', './game-data.js', './world.js',
+  './', './index.html', './styles.css', './app.js', './engine.js', './game-data.js', './world.js', './anthem-clip.js',
   './manifest.webmanifest', './assets/icon.svg', './assets/icon-192.png',
   './assets/icon-512.png', './assets/factory.svg', './assets/symbols.svg', './LICENSE.txt',
 ];

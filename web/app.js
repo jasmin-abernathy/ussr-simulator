@@ -5,6 +5,7 @@ import {
   reduceInflation, exportState, getGoals,
 } from './engine.js';
 import { COUNTRIES, MILESTONES, createWorld, hydrateWorld, chooseCountry, getCooperation, cooperate, getWorldStats, celebrate, rewardAnthem } from './world.js';
+import { ANTHEM_END_SECONDS, anthemClipFinished } from './anthem-clip.js';
 
 const SAVE_KEY = 'ussr-simulator:save:v1';
 const BACKUP_KEY = 'ussr-simulator:backup:v1';
@@ -483,34 +484,52 @@ acquireSession();
 const anthemAudio = document.getElementById('anthem-audio');
 const anthemButton = document.getElementById('anthem-button');
 if (anthemAudio && anthemButton) {
+  let rewardedThisListen = false;
+
   const updateAnthem = (message) => {
     const playing = !anthemAudio.paused && !anthemAudio.ended;
     anthemButton.setAttribute('aria-pressed', String(playing));
     anthemButton.classList.toggle('is-playing', playing);
-    document.getElementById('anthem-label').textContent = playing ? 'Mettre en pause L’Internationale' : 'Jouer L’Internationale';
+    document.getElementById('anthem-label').textContent = playing
+      ? 'Mettre en pause L’Internationale' : 'Jouer L’Internationale';
     document.getElementById('anthem-control-symbol').textContent = playing ? 'Ⅱ' : '▶';
-    document.getElementById('anthem-status').textContent = message || (playing ? 'Lecture en cours · sans paroles' : 'Version instrumentale · sans paroles');
+    document.getElementById('anthem-status').textContent = message ||
+      (playing ? 'Écoute jusqu’au deuxième refrain pour gagner +3 communisme.'
+        : 'Jusqu’au deuxième refrain · +3 communisme par écoute complète');
   };
+
+  function finishAnthem() {
+    // The full source on the web has trailing silence after the second refrain.
+    // The Android build embeds a 76-second cut of the very same recording.
+    // The guard avoids awarding twice when timeupdate and ended both fire.
+    if (rewardedThisListen || !anthemClipFinished(anthemAudio.currentTime)) return;
+    rewardedThisListen = true;
+    anthemAudio.pause();
+    anthemAudio.currentTime = 0;
+    if (canWrite) {
+      const bonus = rewardAnthem(world, state);
+      if (bonus.ok) {
+        changed();
+        notify(`🎵 Deuxième refrain terminé : +${bonus.points} communisme !`);
+      }
+    }
+    updateAnthem('Extrait terminé · +3 communisme, réécoutable sans limite');
+  }
+
   anthemButton.addEventListener('click', async () => {
     if (!anthemAudio.paused) { anthemAudio.pause(); return; }
+    if (anthemAudio.currentTime === 0) rewardedThisListen = false;
     try { await anthemAudio.play(); }
     catch { updateAnthem('Lecture impossible : fichier audio indisponible.'); }
   });
   anthemAudio.addEventListener('play', () => {
-    updateAnthem('Écoute jusqu’à la fin pour gagner +3 communisme.');
+    updateAnthem('Écoute les deux refrains jusqu’au bout pour gagner +3 communisme.');
   });
-  anthemAudio.addEventListener('pause', () => updateAnthem());
-  anthemAudio.addEventListener('ended', () => {
-    if(canWrite){
-      const bonus=rewardAnthem(world,state);
-      if(bonus.ok){
-        changed();
-        notify(`🎵 L’Internationale écoutée en entier : +${bonus.points} communisme !`);
-      }
-    }
-    anthemAudio.currentTime=0;
-    updateAnthem('Une écoute complète = +3 communisme · sans limite');
+  anthemAudio.addEventListener('pause', () => {
+    if (!rewardedThisListen) updateAnthem();
   });
+  anthemAudio.addEventListener('timeupdate', finishAnthem);
+  anthemAudio.addEventListener('ended', finishAnthem);
   anthemAudio.addEventListener('error', () => updateAnthem('Fichier non chargé. Vérifie la connexion ou réessaie.'));
 }
 
