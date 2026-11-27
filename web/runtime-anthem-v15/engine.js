@@ -128,6 +128,8 @@ export function hydrateState(raw, now = Date.now()) {
     : Math.max(minimum.communism,readNumber(raw.communism,minimum.communism));
   state.clicks = readNumber(raw.clicks, 0, Number.MAX_SAFE_INTEGER, true);
   state.automaticSeconds = readNumber(raw.automaticSeconds, 0, Number.MAX_SAFE_INTEGER, true);
+  state.infrastructureCosts=raw.infrastructureCosts===undefined?0:readNumber(raw.infrastructureCosts,0);
+  state.infrastructureCashLoss=raw.infrastructureCashLoss===undefined?0:readNumber(raw.infrastructureCashLoss,0);
   state.publicNeedsPending=raw.publicNeedsPending===undefined?0:readNumber(raw.publicNeedsPending,0,3,true);
   state.publicNeedsGenerated=raw.publicNeedsGenerated===undefined?0:readNumber(raw.publicNeedsGenerated,0,Number.MAX_SAFE_INTEGER,true);
   state.publicNeedsResolved=raw.publicNeedsResolved===undefined?0:readNumber(raw.publicNeedsResolved,0,Number.MAX_SAFE_INTEGER,true);
@@ -339,8 +341,10 @@ export function getPublicProgramCaps(state){
  const score=getPublicNeedScore(state);
  const stages=[5,10,16].filter(threshold=>score>=threshold).length;
  const levels={services:state.publicServicesLevel||0,solidarity:state.internationalAidLevel||0,transport:state.publicTransportLevel||0,housing:state.publicHousingLevel||0};
+ const business=getBusinessEconomy(state);
+ const required=business.infrastructure.required;
  return Object.fromEntries(Object.entries(PUBLIC_PROGRAM_CAPS).map(([id,rule])=>[
-  id,Math.max(levels[id],Math.min(rule.hard,rule.base+rule.step*stages))
+  id,Math.max(levels[id],Math.min(rule.hard,rule.base+rule.step*stages),required[id]||0)
  ]));
 }
 export function publicProjectOffers(state,now=Date.now()){
