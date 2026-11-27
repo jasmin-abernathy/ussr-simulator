@@ -34,7 +34,7 @@ test('tax policy, budget and every fiscal project exist only in the public tab',
 });
 
 test('work tab still owns enterprise purchases and corruption-sensitive investments',()=>{
- for(const id of ['activity-list','activity-search','investments-corruption','import-buy','bureaucracy-buy'])
+ for(const id of ['activity-list','buy-quantity','investments-corruption','import-buy','bureaucracy-buy'])
   assert.match(work,new RegExp('id="'+id+'"'));
  assert.doesNotMatch(publicTab,/id="activity-list"/);
  assert.match(app,/spendPublicBudget\(state,project\)/);
