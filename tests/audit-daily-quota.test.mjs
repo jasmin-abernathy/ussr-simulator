@@ -2,52 +2,75 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
  createState,hydrateState,exportState,publicProjectOffers,
- spendPublicBudget,getAuditCooldown,AUDIT_COOLDOWN_MS,AUDIT_CORRUPTION_REDUCTION,
+ spendPublicBudget,getAuditCooldown,AUDIT_COOLDOWN_MS,
+ AUDIT_CORRUPTION_REDUCTION,AUDIT_MAX_CHARGES,
 } from '../web/runtime-anthem-v15/engine.js';
 const HOUR=3600000;
 const NOW=Date.UTC(2026,10,27,12,0,0);
-const build=()=>{const state=createState(NOW);state.worldEconomyEnabled=true;state.corruption=30;state.publicBudget=1000000;return state;};
+const build=()=>{const s=createState(NOW);s.worldEconomyEnabled=true;s.corruption=100;s.publicBudget=1e9;return s;};
 const close=(a,b)=>assert.ok(Math.abs(a-b)<1e-8,`${a} vs ${b}`);
-test('one audit per elapsed hour; inspections reduce 20% each, never a fixed number',()=>{
+
+test('start with one inspection, gain one charge each hour and cap at five',()=>{
  const s=build();
  assert.equal(AUDIT_COOLDOWN_MS,HOUR);
- assert.equal(AUDIT_CORRUPTION_REDUCTION,.2);
- assert.equal(getAuditCooldown(s,NOW).ready,true);
- assert.equal(spendPublicBudget(s,'audit',NOW).ok,true);
- close(s.corruption,24);
- const offer=publicProjectOffers(s,NOW+1000).audit;
- assert.equal(offer.cooldownActive,true);
- assert.equal(offer.cooldownMs,HOUR-1000);
- const budget=s.publicBudget,history=s.corruptionAudits;
- assert.equal(spendPublicBudget(s,'audit',NOW+HOUR-1).reason,'cooldown');
- assert.equal(s.publicBudget,budget);assert.equal(s.corruptionAudits,history);
- assert.equal(spendPublicBudget(s,'audit',NOW+HOUR).ok,true);
- close(s.corruption,19.2);
- assert.equal(publicProjectOffers(s,NOW+HOUR).audit.cooldownActive,true);
- assert.equal(spendPublicBudget(s,'audit',NOW+2*HOUR).ok,true);
- close(s.corruption,15.36);
+ assert.equal(AUDIT_MAX_CHARGES,5);
+ assert.equal(AUDIT_CORRUPTION_REDUCTION,.30);
+ assert.equal(getAuditCooldown(s,NOW).charges,1);
+ assert.equal(getAuditCooldown(s,NOW+HOUR-1).charges,1);
+ assert.equal(getAuditCooldown(s,NOW+HOUR).charges,2);
+ assert.equal(getAuditCooldown(s,NOW+4*HOUR).charges,5);
+ assert.equal(getAuditCooldown(s,NOW+100*HOUR).charges,5);
+ assert.equal(getAuditCooldown(s,NOW+100*HOUR).full,true);
+ assert.equal(getAuditCooldown(s,NOW+100*HOUR).remainingMs,0);
 });
-test('hourly cooldown survives export and reload, even after midnight',()=>{
+test('five banked inspections can be spent consecutively, reducing remaining corruption by 30% each',()=>{
  const s=build();
- assert.equal(spendPublicBudget(s,'audit',NOW).ok,true);
- const loaded=hydrateState(exportState(s,NOW+1000),NOW+1000);
- assert.equal(loaded.lastAuditAt,NOW);
- assert.equal(getAuditCooldown(loaded,NOW+HOUR-1).remainingMs,1);
- assert.equal(spendPublicBudget(loaded,'audit',NOW+HOUR-1).reason,'cooldown');
- assert.equal(spendPublicBudget(loaded,'audit',NOW+HOUR).ok,true);
- const nearMidnight=Date.UTC(2026,10,27,23,55,0);
- assert.equal(spendPublicBudget(loaded,'audit',nearMidnight).ok,true);
- assert.equal(spendPublicBudget(loaded,'audit',nearMidnight+10*60*1000).reason,'cooldown');
- assert.equal(spendPublicBudget(loaded,'audit',nearMidnight+HOUR).ok,true);
+ const at=NOW+6*HOUR;
+ const before=s.publicBudget;
+ for(let n=0;n<5;n++){
+  const offer=publicProjectOffers(s,at).audit;
+  assert.equal(offer.charges,5-n);
+  assert.equal(offer.available,true);
+  assert.equal(spendPublicBudget(s,'audit',at).ok,true);
+  close(s.corruption,100*.7**(n+1));
+ }
+ assert.ok(s.publicBudget<before);
+ assert.equal(s.corruptionAudits,5);
+ assert.equal(getAuditCooldown(s,at).charges,0);
+ assert.equal(spendPublicBudget(s,'audit',at).reason,'cooldown');
+ assert.equal(getAuditCooldown(s,at+HOUR-1).charges,0);
+ assert.equal(getAuditCooldown(s,at+HOUR).charges,1);
 });
-test('old saves keep holdings, fractional corruption, and have no inherited daily quota',()=>{
- const s=build();s.corruption=1.39;s.owned.matches=5;s.auditsToday=2;
- const old=exportState(s,NOW);
- delete old.lastAuditAt;
- const loaded=hydrateState(old,NOW);
- assert.equal(loaded.lastAuditAt,0);
+test('spending before reaching five preserves fractional recharge progress',()=>{
+ const s=build();
+ const at=NOW+2*HOUR+HOUR/2;
+ assert.equal(getAuditCooldown(s,at).charges,3);
+ assert.equal(getAuditCooldown(s,at).remainingMs,HOUR/2);
+ assert.equal(spendPublicBudget(s,'audit',at).ok,true);
+ assert.equal(getAuditCooldown(s,at).charges,2);
+ assert.equal(getAuditCooldown(s,at+HOUR/2).charges,3);
+});
+test('banked inspections survive save reloads, time passing offline and midnight',()=>{
+ const s=build();
+ const stored=hydrateState(exportState(s,NOW+1000),NOW+3*HOUR);
+ assert.equal(getAuditCooldown(stored,NOW+3*HOUR).charges,4);
+ assert.equal(spendPublicBudget(stored,'audit',NOW+3*HOUR).ok,true);
+ const next=hydrateState(exportState(stored,NOW+3*HOUR),NOW+5*HOUR);
+ assert.equal(getAuditCooldown(next,NOW+5*HOUR).charges,5);
+ const night=Date.UTC(2026,10,27,23,55,0);
+ assert.equal(getAuditCooldown(s,night+10*60*1000).charges,5);
+});
+test('old saves keep holdings and adapt existing audit cooldown to the new reserve',()=>{
+ const s=build();s.corruption=1.39;s.owned.matches=5;
+ assert.equal(spendPublicBudget(s,'audit',NOW).ok,true);
+ const old=exportState(s,NOW+1000);
+ delete old.auditCharges;delete old.auditChargeAt;
+ const loaded=hydrateState(old,NOW+1000);
  assert.equal(loaded.owned.matches,5);
- assert.equal(publicProjectOffers(loaded,NOW).audit.cooldownActive,false);
- assert.equal(spendPublicBudget(loaded,'audit',NOW).ok,true);
- close(loaded.corruption,1.112);
+ assert.equal(getAuditCooldown(loaded,NOW+1000).charges,0);
+ assert.equal(getAuditCooldown(loaded,NOW+HOUR).charges,1);
+ const never=exportState(build(),NOW);
+ delete never.auditCharges;delete never.auditChargeAt;delete never.lastAuditAt;
+ const fresh=hydrateState(never,NOW);
+ assert.equal(getAuditCooldown(fresh,NOW).charges,1);
 });
