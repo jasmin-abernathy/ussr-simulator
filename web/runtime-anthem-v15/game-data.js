@@ -50,7 +50,7 @@ export const ACTIVITIES = Object.freeze([
   activity('black-market', 9, 'Marché noir', 'Black market',
     'Des circuits parallèles qui ajoutent un bonus à toute la production.', 50000, 220, 0, 80, 10, 2),
   activity('posters', 10, 'Atelier d’affiches', 'Poster agitation',
-    'Les murs affichent les ambitions du prochain plan.', 223200, 250, 0, 150, 10),
+    'Affiches de propagande : elles renforcent le communisme mais favorisent aussi la corruption.', 223200, 250, 0, 150, 10),
   activity('television', 11, 'Télévision', 'TV Shows',
     'Un programme commun, du salon à la salle de repos.', 250000, 280, 100, 150, 5),
   activity('censorship', 12, 'Bureau de censure', 'Censore',
