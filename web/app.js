@@ -4,7 +4,7 @@ import {
   clickProduce, buyActivity, advance, startPlan, claimPlan,
   reduceInflation, exportState, getGoals,
 } from './engine.js';
-import { COUNTRIES, MILESTONES, createWorld, hydrateWorld, chooseCountry, getCooperation, cooperate, getWorldStats, celebrate } from './world.js';
+import { COUNTRIES, MILESTONES, createWorld, hydrateWorld, chooseCountry, getCooperation, cooperate, getWorldStats, celebrate, rewardAnthem } from './world.js';
 
 const SAVE_KEY = 'ussr-simulator:save:v1';
 const BACKUP_KEY = 'ussr-simulator:backup:v1';
@@ -496,7 +496,18 @@ if (anthemAudio && anthemButton) {
     try { await anthemAudio.play(); }
     catch { updateAnthem('Lecture impossible : fichier audio indisponible.'); }
   });
-  anthemAudio.addEventListener('play', () => updateAnthem());
+  anthemAudio.addEventListener('play', () => {
+    updateAnthem();
+    if (!canWrite) return;
+    const bonus=rewardAnthem(world,state);
+    if(bonus.ok){
+      changed();
+      notify(`🎵 L’Internationale : +${bonus.points} points de communisme !`);
+      updateAnthem(`+${bonus.points} communisme gagné · prochain bonus dans 90 s`);
+    } else if (bonus.reason==='cooldown') {
+      updateAnthem(`En écoute · prochain bonus dans ${Math.ceil(bonus.remainingMs/1000)} s`);
+    }
+  });
   anthemAudio.addEventListener('pause', () => updateAnthem());
   anthemAudio.addEventListener('ended', () => { anthemAudio.currentTime = 0; updateAnthem(); });
   anthemAudio.addEventListener('error', () => updateAnthem('Fichier non chargé. Vérifie la connexion ou réessaie.'));
