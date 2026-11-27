@@ -3205,3 +3205,59 @@ conic-gradient(#17bd2a 0% var(--anthem-progress),#090909 var(--anthem-progress) 
 .finance-panel .policy-buttons button [data-policy-preview]{font-size:clamp(20px,4vw,27px)!important;font-weight:850!important;line-height:1.05!important;letter-spacing:-.4px}
 .finance-panel .policy-buttons button [data-policy-estimate]{font-size:10px!important;line-height:1.35!important;font-weight:500!important;overflow-wrap:anywhere}
 @media(max-width:390px){.finance-panel .policy-buttons button{padding:9px 6px!important;gap:6px!important}.finance-panel .policy-buttons button .policy-name{font-size:12px!important}.finance-panel .policy-buttons button [data-policy-preview]{font-size:21px!important}}
+
+
+/* Anthem playback is a real CSS control, not a symbol baked into an image.
+   The original globe and audio progress ring remain untouched. */
+.anthem-panel #anthem-control-symbol,
+.anthem-panel .anthem-button.is-playing #anthem-control-symbol{
+  display:block;
+  position:absolute;
+  z-index:5;
+  left:50%;
+  bottom:7.5%;
+  transform:translateX(-50%);
+  width:clamp(42px,20%,60px);
+  height:clamp(42px,20%,60px);
+  border:2px solid rgba(255,244,218,.75);
+  border-radius:50%;
+  background:linear-gradient(145deg,#cf2923 4%,#a90708 66%,#800606 100%);
+  box-shadow:0 3px 0 #430c09,0 6px 12px rgba(20,0,0,.4),inset 0 2px 3px rgba(255,240,217,.23);
+  font-size:0;
+  line-height:0;
+  color:transparent;
+  transition:transform .16s ease,filter .16s ease;
+}
+.anthem-panel #anthem-control-symbol::before{
+  content:"";
+  display:block;
+  position:absolute;
+  left:53%;
+  top:50%;
+  transform:translate(-50%,-50%);
+  width:0;height:0;
+  border-top:12px solid transparent;
+  border-bottom:12px solid transparent;
+  border-left:19px solid #fff9eb;
+  filter:drop-shadow(0 1px 1px #440c08);
+}
+.anthem-panel .anthem-button.is-playing #anthem-control-symbol::before{
+  width:6px;height:20px;
+  border:0;
+  background:#fff9eb;
+  left:42%;
+  transform:translate(-50%,-50%);
+  border-radius:1px;
+}
+.anthem-panel .anthem-button.is-playing #anthem-control-symbol::after{
+  content:"";
+  position:absolute;
+  top:50%;left:58%;
+  transform:translate(-50%,-50%);
+  width:6px;height:20px;
+  background:#fff9eb;
+  border-radius:1px;
+}
+.anthem-panel .anthem-button:active #anthem-control-symbol{transform:translateX(-50%) scale(.94)}
+.anthem-panel .anthem-button:focus-visible #anthem-control-symbol{outline:2px solid white;outline-offset:3px}
+@media (prefers-reduced-motion:reduce){.anthem-panel #anthem-control-symbol{transition:none}}
