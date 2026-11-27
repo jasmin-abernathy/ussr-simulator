@@ -1,4 +1,4 @@
-import {getCommunismPerMinute} from './engine.js?v=2026-11-27-balance-2';
+import {getCommunismPerMinute} from './engine.js?v=2026-11-27-public-ux-1';
 import {COUNTRY_GEOGRAPHY} from './world-geography.js?v=2026-11-27-anthem-scaled-1';
 import {ADDITIONAL_COUNTRIES,ADDITIONAL_COUNTRY_DATA} from './world-expansion.js?v=2026-11-27-anthem-scaled-1';
 // Independent cooperative-world expansion, not part of the 2016 historical engine.
