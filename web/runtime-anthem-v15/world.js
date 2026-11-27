@@ -1,4 +1,4 @@
-import {getCommunismPerMinute} from './engine.js?v=2026-11-27-public-ux-1';
+import {getCommunismPerMinute} from './engine.js?v=2026-11-27-nav-corruption-3';
 import {COUNTRY_GEOGRAPHY} from './world-geography.js?v=2026-11-27-anthem-scaled-1';
 import {ADDITIONAL_COUNTRIES,ADDITIONAL_COUNTRY_DATA} from './world-expansion.js?v=2026-11-27-anthem-scaled-1';
 // Independent cooperative-world expansion, not part of the 2016 historical engine.
@@ -251,7 +251,7 @@ export function getUSImportOffer(w,state){
  const count=w.usImports||0;
  const cost=Math.round(35000*Math.pow(1.18,count));
  const capitalist=!w.partners.includes(USA_COUNTRY_ID);
- return {count,cost,capitalist,corruptionPerMinute:capitalist?0.06:0,corruptionOnPurchase:capitalist?5:0,
+ return {count,cost,capitalist,corruptionPerMinute:capitalist?0.15:0,corruptionOnPurchase:capitalist?5:0,
  available:count<10000&&state.cash>=cost&&state.communism>=150};
 }
 export function buyUSImports(w,state){
@@ -284,7 +284,7 @@ export function convertUSImports(w,state,targetId,convert){
 export function getBureaucracyOffer(state){
  const count=state.bureaucracyOffices||0;
  const cost=Math.round(1200*Math.pow(1.32,count));
- return {count,cost,corruptionOnPurchase:2,corruptionPerMinute:0.024,
+ return {count,cost,corruptionOnPurchase:2,corruptionPerMinute:0.09,
   collectionBonusPercent:2,available:count<1000&&state.communism>=25&&state.cash>=cost};
 }
 export function buyBureaucracy(state){
@@ -300,7 +300,7 @@ export function getBilateralOffer(world,state,id){
  if(!country||!world.origin||!isCountryVisible(world,id)||id===world.origin||world.partners.includes(id))return null;
  const signed=world.bilateral.includes(id);
  const cost=4500+Number(id)*350;
- return {...country,cost,signed,corruptionOnPurchase:4,corruptionPerMinute:0.048,
+ return {...country,cost,signed,corruptionOnPurchase:4,corruptionPerMinute:0.10,
   businessIncomeBonusPercent:1,
   available:!signed&&state.cash>=cost&&state.communism>=100};
 }
