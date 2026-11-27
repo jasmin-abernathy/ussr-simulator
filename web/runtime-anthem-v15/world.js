@@ -231,11 +231,12 @@ export function celebrate(w,points){const result=[];for(const m of MILESTONES)if
  */
 /** The anthem stays valuable when industrial communism surpasses +3/min.
  * The reward is determined at actual playback completion, and never
- * decreases below the original +3. Fractional rates round up.
+ * decreases below the original +3. The bonus is half the passive rate,
+ * rounded up, so replaying the song does not overwhelm progression.
  */
 export function getAnthemReward(state){
  const rate=getCommunismPerMinute(state);
- return Math.max(ANTHEM_BONUS,Math.ceil(Number.isFinite(rate)?rate:0));
+ return Math.max(ANTHEM_BONUS,Math.ceil((Number.isFinite(rate)?rate:0)*.5));
 }
 export function rewardAnthem(world,state){
  if(!world.origin)return {ok:false,reason:'choose-origin'};
@@ -250,7 +251,7 @@ export function getUSImportOffer(w,state){
  const count=w.usImports||0;
  const cost=Math.round(35000*Math.pow(1.18,count));
  const capitalist=!w.partners.includes(USA_COUNTRY_ID);
- return {count,cost,capitalist,corruptionPerMinute:capitalist?0.05:0,corruptionOnPurchase:capitalist?5:0,
+ return {count,cost,capitalist,corruptionPerMinute:capitalist?0.06:0,corruptionOnPurchase:capitalist?5:0,
  available:count<10000&&state.cash>=cost&&state.communism>=150};
 }
 export function buyUSImports(w,state){
@@ -283,7 +284,7 @@ export function convertUSImports(w,state,targetId,convert){
 export function getBureaucracyOffer(state){
  const count=state.bureaucracyOffices||0;
  const cost=Math.round(1200*Math.pow(1.32,count));
- return {count,cost,corruptionOnPurchase:2,corruptionPerMinute:0.02,
+ return {count,cost,corruptionOnPurchase:2,corruptionPerMinute:0.024,
   collectionBonusPercent:2,available:count<1000&&state.communism>=25&&state.cash>=cost};
 }
 export function buyBureaucracy(state){
@@ -299,7 +300,7 @@ export function getBilateralOffer(world,state,id){
  if(!country||!world.origin||!isCountryVisible(world,id)||id===world.origin||world.partners.includes(id))return null;
  const signed=world.bilateral.includes(id);
  const cost=4500+Number(id)*350;
- return {...country,cost,signed,corruptionOnPurchase:4,corruptionPerMinute:0.04,
+ return {...country,cost,signed,corruptionOnPurchase:4,corruptionPerMinute:0.048,
   businessIncomeBonusPercent:1,
   available:!signed&&state.cash>=cost&&state.communism>=100};
 }
