@@ -19,7 +19,7 @@ const addMoney = (state, amount) => {
 export function createState(now = Date.now()) {
   return {
     version: RULES.saveVersion,
-    cash: 0, totalEarned: 0, clicks: 0, automaticSeconds: 0, communism: 0, corruption: 0, importsOwned: 0, bureaucracyOffices: 0, bilateralAgreements: 0, usCapitalist: true, worldEconomyEnabled: false, taxPolicy: 'balanced', secondRemainderMs: 0, economyTickMode: 'seconds-v1',
+    cash: 0, totalEarned: 0, clicks: 0, automaticSeconds: 0, communism: 0, corruption: 0, importsOwned: 0, bureaucracyOffices: 0, bilateralAgreements: 0, usCapitalist: true, worldEconomyEnabled: false, taxPolicy: 'balanced', secondRemainderMs: 0, communismRemainderMs: 0, economyTickMode: 'seconds-v1',
     owned: Object.fromEntries(ACTIVITIES.map(item => [item.id, 0])),
     counters: { production: RULES.initialProduction, taxes: 0, productionBonusPercent: 0, taxBonusPercent: 0 },
     productionSteps: 0, taxSteps: 0,
@@ -88,6 +88,10 @@ export function hydrateState(raw, now = Date.now()) {
     ? (raw.secondRemainderMs===undefined?0:readNumber(raw.secondRemainderMs,0,999.999))
     : legacyRemainder%1000;
   state.economyTickMode='seconds-v1';
+  // New passive-communism clock starts at zero on older saves; the elapsed
+  // offline period is still credited once by advance() after hydration.
+  state.communismRemainderMs=raw.communismRemainderMs===undefined
+    ? 0 : readNumber(raw.communismRemainderMs,0,59999.999);
   state.cash = readNumber(raw.cash, 0);
   state.totalEarned = Math.max(state.cash, readNumber(raw.totalEarned, state.cash));
   state.communism = Math.max(minimum.communism, readNumber(raw.communism, minimum.communism));
@@ -156,9 +160,24 @@ const corruptionPerMinute = state =>
   (state.bureaucracyOffices||0)*0.08+(state.bilateralAgreements||0)*0.16;
 
 /** Derived values only; querying never changes the state or the clock. */
+/** Each owned unit repeatedly generates its one-time communism bonus
+ * every full minute. The purchase itself still awards that bonus once.
+ * Non-industry investments and international agreements are excluded.
+ */
+export function getCommunismPerMinute(state){
+ let total=0;
+ for(const item of ACTIVITIES){
+  const count=state.owned?.[item.id]||0;
+  if(count>0&&item.effects.communism>0){
+   total=cap(total+cap(count,RULES.maxOwned)*item.effects.communism);
+  }
+ }
+ return total;
+}
+
 export function getStats(state) {
   return {
-    cash: state.cash, totalEarned: state.totalEarned, communism: state.communism, corruption: state.corruption||0, corruptionPerMinute:corruptionPerMinute(state), commerceRevenuePerSecond:commerceRevenuePerSecond(state), clicks: state.clicks,
+    cash: state.cash, totalEarned: state.totalEarned, communism: state.communism, communismPerMinute: getCommunismPerMinute(state), corruption: state.corruption||0, corruptionPerMinute:corruptionPerMinute(state), commerceRevenuePerSecond:commerceRevenuePerSecond(state), clicks: state.clicks,
     productionPerClick: production(state), manualProductionBonus: manualProductionBonus(state), taxesPerSecond: state.worldEconomyEnabled?0:taxes(state),
     business: getBusinessEconomy(state),
     totalOwned: Object.values(state.owned).reduce((total, count) => total + count, 0),
@@ -285,13 +304,21 @@ export function advance(state, now = Date.now()) {
   now = time(now);
   const elapsedMs = Math.max(0, now - state.lastUpdate);
   const creditedMs = Math.min(elapsedMs, RULES.offlineCapMs);
-  const result = { ok: true, earned: 0, elapsedMs, creditedMs, capped: elapsedMs > creditedMs };
+  const result = { ok: true, earned: 0, communismEarned: 0, elapsedMs, creditedMs, capped: elapsedMs > creditedMs };
   if (elapsedMs === 0) return result;
   state.lastUpdate = now; // Discard time over the cap, rather than banking it.
   if(state.worldEconomyEnabled){
     const elapsed=state.secondRemainderMs+creditedMs;
     const seconds=Math.floor(elapsed/1000);
     state.secondRemainderMs=elapsed-seconds*1000;
+    const communismElapsed=(state.communismRemainderMs||0)+creditedMs;
+    const fullMinutes=Math.floor(communismElapsed/60000);
+    state.communismRemainderMs=communismElapsed-fullMinutes*60000;
+    if(fullMinutes>0){
+      const rate=getCommunismPerMinute(state);
+      result.communismEarned=Math.min(cap(rate*fullMinutes),RULES.maxNumber-state.communism);
+      state.communism=cap(state.communism+result.communismEarned);
+    }
     if(seconds>0){
       const finances=getBusinessEconomy(state);
       result.earned=addMoney(state,finances.netToTreasuryPerSecond*seconds);
