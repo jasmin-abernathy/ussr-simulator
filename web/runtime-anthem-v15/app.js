@@ -1,12 +1,12 @@
-const APP_VERSION='2026-11-28-first-refrain-1';
-import { ACTIVITIES, RULES } from './game-data.js?v=2026-11-28-first-refrain-1';
+const APP_VERSION='2026-11-28-anthem-min-2-1';
+import { ACTIVITIES, RULES } from './game-data.js?v=2026-11-28-anthem-min-2-1';
 import {
   createState, hydrateState, getStats, getActivity, quotePurchase,
   clickProduce, buyActivity, quoteActivityConversion, convertActivity, CONVERSION_TARGETS, getActivityCorruptionRate, CORRUPTION_PURCHASE, COMMUNISM_PURCHASE_PENALTY, getPropagandaOffer, buyPropagandaAgency, getIdeologyInstitutionOffer, buyIdeologyInstitution, advance, startPlan, claimPlan, publicProjectOffers, spendPublicBudget,
   reduceInflation, exportState, getGoals, activityBusinessRate, setTaxPolicy, TAX_POLICIES, TAX_POLICY_LABELS, getBusinessEconomyForPolicy,
-} from './engine.js?v=2026-11-28-first-refrain-1';
-import { COUNTRIES, MILESTONES, createWorld, hydrateWorld, chooseCountry, getCooperation, cooperate, rankCountriesByCooperationCost, getWorldStats, celebrate, rewardAnthem, getAnthemReward, START_COUNTRIES, USA_COUNTRY_ID, getVisibleCountries, getWorldStage, getCampaignWaves, getUSImportOffer, buyUSImports, convertUSImports, getBureaucracyOffer, buyBureaucracy, getBilateralOffer, buyBilateralAgreement } from './world.js?v=2026-11-28-first-refrain-1';
-import { ANTHEM_END_SECONDS, anthemClipFinished } from './anthem-clip.js?v=2026-11-28-first-refrain-1';
+} from './engine.js?v=2026-11-28-anthem-min-2-1';
+import { COUNTRIES, MILESTONES, createWorld, hydrateWorld, chooseCountry, getCooperation, cooperate, rankCountriesByCooperationCost, getWorldStats, celebrate, rewardAnthem, getAnthemReward, START_COUNTRIES, USA_COUNTRY_ID, getVisibleCountries, getWorldStage, getCampaignWaves, getUSImportOffer, buyUSImports, convertUSImports, getBureaucracyOffer, buyBureaucracy, getBilateralOffer, buyBilateralAgreement } from './world.js?v=2026-11-28-anthem-min-2-1';
+import { ANTHEM_END_SECONDS, anthemClipFinished } from './anthem-clip.js?v=2026-11-28-anthem-min-2-1';
 
 const SAVE_KEY = 'ussr-simulator:save:v1';
 const BACKUP_KEY = 'ussr-simulator:backup:v1';
@@ -360,7 +360,7 @@ function renderGoals() {
 function render() {
   const stats = getStats(state);
   const anthemReward=getAnthemReward(state);
-  $('anthem-button')?.classList.toggle('has-scaled-reward',anthemReward>0);
+  $('anthem-button')?.classList.toggle('has-scaled-reward',anthemReward>2);
   setText($('anthem-status'),`+${format(anthemReward)} points communisme`);
   $('anthem-button')?.setAttribute('aria-label',
     `Écouter L’Internationale · +${format(anthemReward)} points de communisme à la fin`);
@@ -925,7 +925,7 @@ if (anthemAudio && anthemButton) {
     document.getElementById('anthem-control-symbol').textContent = playing ? 'Ⅱ' : '▶';
     const currentBonus=getAnthemReward(state);
     document.getElementById('anthem-status').textContent = `+${format(currentBonus)} points communisme`;
-    anthemButton.classList.toggle('has-scaled-reward',currentBonus>0);
+    anthemButton.classList.toggle('has-scaled-reward',currentBonus>2);
     anthemButton.setAttribute('aria-label',
       `${playing?'Mettre en pause':'Écouter'} L’Internationale · +${format(currentBonus)} points de communisme à la fin`);
     updateMediaSession();
