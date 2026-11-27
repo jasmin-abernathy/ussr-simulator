@@ -497,19 +497,20 @@ if (anthemAudio && anthemButton) {
     catch { updateAnthem('Lecture impossible : fichier audio indisponible.'); }
   });
   anthemAudio.addEventListener('play', () => {
-    updateAnthem();
-    if (!canWrite) return;
-    const bonus=rewardAnthem(world,state);
-    if(bonus.ok){
-      changed();
-      notify(`🎵 L’Internationale : +${bonus.points} points de communisme !`);
-      updateAnthem(`+${bonus.points} communisme gagné · prochain bonus dans 90 s`);
-    } else if (bonus.reason==='cooldown') {
-      updateAnthem(`En écoute · prochain bonus dans ${Math.ceil(bonus.remainingMs/1000)} s`);
-    }
+    updateAnthem('Écoute jusqu’à la fin pour gagner +3 communisme.');
   });
   anthemAudio.addEventListener('pause', () => updateAnthem());
-  anthemAudio.addEventListener('ended', () => { anthemAudio.currentTime = 0; updateAnthem(); });
+  anthemAudio.addEventListener('ended', () => {
+    if(canWrite){
+      const bonus=rewardAnthem(world,state);
+      if(bonus.ok){
+        changed();
+        notify(`🎵 L’Internationale écoutée en entier : +${bonus.points} communisme !`);
+      }
+    }
+    anthemAudio.currentTime=0;
+    updateAnthem('Une écoute complète = +3 communisme · sans limite');
+  });
   anthemAudio.addEventListener('error', () => updateAnthem('Fichier non chargé. Vérifie la connexion ou réessaie.'));
 }
 
