@@ -3406,3 +3406,13 @@ conic-gradient(#17bd2a 0% var(--anthem-progress),#090909 var(--anthem-progress) 
   pointer-events:none;
 }
 @media(max-width:700px){.brand-mark img{width:29px;height:29px}}
+
+
+/* Public infrastructure pressure: a clearly visible budget warning. */
+.public-infrastructure-status{
+ margin:10px 0;padding:13px 15px;
+ background:#fff0eb;color:#9c3129;border:1px solid #e6bdb2;
+ border-radius:12px;font-size:12px;font-weight:700;line-height:1.55;
+ overflow-wrap:break-word;
+}
+.public-infrastructure-status[hidden]{display:none!important}
