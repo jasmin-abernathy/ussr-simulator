@@ -679,7 +679,7 @@ const BUSINESS_TYPES=Object.freeze({
  corn:[12500,9],'virgin-lands':[16000,12],cinema:[18500,23],
  'us-imports':[5400,40],
 });
-export const TAX_POLICIES=Object.freeze({social:10,balanced:20,solidarity:30});
+export const TAX_POLICIES=Object.freeze({social:10,balanced:30,solidarity:50});
 export const TAX_POLICY_LABELS=Object.freeze({social:'Fiscalité allégée',balanced:'Fiscalité équilibrée',solidarity:'Fiscalité solidaire'});
 export function setTaxPolicy(state,policy){
  if(!Object.prototype.hasOwnProperty.call(TAX_POLICIES,policy))return false;
