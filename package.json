@@ -1,0 +1,21 @@
+{
+  "name": "ussr-simulator-personal-edition",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Édition web personnelle des mécanismes de gestion conservés dans GDCame en 2016.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "node scripts/serve.mjs",
+    "serve": "node scripts/serve.mjs",
+    "check": "node scripts/check-web.mjs",
+    "test": "node --test tests/*.test.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jasmin-abernathy/ussr-simulator.git"
+  }
+}

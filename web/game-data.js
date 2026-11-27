@@ -1,0 +1,78 @@
+/**
+ * Historical balance: EntityFX/GdcGame, 3314540a (2016-09-02).
+ * Original MIT attribution is retained in ../LICENSE.md.
+ * French text is original to this web port. See ../docs/MECHANICS.md.
+ */
+export const RULES = Object.freeze({
+  saveVersion: 1,
+  initialProduction: 10,
+  priceGrowth: 1.15,
+  productionInflationStep: 1000,
+  taxInflationStep: 2000,
+  maxInflation: 100,
+  offlineCapMs: 8 * 60 * 60 * 1000,
+  planUnlock: 10000,
+  planDurationMs: 4 * 60 * 60 * 1000,
+  planReward: 5000000,
+  planRewardGrowth: 1.2,
+  beerReductionMs: 5 * 60 * 1000,
+  minimumPlanDurationMs: 25 * 60 * 1000,
+  maxNumber: 1e100,
+  maxOwned: 10000,
+  maxBatch: 1000,
+  minimumPrice: 0.000001,
+  maxSaveBytes: 1024 * 1024,
+});
+
+const activity = (id, legacyId, name, originalName, description, initialPrice, unlock,
+  production = 0, taxes = 0, communism = 0, productionPercent = 0, taxPercent = 0, special = null) =>
+  Object.freeze({ id, legacyId, name, originalName, description, initialPrice, unlock,
+    effects: Object.freeze({ production, taxes, communism, productionPercent, taxPercent }), special });
+
+/** Edit prices, thresholds and effects here to rebalance your own version. */
+export const ACTIVITIES = Object.freeze([
+  activity('matches', 1, 'Allumettes', 'Matches',
+    'Une petite fabrique pour allumer la production.', 200, 0, 10, 0, 1),
+  activity('gum', 2, 'Chewing-gum', 'Bubble gum',
+    'Un kiosque qui fait entrer les premières recettes régulières.', 400, 5, 0, 10, 1),
+  activity('beer', 3, 'Brasserie', 'Beer',
+    'Des ouvriers désaltérés. Chaque achat raccourcit les prochains plans de cinq minutes.', 800, 10, 20, 20, 2, 0, 0, 'plan'),
+  activity('radio', 4, 'Radio étrangère', 'Voice Of America',
+    'Une autre fréquence. Chaque achat divise par trois le prix d’une activité, à tour de rôle.', 1500, 25, 80, 40, 0, 0, 0, 'discount'),
+  activity('dissidence', 5, 'Réunion en appartement', 'Dissidence On Flat',
+    'Les idées circulent. Chaque achat double les futurs bonus d’une activité, à tour de rôle.', 3000, 40, 160, 0, 0, 0, 0, 'double'),
+  activity('trading', 6, 'Petit commerce', 'Hucksterism',
+    'Quelques étals, des échanges et de nouvelles recettes.', 6000, 80, 0, 80, 5),
+  activity('soda', 7, 'Distributeur de soda', 'Soda Machine',
+    'Une pause pétillante au pied des ateliers.', 10000, 120, 240, 80, 5),
+  activity('grocery', 8, 'Épicerie', 'Grocery Store',
+    'Un point de ravitaillement pour tout le quartier.', 20000, 180, 80, 80, 5),
+  activity('black-market', 9, 'Marché noir', 'Black market',
+    'Des circuits parallèles qui ajoutent un bonus à toute la production.', 50000, 220, 0, 80, 10, 2),
+  activity('posters', 10, 'Atelier d’affiches', 'Poster agitation',
+    'Les murs affichent les ambitions du prochain plan.', 223200, 250, 0, 150, 10),
+  activity('television', 11, 'Télévision', 'TV Shows',
+    'Un programme commun, du salon à la salle de repos.', 250000, 280, 100, 150, 5),
+  activity('censorship', 12, 'Bureau de censure', 'Censore',
+    'Des tampons et beaucoup de papier à traiter.', 300000, 500, 200, 0, 10),
+  activity('mausoleum', 13, 'Visite du mausolée', 'Excursion to the mausoleum',
+    'Des excursions organisées et des souvenirs à raconter.', 500000, 600, 250, 0, 5),
+  activity('lenin', 14, 'Statue de Lénine', 'Build Lenin Statue',
+    'Une nouvelle place, un nouveau monument.', 800000, 650, 0, 0, 30),
+  activity('electrification', 15, 'Électrification', 'Electrofication',
+    'Le réseau s’étend et renforce toute la production.', 1100000, 700, 0, 0, 10, 5),
+  activity('canning', 16, 'Conserverie', 'Canned Production',
+    'La récolte prend le chemin des boîtes de conserve.', 1100000, 800, 100, 100, 10),
+  activity('candy', 17, 'Confiserie', 'Candies Production',
+    'Une chaîne de fabrication pour les jours de fête.', 1350000, 900, 150, 200, 10),
+  activity('champagne', 18, 'Vin pétillant', 'Champagne Production',
+    'De nouvelles bouteilles pour célébrer les objectifs atteints.', 2200000, 1000, 300, 50, 15),
+  activity('collectivisation', 19, 'Collectivisation', 'Collectivisation',
+    'Une organisation commune qui ajoute un bonus à toutes les recettes fiscales.', 2500000, 1200, 0, 0, 10, 0, 2),
+  activity('corn', 20, 'Champs de maïs', 'Corn fields',
+    'Les cultures gagnent du terrain sur l’horizon.', 2500000, 1300, 500, 0, 20),
+  activity('virgin-lands', 21, 'Terres vierges', 'Virign Land Campaign',
+    'De nouvelles terres entrent dans le circuit économique.', 1000000, 1500, 0, 500, 25),
+  activity('cinema', 22, 'Cinéma', 'Cinema',
+    'La salle s’illumine à la fin de la journée.', 2500000, 1800, 500, 150, 15),
+]);

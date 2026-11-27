@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#b9382a">
+  <meta name="description" content="Un jeu de gestion à ton rythme. Produis, développe tes activités et prépare le prochain plan quinquennal.">
+  <meta name="robots" content="noindex,nofollow">
+  <title>USSR Simulator — Édition personnelle</title>
+  <link rel="icon" href="./assets/icon.svg" type="image/svg+xml">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="stylesheet" href="./styles.css">
+  <script type="module" src="./app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#production-panel">Aller au jeu</a>
+  <header class="site-header">
+    <a class="wordmark" href="./" aria-label="USSR Simulator, accueil du jeu">
+      <span class="brand-mark" aria-hidden="true"><svg><use href="./assets/symbols.svg#star"></use></svg></span>
+      <span class="brand-name">USSR<span>SIMULATOR</span></span>
+    </a>
+    <p class="edition-label"><span class="edition-line"></span>ÉDITION PERSONNELLE</p>
+    <div class="header-actions">
+      <button class="icon-button" id="help-button" type="button" aria-label="Comment jouer" title="Comment jouer"><svg aria-hidden="true"><use href="./assets/symbols.svg#help"></use></svg></button>
+      <button class="icon-button" id="settings-button" type="button" aria-label="Options de la partie" title="Options de la partie"><svg aria-hidden="true"><use href="./assets/symbols.svg#gear"></use></svg></button>
+    </div>
+  </header>
+
+  <main class="game-layout">
+    <section class="command-column" aria-labelledby="command-title">
+      <div class="intro-copy">
+        <p class="eyebrow">TOUT COMMENCE ICI</p>
+        <h1 id="command-title">À toi de <br>faire tourner <br><em>l’histoire.</em></h1>
+        <p class="intro-description">Une activité après l’autre,<br>construis ton avenir.</p>
+      </div>
+      <div class="production-console" id="command-panel">
+        <div class="factory-scene">
+          <span class="scene-label">LA PRODUCTION CONTINUE</span>
+          <img src="./assets/factory.svg" width="560" height="360" alt="Une usine aux toits rouges et ses hautes cheminées, devant le soleil levant.">
+          <span class="scene-caption" aria-hidden="true">CHAQUE GESTE COMPTE.</span>
+        </div>
+        <div class="production-action">
+          <div class="production-label"><span>Ta contribution</span><span class="mono" id="produce-gain">+10 ₽</span></div>
+          <button id="produce-button" class="produce-button" type="button">
+            <svg aria-hidden="true"><use href="./assets/symbols.svg#industry"></use></svg>
+            <span>Produire</span>
+            <span class="button-press-mark" aria-hidden="true">+</span>
+          </button>
+          <p class="action-hint">Touche pour produire.<br>Les recettes s’accumulent toutes seules.</p>
+        </div>
+      </div>
+      <p class="quiet-note"><svg aria-hidden="true"><use href="./assets/symbols.svg#leaf"></use></svg>À ton rythme. Sans publicité.</p>
+    </section>
+
+    <section class="activity-column" id="production-panel" aria-labelledby="activities-title">
+      <section class="economy-strip" aria-label="État de ton économie">
+        <div class="balance-block">
+          <span class="stat-label">Trésorerie</span>
+          <span class="balance-number"><span id="balance">0</span><span class="currency">₽</span></span>
+        </div>
+        <div class="economy-details">
+          <div class="mini-stat"><span class="stat-label"><svg aria-hidden="true"><use href="./assets/symbols.svg#hand"></use></svg>Par action</span><span class="stat-value"><span id="production-rate">10</span><span class="stat-unit"> ₽</span></span></div>
+          <div class="mini-stat"><span class="stat-label"><svg aria-hidden="true"><use href="./assets/symbols.svg#clock"></use></svg>Par seconde</span><span class="stat-value"><span id="tax-rate">0</span><span class="stat-unit"> ₽</span></span></div>
+          <div class="mini-stat communism-stat"><span class="stat-label"><svg aria-hidden="true"><use href="./assets/symbols.svg#star"></use></svg>Communisme</span><span class="stat-value" id="communism">0</span></div>
+        </div>
+      </section>
+
+      <div class="section-heading">
+        <div><p class="eyebrow">L’ÉCONOMIE SE CONSTRUIT</p><h2 id="activities-title">Tes activités</h2></div>
+        <span class="count-label"><span id="owned-count">0</span><span id="owned-label"> activité</span></span>
+      </div>
+      <p class="section-description">Investis tes roubles pour produire plus et ouvrir de nouvelles possibilités.</p>
+
+      <div class="activity-toolbar">
+        <div class="filter-tabs" role="group" aria-label="Afficher les activités">
+          <button type="button" class="filter-button is-active" data-filter="all" aria-pressed="true">Toutes</button>
+          <button type="button" class="filter-button" data-filter="available" aria-pressed="false">Disponibles</button>
+          <button type="button" class="filter-button" data-filter="owned" aria-pressed="false">Acquises</button>
+        </div>
+        <label class="quantity-select" for="buy-quantity"><span>Achat</span><select id="buy-quantity" aria-label="Quantité à acheter"><option value="1">×1</option><option value="10">×10</option><option value="max">Max.</option></select></label>
+      </div>
+      <div id="activity-list" class="activity-list" aria-label="Liste des activités">
+        <div class="loading-state" role="status"><span class="loading-symbol" aria-hidden="true">✳</span>Préparation de ton économie…</div>
+      </div>
+      <p id="activity-empty" class="empty-state" hidden>Aucune activité dans cette sélection pour le moment.</p>
+      <noscript><p class="empty-state">Active JavaScript dans ton navigateur pour jouer à USSR Simulator.</p></noscript>
+    </section>
+
+    <aside class="planning-column" aria-label="Plan et progression">
+      <section class="plan-card" id="plan-panel" aria-labelledby="plan-title">
+        <div class="plan-topline"><span class="eyebrow">VOIR PLUS GRAND</span><svg class="plan-star" aria-hidden="true"><use href="./assets/symbols.svg#star"></use></svg></div>
+        <h2 id="plan-title">Le plan<br>quinquennal.</h2>
+        <p class="plan-description">Un grand chantier.<br>Un nouvel horizon.</p>
+        <div class="plan-poster" aria-hidden="true"><span class="plan-number">5</span><svg><use href="./assets/symbols.svg#industry"></use></svg><span class="poster-lines"></span></div>
+        <div class="plan-reward"><span>Récompense</span><strong id="plan-reward">5 000 000 ₽</strong></div>
+        <div class="plan-progress-header"><span id="plan-status">À partir de 10 000 points</span><span id="plan-countdown">4 h</span></div>
+        <progress id="plan-progress" max="100" value="0" aria-label="Progression du plan quinquennal">0 %</progress>
+        <button class="plan-button" id="plan-button" type="button" disabled>Lancer le plan</button>
+      </section>
+
+      <section class="goals-card" aria-labelledby="goals-title">
+        <div class="small-section-heading"><h2 id="goals-title">Prochaines étapes</h2><svg aria-hidden="true"><use href="./assets/symbols.svg#flag"></use></svg></div>
+        <ul class="goals-list" id="goals-list"></ul>
+      </section>
+
+      <section class="inflation-card" aria-labelledby="inflation-title">
+        <div class="small-section-heading"><h2 id="inflation-title">Garder l’équilibre</h2><strong id="inflation-value">0 %</strong></div>
+        <p>L’inflation peut réduire les recettes de ton économie.</p>
+        <button class="text-button" id="inflation-button" type="button" disabled>Lutter contre la corruption</button>
+      </section>
+
+      <section class="session-card" id="session-panel" aria-labelledby="session-title">
+        <svg class="session-icon" aria-hidden="true"><use href="./assets/symbols.svg#save"></use></svg>
+        <div><h2 id="session-title">Ta partie, ici.</h2><p id="save-status" role="status">Sauvegarde sur cet appareil</p></div>
+        <p id="session-stats" class="session-stats"></p>
+        <p id="storage-warning" class="storage-warning" role="alert" hidden></p>
+        <button class="text-button session-options" type="button" data-open-dialog="settings-dialog">Gérer ma partie</button>
+        <button class="secondary-button install-button" type="button" id="install-button" hidden>Installer le jeu</button>
+      </section>
+    </aside>
+  </main>
+
+  <footer class="game-footer"><span>USSR SIMULATOR</span><p>Un petit commencement. De grandes possibilités.</p><a href="https://github.com/jasmin-abernathy/ussr-simulator" target="_blank" rel="noopener noreferrer">Le projet</a></footer>
+
+  <nav class="mobile-nav" aria-label="Navigation dans le jeu">
+    <a class="is-active" href="#command-panel"><svg aria-hidden="true"><use href="./assets/symbols.svg#industry"></use></svg><span>Production</span></a>
+    <a href="#plan-panel"><svg aria-hidden="true"><use href="./assets/symbols.svg#star"></use></svg><span>Le plan</span></a>
+    <a href="#session-panel"><svg aria-hidden="true"><use href="./assets/symbols.svg#save"></use></svg><span>Ma partie</span></a>
+  </nav>
+
+  <dialog id="help-dialog" class="game-dialog" aria-labelledby="help-title">
+    <div class="dialog-heading"><p class="eyebrow">BIENVENUE, CAMARADE</p><button class="icon-button dialog-close" type="button" data-close-dialog aria-label="Fermer l’aide"><svg aria-hidden="true"><use href="./assets/symbols.svg#close"></use></svg></button></div>
+    <h2 id="help-title">Les grandes choses<br>commencent petit.</h2>
+    <ol class="help-steps">
+      <li><strong>Produis tes premiers roubles.</strong><p>Appuie sur « Produire ». Chaque action alimente ta trésorerie.</p></li>
+      <li><strong>Investis dans des activités.</strong><p>Elles améliorent ta production, tes recettes automatiques et ton indice de communisme. Cet indice débloque la suite.</p></li>
+      <li><strong>Prépare ton grand chantier.</strong><p>À 10 000 points, le plan quinquennal devient accessible. Lance-le, puis récupère sa récompense une fois terminé.</p></li>
+    </ol>
+    <p class="help-offline">Tes recettes continuent pendant ton absence, dans la limite de 8 heures. Pour installer le jeu, utilise le menu de ton navigateur ou « Partager » puis « Sur l’écran d’accueil » sur iPhone.</p>
+    <p class="dialog-note">Ta partie se sauvegarde sur cet appareil. Exporte-la dans les options pour la conserver ou la transférer.</p>
+    <button class="primary-button full-width" type="button" data-close-dialog>C’est parti</button>
+  </dialog>
+
+  <dialog id="settings-dialog" class="game-dialog" aria-labelledby="settings-title">
+    <div class="dialog-heading"><p class="eyebrow">TON COIN À TOI</p><button class="icon-button dialog-close" type="button" data-close-dialog aria-label="Fermer les options"><svg aria-hidden="true"><use href="./assets/symbols.svg#close"></use></svg></button></div>
+    <h2 id="settings-title">Ta partie.</h2>
+    <p class="dialog-introduction">Elle est enregistrée dans ce navigateur. Garde une copie avant de changer d’appareil ou d’effacer tes données de navigation.</p>
+    <div class="save-actions">
+      <button id="export-save" class="secondary-button" type="button"><svg aria-hidden="true"><use href="./assets/symbols.svg#download"></use></svg>Exporter la sauvegarde</button>
+      <label class="secondary-button file-input-label" for="import-save"><svg aria-hidden="true"><use href="./assets/symbols.svg#upload"></use></svg>Importer une sauvegarde<input id="import-save" type="file" accept="application/json,.json"></label>
+    </div>
+    <p class="dialog-note">L’importation remplace la partie ouverte par celle du fichier choisi.</p>
+    <div class="reset-area"><div><h3>Un nouveau départ</h3><p>Recommencer avec une économie toute neuve.</p></div><button id="reset-open" class="danger-button" type="button">Recommencer</button></div>
+    <p class="about-line">Édition personnelle · Sans publicité ni compte à créer.<br><a href="https://github.com/jasmin-abernathy/ussr-simulator" target="_blank" rel="noopener noreferrer">Voir le code et les crédits</a></p>
+  </dialog>
+
+  <dialog id="reset-dialog" class="game-dialog small-dialog" aria-labelledby="reset-title">
+    <div class="dialog-heading"><p class="eyebrow">NOUVEAU DÉPART</p><button class="icon-button dialog-close" type="button" data-close-dialog aria-label="Annuler"><svg aria-hidden="true"><use href="./assets/symbols.svg#close"></use></svg></button></div>
+    <h2 id="reset-title">Tout recommencer ?</h2>
+    <p>Ta progression actuelle sera effacée de cet appareil. Pense à l’exporter si tu souhaites la garder.</p>
+    <div class="dialog-actions"><button class="secondary-button" type="button" data-close-dialog>Garder ma partie</button><button class="primary-button" id="reset-confirm" type="button">Recommencer</button></div>
+  </dialog>
+
+  <dialog id="offline-dialog" class="game-dialog small-dialog offline-dialog" aria-labelledby="offline-title">
+    <div class="dialog-heading"><p class="eyebrow">BON RETOUR</p><button class="icon-button dialog-close" type="button" data-close-dialog aria-label="Fermer le bilan"><svg aria-hidden="true"><use href="./assets/symbols.svg#close"></use></svg></button></div>
+    <svg class="offline-symbol" aria-hidden="true"><use href="./assets/symbols.svg#industry"></use></svg>
+    <h2 id="offline-title">L’économie n’a<br>pas attendu.</h2>
+    <p>Tes activités ont continué pendant ton absence.</p>
+    <p class="offline-total"><span id="offline-earned">0</span> <span>₽</span></p>
+    <p class="dialog-note" id="offline-duration"></p>
+    <button id="offline-dismiss" class="primary-button full-width" type="button" data-close-dialog>Reprendre la partie</button>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+</body>
+</html>

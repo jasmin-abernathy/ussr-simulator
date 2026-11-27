@@ -1,0 +1,309 @@
+import { ACTIVITIES, RULES } from './game-data.js';
+
+const BY_ID = new Map(ACTIVITIES.map((item, index) => [item.id, { item, index }]));
+const MAX_TIME = 8.64e15;
+const own = (object, key) => Object.prototype.hasOwnProperty.call(object, key);
+const record = value => value !== null && typeof value === 'object' && !Array.isArray(value);
+const cap = (value, maximum = RULES.maxNumber) => Math.min(maximum, Math.max(0, value));
+const time = value => typeof value === 'number' && Number.isFinite(value)
+  ? cap(value, MAX_TIME) : Date.now();
+const emptyOffline = () => ({ elapsedMs: 0, creditedMs: 0, earned: 0, capped: false });
+const addMoney = (state, amount) => {
+  const credited = Math.min(cap(amount), RULES.maxNumber - state.cash);
+  state.cash += credited;
+  state.totalEarned = cap(state.totalEarned + credited);
+  return credited;
+};
+
+/** Return a new version-1 state. All dates are UTC epoch milliseconds. */
+export function createState(now = Date.now()) {
+  return {
+    version: RULES.saveVersion,
+    cash: 0, totalEarned: 0, clicks: 0, automaticSeconds: 0, communism: 0,
+    owned: Object.fromEntries(ACTIVITIES.map(item => [item.id, 0])),
+    counters: { production: RULES.initialProduction, taxes: 0, productionBonusPercent: 0, taxBonusPercent: 0 },
+    productionSteps: 0, taxSteps: 0,
+    lastUpdate: time(now), tickRemainderMs: 0,
+    plan: { status: 'idle', remainingMs: 0, durationMs: 0, completed: 0 },
+    offline: emptyOffline(), recovered: false,
+  };
+}
+
+/**
+ * Parse only known data fields. Invalid/unsupported saves recover to safe values.
+ * This prevents invalid arithmetic and object-key injection, not save editing.
+ * Loading also credits the elapsed time once, with an eight-hour limit.
+ */
+export function hydrateState(raw, now = Date.now()) {
+  now = time(now);
+  const state = createState(now);
+  if (typeof raw === 'string') {
+    if (new TextEncoder().encode(raw).length > RULES.maxSaveBytes) {
+      state.recovered = true;
+      return state;
+    }
+    try { raw = JSON.parse(raw); } catch { state.recovered = true; return state; }
+  }
+  if (!record(raw) || raw.version !== RULES.saveVersion) {
+    state.recovered = raw != null;
+    return state;
+  }
+  const readNumber = (value, fallback, maximum = RULES.maxNumber, integer = false) => {
+    if (typeof value !== 'number' || !Number.isFinite(value)) {
+      state.recovered = true;
+      return fallback;
+    }
+    const result = integer ? Math.floor(cap(value, maximum)) : cap(value, maximum);
+    if (result !== value) state.recovered = true;
+    return result;
+  };
+  const owned = record(raw.owned) ? raw.owned : {};
+  const minimum = { production: RULES.initialProduction, taxes: 0, productionBonusPercent: 0, taxBonusPercent: 0, communism: 0 };
+  for (const item of ACTIVITIES) {
+    const count = readNumber(own(owned, item.id) ? owned[item.id] : undefined, 0, RULES.maxOwned, true);
+    state.owned[item.id] = count;
+    minimum.production += count * item.effects.production;
+    minimum.taxes += count * item.effects.taxes;
+    minimum.productionBonusPercent += count * item.effects.productionPercent;
+    minimum.taxBonusPercent += count * item.effects.taxPercent;
+    minimum.communism += count * item.effects.communism;
+  }
+  const counters = record(raw.counters) ? raw.counters : {};
+  for (const key of Object.keys(state.counters)) {
+    const value = readNumber(own(counters, key) ? counters[key] : undefined, minimum[key]);
+    state.counters[key] = Math.max(minimum[key], value);
+    if (state.counters[key] !== value) state.recovered = true;
+  }
+  state.cash = readNumber(raw.cash, 0);
+  state.totalEarned = Math.max(state.cash, readNumber(raw.totalEarned, state.cash));
+  state.communism = Math.max(minimum.communism, readNumber(raw.communism, minimum.communism));
+  state.clicks = readNumber(raw.clicks, 0, Number.MAX_SAFE_INTEGER, true);
+  state.automaticSeconds = readNumber(raw.automaticSeconds, 0, Number.MAX_SAFE_INTEGER, true);
+  state.productionSteps = readNumber(raw.productionSteps, 0, RULES.productionInflationStep * RULES.maxInflation, true);
+  state.taxSteps = readNumber(raw.taxSteps, 0, RULES.taxInflationStep * RULES.maxInflation, true);
+  state.tickRemainderMs = readNumber(raw.tickRemainderMs, 0, 999.999999);
+  const savedTime = readNumber(raw.lastUpdate, now, MAX_TIME);
+  state.lastUpdate = Math.min(savedTime, now);
+  if (savedTime > now) {
+    state.recovered = true;
+    state.tickRemainderMs = 0;
+  }
+  const plan = record(raw.plan) ? raw.plan : {};
+  state.plan.completed = readNumber(plan.completed, 0, RULES.maxOwned, true);
+  if (state.communism >= RULES.planUnlock && ['running', 'ready'].includes(plan.status)) {
+    state.plan.status = plan.status;
+    state.plan.durationMs = Math.max(RULES.minimumPlanDurationMs,
+      readNumber(plan.durationMs, RULES.planDurationMs, RULES.planDurationMs));
+    state.plan.remainingMs = plan.status === 'ready' ? 0 : readNumber(plan.remainingMs, state.plan.durationMs, state.plan.durationMs);
+    if (state.plan.remainingMs === 0) state.plan.status = 'ready';
+  } else if (plan.status !== 'idle') {
+    state.recovered = true;
+  }
+  const result = advance(state, now);
+  state.offline = { elapsedMs: result.elapsedMs, creditedMs: result.creditedMs, earned: result.earned, capped: result.capped };
+  return state;
+}
+
+// Each custom rule visits the 22 items in their original order, repeatedly.
+const visits = (purchases, index) => Math.floor(purchases / ACTIVITIES.length) + (index < purchases % ACTIVITIES.length ? 1 : 0);
+const planDuration = state => Math.max(RULES.minimumPlanDurationMs,
+  RULES.planDurationMs - state.owned.beer * RULES.beerReductionMs);
+const planReward = state => Math.min(RULES.maxNumber,
+  RULES.planReward * RULES.planRewardGrowth ** state.plan.completed);
+const inflation = (steps, size) => Math.floor(steps / size);
+const grossProduction = state => cap(state.counters.production * (1 + state.counters.productionBonusPercent / 100));
+const grossTaxes = state => cap(state.counters.taxes * (1 + state.counters.taxBonusPercent / 100));
+const production = state => grossProduction(state) * (1 - inflation(state.productionSteps, RULES.productionInflationStep) / 100);
+const taxes = state => grossTaxes(state) * (1 - inflation(state.taxSteps, RULES.taxInflationStep) / 100);
+
+/** Derived values only; querying never changes the state or the clock. */
+export function getStats(state) {
+  return {
+    cash: state.cash, totalEarned: state.totalEarned, communism: state.communism, clicks: state.clicks,
+    productionPerClick: production(state), taxesPerSecond: taxes(state),
+    totalOwned: Object.values(state.owned).reduce((total, count) => total + count, 0),
+    unlockedCount: ACTIVITIES.filter(item => item.unlock <= state.communism).length,
+    productionBase: state.counters.production, taxBase: state.counters.taxes,
+    productionBonusPercent: state.counters.productionBonusPercent, taxBonusPercent: state.counters.taxBonusPercent,
+    productionInflation: inflation(state.productionSteps, RULES.productionInflationStep),
+    taxInflation: inflation(state.taxSteps, RULES.taxInflationStep),
+    canReduceInflation: state.taxSteps >= RULES.taxInflationStep,
+    plan: { unlocked: state.communism >= RULES.planUnlock, status: state.plan.status,
+      remainingMs: state.plan.remainingMs,
+      durationMs: state.plan.status === 'idle' ? planDuration(state) : state.plan.durationMs,
+      nextDurationMs: planDuration(state),
+      reward: planReward(state), completed: state.plan.completed },
+    offline: { ...state.offline },
+  };
+}
+
+function priceFor(item, index, owned, radioCount) {
+  const discounts = visits(radioCount, index);
+  const direct = item.initialPrice * RULES.priceGrowth ** owned / 3 ** discounts;
+  if (Number.isFinite(direct) && direct > 0) {
+    return Math.max(RULES.minimumPrice, Math.min(RULES.maxNumber, direct));
+  }
+  const logPrice = Math.log(item.initialPrice) + owned * Math.log(RULES.priceGrowth)
+    - discounts * Math.log(3);
+  return Math.max(RULES.minimumPrice, Math.min(RULES.maxNumber, Math.exp(logPrice)));
+}
+
+/** The effects shown are those of the NEXT purchase, including dissident boosts. */
+export function getActivity(state, id) {
+  const entry = BY_ID.get(id);
+  if (!entry) return null;
+  const { item, index } = entry;
+  const multiplier = Math.min(RULES.maxNumber, 2 ** visits(state.owned.dissidence, index));
+  const effects = Object.fromEntries(Object.entries(item.effects).map(([key, value]) =>
+    [key, key === 'communism' ? value : cap(value * multiplier)]));
+  const cost = priceFor(item, index, state.owned[id], state.owned.radio);
+  const unlocked = state.communism >= item.unlock;
+  return { ...item, effects, owned: state.owned[id], cost, unlocked,
+    canBuy: unlocked && state.cash >= cost && state.owned[id] < RULES.maxOwned };
+}
+
+/**
+ * Quote up to quantity affordable units; 'max' is limited to 1,000 per action.
+ * Numeric batches may also be partial. Costs include the radio's self-discount.
+ */
+export function quotePurchase(state, id, quantity = 1) {
+  const entry = BY_ID.get(id);
+  if (!entry) return { ok: false, reason: 'unknown-activity', quantity: 0, cost: 0, requested: 0, maxReached: false };
+  if (quantity !== 'max' && (!Number.isSafeInteger(quantity) || quantity < 1)) {
+    return { ok: false, reason: 'invalid-quantity', quantity: 0, cost: 0, requested: 0, maxReached: false };
+  }
+  const requested = quantity === 'max' ? RULES.maxBatch : Math.min(RULES.maxBatch, quantity);
+  const result = { ok: false, quantity: 0, cost: 0, requested, maxReached: false };
+  if (state.communism < entry.item.unlock) return { ...result, reason: 'locked' };
+  const available = Math.min(requested, RULES.maxOwned - state.owned[id]);
+  if (available <= 0) return { ...result, reason: 'ownership-limit', maxReached: true };
+  for (let count = 0; count < available; count += 1) {
+    const cost = priceFor(entry.item, entry.index, state.owned[id] + count,
+      state.owned.radio + (id === 'radio' ? count : 0));
+    if (cost > state.cash - result.cost) break;
+    result.cost += cost;
+    result.quantity += 1;
+  }
+  result.ok = result.quantity > 0;
+  result.maxReached = result.quantity === RULES.maxBatch || state.owned[id] + result.quantity === RULES.maxOwned;
+  if (!result.ok) result.reason = 'insufficient-funds';
+  return result;
+}
+
+/** Mutates state; a failed purchase leaves it unchanged. */
+export function buyActivity(state, id, quantity = 1) {
+  const quote = quotePurchase(state, id, quantity);
+  if (!quote.ok) return { ok: false, reason: quote.reason, bought: 0, spent: 0 };
+  state.cash = Math.max(0, state.cash - quote.cost);
+  for (let count = 0; count < quote.quantity; count += 1) {
+    const { effects } = getActivity(state, id);
+    state.counters.production = cap(state.counters.production + effects.production);
+    state.counters.taxes = cap(state.counters.taxes + effects.taxes);
+    state.counters.productionBonusPercent = cap(state.counters.productionBonusPercent + effects.productionPercent);
+    state.counters.taxBonusPercent = cap(state.counters.taxBonusPercent + effects.taxPercent);
+    state.communism = cap(state.communism + effects.communism);
+    // Increment AFTER applying effects: a doubling never alters already-owned items.
+    state.owned[id] += 1;
+  }
+  return { ok: true, bought: quote.quantity, spent: quote.cost };
+}
+
+/** Mutates state. The clock is advanced separately by the UI. */
+export function clickProduce(state) {
+  const earned = addMoney(state, production(state));
+  state.clicks = cap(state.clicks + 1, Number.MAX_SAFE_INTEGER);
+  state.productionSteps = Math.min(RULES.productionInflationStep * RULES.maxInflation, state.productionSteps + 1);
+  return { ok: true, earned };
+}
+
+/** Sum historical per-second income, crossing at most 100 inflation boundaries. */
+function collectTaxes(state, seconds) {
+  let remaining = seconds;
+  let earned = 0;
+  const base = grossTaxes(state);
+  while (remaining > 0 && state.taxSteps < RULES.taxInflationStep * RULES.maxInflation) {
+    const rate = inflation(state.taxSteps, RULES.taxInflationStep);
+    const segment = Math.min(remaining, RULES.taxInflationStep - state.taxSteps % RULES.taxInflationStep);
+    earned += base * (1 - rate / 100) * segment;
+    state.taxSteps += segment;
+    remaining -= segment;
+  }
+  state.productionSteps = Math.max(0, state.productionSteps - seconds);
+  state.automaticSeconds = cap(state.automaticSeconds + seconds, Number.MAX_SAFE_INTEGER);
+  return addMoney(state, earned);
+}
+
+/**
+ * Mutates state once per time interval. Fractional seconds are carried forward.
+ * Backward clocks earn nothing; the previous watermark prevents double credit.
+ */
+export function advance(state, now = Date.now()) {
+  now = time(now);
+  const elapsedMs = Math.max(0, now - state.lastUpdate);
+  const creditedMs = Math.min(elapsedMs, RULES.offlineCapMs);
+  const result = { ok: true, earned: 0, elapsedMs, creditedMs, capped: elapsedMs > creditedMs };
+  if (elapsedMs === 0) return result;
+  state.lastUpdate = now; // Discard time over the cap, rather than banking it.
+  const tickMs = state.tickRemainderMs + creditedMs;
+  const seconds = Math.floor(tickMs / 1000);
+  state.tickRemainderMs = tickMs - seconds * 1000;
+  if (seconds > 0) result.earned = collectTaxes(state, seconds);
+  if (state.plan.status === 'running') {
+    state.plan.remainingMs = Math.max(0, state.plan.remainingMs - creditedMs);
+    if (state.plan.remainingMs === 0) state.plan.status = 'ready';
+  }
+  return result;
+}
+
+/** Begin one plan. The duration is fixed when it starts. */
+export function startPlan(state, now = Date.now()) {
+  advance(state, now);
+  if (state.communism < RULES.planUnlock) return { ok: false, reason: 'locked' };
+  if (state.plan.status !== 'idle') return { ok: false, reason: 'plan-active' };
+  state.plan.status = 'running';
+  state.plan.remainingMs = planDuration(state);
+  state.plan.durationMs = state.plan.remainingMs;
+  return { ok: true, durationMs: state.plan.remainingMs };
+}
+
+/** Claim a completed plan exactly once; the following reward grows by 20%. */
+export function claimPlan(state, now = Date.now()) {
+  advance(state, now);
+  if (state.plan.status !== 'ready') return { ok: false, reason: 'plan-not-ready', earned: 0 };
+  const earned = addMoney(state, planReward(state));
+  state.plan.completed = Math.min(RULES.maxOwned, state.plan.completed + 1);
+  state.plan.status = 'idle';
+  state.plan.remainingMs = 0;
+  state.plan.durationMs = 0;
+  return { ok: true, earned };
+}
+
+/** Historical anticorruption action: -1 inflation point, one tax tick, +1 communism. */
+export function reduceInflation(state) {
+  if (state.taxSteps < RULES.taxInflationStep) return { ok: false, reason: 'no-inflation', earned: 0 };
+  state.taxSteps -= RULES.taxInflationStep;
+  const earned = addMoney(state, taxes(state));
+  state.communism = cap(state.communism + 1);
+  return { ok: true, earned };
+}
+
+/** Advances state, then returns an independent JSON-compatible save object. */
+export function exportState(state, now = Date.now()) {
+  advance(state, now);
+  const { offline, recovered, ...persistent } = state;
+  return JSON.parse(JSON.stringify(persistent));
+}
+
+/** Informational milestones; they do not change balance or grant hidden rewards. */
+export function getGoals(state) {
+  const stats = getStats(state);
+  const definitions = [
+    ['first-workshop', 'Le premier atelier', 'Acheter une activité.', stats.totalOwned, 1],
+    ['first-taxes', 'Des recettes régulières', 'Atteindre 10 roubles de taxes par seconde.', stats.taxesPerSecond, 10],
+    ['new-frequency', 'Une autre fréquence', 'Atteindre 25 points de communisme pour débloquer la radio.', state.communism, 25],
+    ['all-activities', 'Toute une économie', 'Débloquer les 22 activités historiques.', stats.unlockedCount, ACTIVITIES.length],
+    ['first-plan', 'Le plan quinquennal', 'Atteindre 10 000 points de communisme.', state.communism, RULES.planUnlock],
+  ];
+  return definitions.map(([id, title, description, current, target]) =>
+    ({ id, title, description, current, target, complete: current >= target, progress: Math.min(1, current / target) }));
+}
