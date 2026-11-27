@@ -944,10 +944,14 @@ function renderWorld(){
     worldDisplayLimit=30;
     lastWorldDisplayStage=stats.stage;
   }
-  // All currently visible countries ordered by actual cooperation price.
-  // Unlocked geographic waves and regional filtering remain unchanged.
-  const countries=rankCountriesByCooperationCost(world,state,
-    getVisibleCountries(world).filter(c=>worldFilter==='all'||c.region===worldFilter));
+  // Keep the starting country pinned at the top. Sort only the other
+  // visible countries by actual cooperation cost (cheapest first).
+  // Geographic wave availability and regional filtering stay unchanged.
+  const visibleCountries=getVisibleCountries(world);
+  const originCountry=visibleCountries.find(c=>c.id===world.origin);
+  const otherCountries=rankCountriesByCooperationCost(world,state,
+    visibleCountries.filter(c=>c.id!==world.origin&&(worldFilter==='all'||c.region===worldFilter)));
+  const countries=originCountry?[originCountry,...otherCountries]:otherCountries;
   const showLimited=stats.stage>=2;
   const items=(showLimited?countries.slice(0,worldDisplayLimit):countries).map(c=>getCooperation(world,state,c.id));
   const remaining=Math.max(0,countries.length-worldDisplayLimit);
@@ -956,7 +960,7 @@ function renderWorld(){
     more.hidden=!showLimited||remaining===0;
     more.textContent=`Afficher ${Math.min(30,remaining)} pays supplémentaires · ${remaining} restants`;
   }
-  const signature=JSON.stringify([world.origin,world.partners,world.bilateral,state.communism,Math.floor(state.cash),Math.floor(state.corruption*100),state.internationalAidLevel,worldFilter,'cooperation-cost-v1',stats.stage,worldDisplayLimit]);
+  const signature=JSON.stringify([world.origin,world.partners,world.bilateral,state.communism,Math.floor(state.cash),Math.floor(state.corruption*100),state.internationalAidLevel,worldFilter,'origin-first-cost-v2',stats.stage,worldDisplayLimit]);
   if(target.dataset.signature===signature)return;
   target.dataset.signature=signature;
   const frag=document.createDocumentFragment();
