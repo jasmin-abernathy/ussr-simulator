@@ -193,7 +193,7 @@ const commerceRevenuePerSecond = state => state.worldEconomyEnabled?(
   (state.owned.soda||0)*25+(state.owned.grocery||0)*35+
   (state.owned['black-market']||0)*70+(state.importsOwned||0)*90):0;
 /** Recurring business corruption is 5% of each unit's one-time penalty. */
-export const CORRUPTION_PURCHASE=Object.freeze({gum:2,trading:0.5,'black-market':2});
+export const CORRUPTION_PURCHASE=Object.freeze({gum:2,trading:0.5,'black-market':2,posters:2});
 /** Some controversial investments also undermine political support immediately. */
 export const COMMUNISM_PURCHASE_PENALTY=Object.freeze({gum:1,trading:2,'black-market':4});
 export const STAKHANOV_COMMUNISM_COST=.05;
