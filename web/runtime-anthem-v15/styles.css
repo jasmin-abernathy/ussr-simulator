@@ -3182,3 +3182,12 @@ conic-gradient(#17bd2a 0% var(--anthem-progress),#090909 var(--anthem-progress) 
  .public-project{grid-template-columns:minmax(0,1fr);padding:14px}
  .public-project button{min-height:44px}
 }
+
+
+/* Stakhanovism: money earned and small political cost are always visible. */
+.production-label{align-items:flex-start;gap:12px}
+.production-label>span:first-child{font-weight:750;color:var(--ink);font-size:clamp(13px,3.8vw,17px)}
+.production-rewards{display:flex;flex-direction:column;align-items:flex-end;text-align:right;gap:3px;min-width:0}
+.production-ideology-cost{color:#a7352a;font-weight:700;font-size:clamp(10px,2.7vw,12px);line-height:1.35}
+.produce-button>span:not(.button-press-mark){min-width:0;line-height:1.15;text-align:left}
+@media(max-width:370px){.produce-button{gap:9px;padding-inline:12px;font-size:clamp(16px,5vw,20px)}.produce-button svg{flex-shrink:0}}
