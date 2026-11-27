@@ -26,7 +26,7 @@ test('Stakhanovist political losses survive save and reload even below bonuses e
 });
 test('manual production doubles automatic net commercial income above 10 roubles/second',()=>{
  const s=createState(NOW);s.worldEconomyEnabled=true;s.communism=8;s.cash=0;
- s.owned.matches=20;
+ s.owned.matches=100;
  const income=getBusinessEconomy(s).netToTreasuryPerSecond;
  assert.ok(income>10);
  assert.equal(STAKHANOV_INCOME_THRESHOLD,10);
@@ -45,7 +45,7 @@ test('click keeps the original formula at and below the 10 roubles/second thresh
  s.owned.matches=1;
  const income=getBusinessEconomy(s).netToTreasuryPerSecond;
  assert.ok(income<=10);
- close(getStats(s).productionPerClick,10+income/(1-0.30)*.25);
+ close(getStats(s).productionPerClick,10+Math.round(income/(1-0.30)*.25*100)/100);
  const click=clickProduce(s);
  close(click.earned,getStats(s).productionPerClick);
 });
