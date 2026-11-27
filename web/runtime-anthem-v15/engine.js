@@ -13,7 +13,7 @@ const time = value => typeof value === 'number' && Number.isFinite(value)
  */
 export const AUDIT_COOLDOWN_MS=60*60*1000;
 export const AUDIT_MAX_CHARGES=5;
-export const AUDIT_CORRUPTION_REDUCTION=.20;
+export const AUDIT_CORRUPTION_REDUCTION=.30;
 export function getAuditCooldown(state,now=Date.now()){
  const current=time(now);
  const stored=Math.min(AUDIT_MAX_CHARGES,Math.max(0,Math.floor(state.auditCharges??1)));
@@ -315,7 +315,7 @@ export const PUBLIC_PROJECTS=Object.freeze({
  crisis:Object.freeze({name:'Résoudre la crise',description:'Répare une crise économique : restaure la collecte fiscale et réduit la pression de corruption.'}),
  transport:Object.freeze({name:'Développer les transports publics',description:'Améliore durablement les revenus des activités grâce à une meilleure desserte.'}),
  housing:Object.freeze({name:'Construire des logements coopératifs',description:'Protège progressivement les recettes publiques pendant les crises.'}),
- audit:Object.freeze({name:'Contrôle des comptes',description:'Une inspection réduit de 20 % la corruption existante. Une charge revient chaque heure et cinq peuvent être mises en réserve.'}),
+ audit:Object.freeze({name:'Contrôle des comptes',description:'Une inspection réduit de 30 % la corruption existante. Une charge revient chaque heure et cinq peuvent être mises en réserve.'}),
  transparency:Object.freeze({name:'Maisons de la transparence',description:'Réduisent durablement le risque de corruption lié aux activités.'}),
  inspectorates:Object.freeze({name:'Inspections citoyennes',description:'Freinent la corruption nouvelle en surveillant les activités ; les contrôles des comptes réduisent le stock existant.'}),
  maintenance:Object.freeze({name:'Entretenir les infrastructures',description:'Remet les équipements en état et soulage les tensions économiques.'}),
