@@ -19,7 +19,7 @@ const addMoney = (state, amount) => {
 export function createState(now = Date.now()) {
   return {
     version: RULES.saveVersion,
-    cash: 0, totalEarned: 0, publicBudget: 0, publicTaxesCollected: 0, publicSpent: 0, publicServicesLevel: 0, internationalAidLevel: 0, publicTransportLevel: 0, publicHousingLevel: 0, crisesPending: 0, crisesGenerated: 0, crisisRemainderMs: 0, clicks: 0, automaticSeconds: 0, communism: 0, corruption: 0, importsOwned: 0, bureaucracyOffices: 0, propagandaAgencies: 0, bilateralAgreements: 0, usCapitalist: true, worldEconomyEnabled: false, taxPolicy: 'balanced', secondRemainderMs: 0, communismRemainderMs: 0, economyTickMode: 'seconds-v1',
+    cash: 0, totalEarned: 0, publicBudget: 0, publicTaxesCollected: 0, publicSpent: 0, publicServicesLevel: 0, internationalAidLevel: 0, publicTransportLevel: 0, publicHousingLevel: 0, corruptionAudits: 0, crisesPending: 0, crisesGenerated: 0, crisisRemainderMs: 0, clicks: 0, automaticSeconds: 0, communism: 0, corruption: 0, importsOwned: 0, bureaucracyOffices: 0, propagandaAgencies: 0, bilateralAgreements: 0, usCapitalist: true, worldEconomyEnabled: false, taxPolicy: 'balanced', secondRemainderMs: 0, communismRemainderMs: 0, economyTickMode: 'seconds-v1',
     owned: Object.fromEntries(ACTIVITIES.map(item => [item.id, 0])),
     counters: { production: RULES.initialProduction, taxes: 0, productionBonusPercent: 0, taxBonusPercent: 0 },
     productionSteps: 0, taxSteps: 0,
@@ -101,6 +101,7 @@ export function hydrateState(raw, now = Date.now()) {
   state.internationalAidLevel=raw.internationalAidLevel===undefined?0:readNumber(raw.internationalAidLevel,0,8,true);
   state.publicTransportLevel=raw.publicTransportLevel===undefined?0:readNumber(raw.publicTransportLevel,0,12,true);
   state.publicHousingLevel=raw.publicHousingLevel===undefined?0:readNumber(raw.publicHousingLevel,0,10,true);
+  state.corruptionAudits=raw.corruptionAudits===undefined?0:readNumber(raw.corruptionAudits,0,100000,true);
   state.crisesPending=raw.crisesPending===undefined?0:readNumber(raw.crisesPending,0,3,true);
   state.crisesGenerated=raw.crisesGenerated===undefined?0:readNumber(raw.crisesGenerated,0,Number.MAX_SAFE_INTEGER,true);
   state.crisisRemainderMs=raw.crisisRemainderMs===undefined?0:readNumber(raw.crisisRemainderMs,0,899999.999);
@@ -166,18 +167,21 @@ const commerceRevenuePerSecond = state => state.worldEconomyEnabled?(
   (state.owned.gum||0)*4+(state.owned.beer||0)*8+(state.owned.trading||0)*20+
   (state.owned.soda||0)*25+(state.owned.grocery||0)*35+
   (state.owned['black-market']||0)*70+(state.importsOwned||0)*90):0;
-/** Recurring business corruption is 1.2% of each unit's one-time penalty. */
+/** Recurring business corruption is 5% of each unit's one-time penalty. */
 export const CORRUPTION_PURCHASE=Object.freeze({gum:2,trading:0.5,'black-market':2});
-export const PASSIVE_CORRUPTION_RATIO=.012;
+export const PASSIVE_CORRUPTION_RATIO=.05;
+/** Even lawful commercial expansion requires oversight: rising activity raises structural risk. */
+export const STRUCTURAL_CORRUPTION_PER_BUSINESS=.06;
 export const RESALE_RATE=.40;
 export const getActivityCorruptionRate=id=>(CORRUPTION_PURCHASE[id]||0)*PASSIVE_CORRUPTION_RATIO;
 export const corruptionPerMinute = state =>
   (state.worldEconomyEnabled?Object.entries(CORRUPTION_PURCHASE).reduce(
     (sum,[id,risk])=>sum+(state.owned[id]||0)*risk*PASSIVE_CORRUPTION_RATIO,0):0)+
-  (state.usCapitalist!==false?(state.importsOwned||0)*.06:0)+
-  (state.bureaucracyOffices||0)*.024+
-  (state.propagandaAgencies||0)*.036+
-  (state.bilateralAgreements||0)*.048;
+  (state.worldEconomyEnabled?Math.min(18,Object.entries(state.owned||{}).reduce((sum,[id,count])=>sum+(count>0&&ACTIVITIES.some(activity=>activity.id===id)?count:0),0)*STRUCTURAL_CORRUPTION_PER_BUSINESS):0)+
+  (state.usCapitalist!==false?(state.importsOwned||0)*.15:0)+
+  (state.bureaucracyOffices||0)*.09+
+  (state.propagandaAgencies||0)*.12+
+  (state.bilateralAgreements||0)*.10;
 
 /** Derived values only; querying never changes the state or the clock. */
 /** Industry passively yields 40% of its one-time communism bonus per minute.
@@ -216,7 +220,7 @@ export function publicProjectOffers(state){
   crisis:{...PUBLIC_PROJECTS.crisis,level:pending,cost:20+15*pending,locked:pending===0},
   transport:{...PUBLIC_PROJECTS.transport,level:state.publicTransportLevel||0,cost:Math.ceil(180*1.55**(state.publicTransportLevel||0)),maxLevel:12,locked:(state.publicTransportLevel||0)>=12},
   housing:{...PUBLIC_PROJECTS.housing,level:state.publicHousingLevel||0,cost:Math.ceil(220*1.65**(state.publicHousingLevel||0)),maxLevel:10,locked:(state.publicHousingLevel||0)>=10},
-  audit:{...PUBLIC_PROJECTS.audit,cost:Math.ceil(120+Math.min(1000,(state.corruption||0)*12)),locked:(state.corruption||0)<.01},
+  audit:{...PUBLIC_PROJECTS.audit,cost:Math.ceil(600*1.38**Math.min(24,state.corruptionAudits||0)+Math.min(2000,(state.corruption||0)*18)),locked:(state.corruption||0)<.01},
   maintenance:{...PUBLIC_PROJECTS.maintenance,cost:Math.ceil(160+Math.min(900,(state.taxSteps||0)/30+(state.productionSteps||0)/40)),locked:(state.taxSteps||0)<250&&(state.productionSteps||0)<250},
  };
  for(const offer of Object.values(offers))offer.available=!offer.locked&&budget>=offer.cost;
@@ -234,7 +238,10 @@ export function spendPublicBudget(state,project){
  if(project==='solidarity')state.internationalAidLevel++;
  if(project==='transport')state.publicTransportLevel++;
  if(project==='housing')state.publicHousingLevel++;
- if(project==='audit')state.corruption=Math.max(0,(state.corruption||0)-5);
+ if(project==='audit'){
+  state.corruption=Math.max(0,(state.corruption||0)-5);
+  state.corruptionAudits=Math.min(100000,(state.corruptionAudits||0)+1);
+ }
  if(project==='maintenance'){
   state.taxSteps=Math.max(0,(state.taxSteps||0)-1500);
   state.productionSteps=Math.max(0,(state.productionSteps||0)-750);
