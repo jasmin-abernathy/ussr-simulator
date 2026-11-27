@@ -1,12 +1,12 @@
-const APP_VERSION='2026-11-27-integrity-institutions-1';
-import { ACTIVITIES, RULES } from './game-data.js?v=2026-11-27-integrity-institutions-1';
+const APP_VERSION='2026-11-27-integrity-balance-1';
+import { ACTIVITIES, RULES } from './game-data.js?v=2026-11-27-integrity-balance-1';
 import {
   createState, hydrateState, getStats, getActivity, quotePurchase,
   clickProduce, buyActivity, quoteActivityConversion, convertActivity, CONVERSION_TARGETS, getActivityCorruptionRate, CORRUPTION_PURCHASE, COMMUNISM_PURCHASE_PENALTY, getPropagandaOffer, buyPropagandaAgency, advance, startPlan, claimPlan, publicProjectOffers, spendPublicBudget,
   reduceInflation, exportState, getGoals, activityBusinessRate, setTaxPolicy, TAX_POLICIES, TAX_POLICY_LABELS, getBusinessEconomyForPolicy,
-} from './engine.js?v=2026-11-27-integrity-institutions-1';
-import { COUNTRIES, MILESTONES, createWorld, hydrateWorld, chooseCountry, getCooperation, cooperate, rankCountriesByCooperationCost, getWorldStats, celebrate, rewardAnthem, getAnthemReward, START_COUNTRIES, USA_COUNTRY_ID, getVisibleCountries, getWorldStage, getCampaignWaves, getUSImportOffer, buyUSImports, convertUSImports, getBureaucracyOffer, buyBureaucracy, getBilateralOffer, buyBilateralAgreement } from './world.js?v=2026-11-27-integrity-institutions-1';
-import { ANTHEM_END_SECONDS, anthemClipFinished } from './anthem-clip.js?v=2026-11-27-integrity-institutions-1';
+} from './engine.js?v=2026-11-27-integrity-balance-1';
+import { COUNTRIES, MILESTONES, createWorld, hydrateWorld, chooseCountry, getCooperation, cooperate, rankCountriesByCooperationCost, getWorldStats, celebrate, rewardAnthem, getAnthemReward, START_COUNTRIES, USA_COUNTRY_ID, getVisibleCountries, getWorldStage, getCampaignWaves, getUSImportOffer, buyUSImports, convertUSImports, getBureaucracyOffer, buyBureaucracy, getBilateralOffer, buyBilateralAgreement } from './world.js?v=2026-11-27-integrity-balance-1';
+import { ANTHEM_END_SECONDS, anthemClipFinished } from './anthem-clip.js?v=2026-11-27-integrity-balance-1';
 
 const SAVE_KEY = 'ussr-simulator:save:v1';
 const BACKUP_KEY = 'ussr-simulator:backup:v1';
@@ -387,8 +387,8 @@ function render() {
     '✓ Situation stable · aucun incident à gérer pour le moment.');
   $('public-crises')?.classList.toggle('has-crisis',stats.crisesPending>0);
   const integrity=stats.corruptionBreakdown;
-  setText($('public-integrity-status'),`🛡️ Protection durable : ${format(integrity.prevention*100)} % de corruption nouvelle évitée · ${format(integrity.recovery)} point/min résorbé · tendance ${integrity.net>0?'+':''}${format(integrity.net)} /min`);
-  $('public-integrity-status')?.classList.toggle('is-improving',integrity.net<0);
+  setText($('public-integrity-status'),`🛡️ Prévention : ${format(integrity.prevention*100)} % par la transparence, puis ${format(integrity.inspectorateReduction*100)} % du reste par les inspections · corruption nouvelle : +${format(integrity.net)} /min`);
+  $('public-integrity-status')?.classList.toggle('is-improving',integrity.prevention>0||integrity.inspectorateReduction>0);
   const projects=stats.publicProjects;
   const needs=projects.needs;
   if($('public-needs-card'))$('public-needs-card').hidden=!needs.pending;
@@ -397,8 +397,8 @@ function render() {
   for(const name of ['services','solidarity','crisis','transport','housing','audit','maintenance','needs','transparency','inspectorates']){
     const offer=projects[name];
     const button=$('public-project-'+name);
-    const progress=name==='transparency'?`${offer.level}/${offer.maxLevel} établissements · ${format(offer.level*15)} % de corruption nouvelle évitée`:
-      name==='inspectorates'?`${offer.level}/${offer.maxLevel} établissements · −${format(offer.level*.25)} corruption/min`:
+    const progress=name==='transparency'?`${offer.level}/${offer.maxLevel} établissements · ${format(offer.level*10)} % de corruption nouvelle évitée`:
+      name==='inspectorates'?`${offer.level}/${offer.maxLevel} établissements · ${format(offer.level*5)} % du reste de corruption nouvelle évitée`:
       name==='needs'?`${offer.pending} besoin${offer.pending>1?'s':''} collectif${offer.pending>1?'s':''} en attente · les équipements demandent du soutien`:
       name==='crisis'?`${stats.crisesPending} intervention${stats.crisesPending>1?'s':''} nécessaire${stats.crisesPending>1?'s':''}`:
       name==='audit'?(offer.cooldownActive?`Prochaine inspection dans ${duration(offer.cooldownMs)}`:'Inspection disponible · réduction de la corruption'):
