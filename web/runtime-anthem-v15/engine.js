@@ -164,22 +164,22 @@ const commerceRevenuePerSecond = state => state.worldEconomyEnabled?(
   (state.owned.gum||0)*4+(state.owned.beer||0)*8+(state.owned.trading||0)*20+
   (state.owned.soda||0)*25+(state.owned.grocery||0)*35+
   (state.owned['black-market']||0)*70+(state.importsOwned||0)*90):0;
-/** Corruption recurring per minute is 1% of each unit's purchase penalty. */
+/** Recurring business corruption is 1.2% of each unit's one-time penalty. */
 export const CORRUPTION_PURCHASE=Object.freeze({gum:2,trading:0.5,'black-market':2});
-export const PASSIVE_CORRUPTION_RATIO=.01;
+export const PASSIVE_CORRUPTION_RATIO=.012;
 export const RESALE_RATE=.40;
 export const getActivityCorruptionRate=id=>(CORRUPTION_PURCHASE[id]||0)*PASSIVE_CORRUPTION_RATIO;
 export const corruptionPerMinute = state =>
   (state.worldEconomyEnabled?Object.entries(CORRUPTION_PURCHASE).reduce(
     (sum,[id,risk])=>sum+(state.owned[id]||0)*risk*PASSIVE_CORRUPTION_RATIO,0):0)+
-  (state.usCapitalist!==false?(state.importsOwned||0)*.05:0)+
-  (state.bureaucracyOffices||0)*.02+
-  (state.propagandaAgencies||0)*.03+
-  (state.bilateralAgreements||0)*.04;
+  (state.usCapitalist!==false?(state.importsOwned||0)*.06:0)+
+  (state.bureaucracyOffices||0)*.024+
+  (state.propagandaAgencies||0)*.036+
+  (state.bilateralAgreements||0)*.048;
 
 /** Derived values only; querying never changes the state or the clock. */
-/** Each owned unit repeatedly generates its one-time communism bonus
- * every full minute. The purchase itself still awards that bonus once.
+/** Industry passively yields 40% of its one-time communism bonus per minute.
+ * Purchase rewards remain unchanged; fractional points accumulate normally.
  * Non-industry investments and international agreements are excluded.
  */
 export function getCommunismPerMinute(state){
@@ -190,7 +190,7 @@ export function getCommunismPerMinute(state){
    total=cap(total+cap(count,RULES.maxOwned)*item.effects.communism);
   }
  }
- return cap(total+(state.worldEconomyEnabled?(state.propagandaAgencies||0)*2:0));
+ return cap(total*.4+(state.worldEconomyEnabled?(state.propagandaAgencies||0)*1:0));
 }
 
 /** Ring-fenced tax budget. Projects never spend the business treasury. */
@@ -369,8 +369,8 @@ export function convertActivity(state,sourceId,targetId){
 export function getPropagandaOffer(state){
  const count=state.propagandaAgencies||0;
  const cost=Math.round(2500*Math.pow(1.35,count));
- return {count,cost,corruptionOnPurchase:3,corruptionPerMinute:.03,
-   communismPerMinute:2,available:state.worldEconomyEnabled&&count<1000&&state.communism>=40&&state.cash>=cost};
+ return {count,cost,corruptionOnPurchase:3,corruptionPerMinute:.036,
+   communismPerMinute:1,available:state.worldEconomyEnabled&&count<1000&&state.communism>=40&&state.cash>=cost};
 }
 export function buyPropagandaAgency(state){
  const offer=getPropagandaOffer(state);
