@@ -10,7 +10,7 @@
   <link rel="icon" href="./assets/icon.svg" type="image/svg+xml">
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="stylesheet" href="./runtime-anthem-v15/styles.css?v=2026-11-27-anthem-2x5-1">
-  <script type="module" src="./runtime-anthem-v15/app.js?v=2026-11-27-integrity-balance-1"></script>
+  <script type="module" src="./runtime-anthem-v15/app.js?v=2026-11-27-ideology-centers-1"></script>
 <script>
 /* Web playtest: disable the previous offline service worker and its caches.
    The game state is in localStorage and must never be touched here. */
@@ -169,6 +169,22 @@
               <div class="investment-stats"><span id="bilateral-owned">0 accord</span><span>+1 % de recettes commerciales</span><span id="bilateral-risk">Corruption en hausse · −6 communisme à la signature</span></div>
             </div>
             <button id="bilateral-buy" class="country-action" type="button" disabled>Signer l'accord</button>
+          </article>
+          <article class="investment-item investment-ideology">
+            <div class="investment-symbol" aria-hidden="true">🤝</div>
+            <div class="investment-details"><h4>Maisons de mobilisation</h4>
+              <p>Mobilisent des soutiens, mais le favoritisme finit par accroître la corruption.</p>
+              <div class="investment-stats"><span id="mobilization-owned">0 établissement / 12</span><span id="mobilization-benefit">+0,10 communisme/min par maison</span><span id="mobilization-risk">⚠ +1 corruption à l’achat · +0,18/min par maison</span></div>
+            </div>
+            <button id="mobilization-buy" class="country-action" type="button" disabled>Construire · 6 000 ₽</button>
+          </article>
+          <article class="investment-item investment-ideology">
+            <div class="investment-symbol" aria-hidden="true">📚</div>
+            <div class="investment-details"><h4>Instituts idéologiques</h4>
+              <p>Renforcent la formation et la mobilisation, au prix de réseaux de privilèges.</p>
+              <div class="investment-stats"><span id="institute-owned">0 établissement / 8</span><span id="institute-benefit">+0,25 communisme/min par institut</span><span id="institute-risk">⚠ +3 corruption à l’achat · +0,42/min par institut</span></div>
+            </div>
+            <button id="institute-buy" class="country-action" type="button" disabled>Construire · 24 000 ₽</button>
           </article>
           <article class="investment-item investment-propaganda">
           <div class="investment-symbol" aria-hidden="true">📢</div>
