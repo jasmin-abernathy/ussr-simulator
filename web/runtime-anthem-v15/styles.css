@@ -3323,3 +3323,13 @@ conic-gradient(#17bd2a 0% var(--anthem-progress),#090909 var(--anthem-progress) 
 .public-project-integrity{border-color:#cddfcd;background:#f9fdf8}
 .public-project-integrity>div strong{color:#2c6541}
 .public-project-integrity>div span{color:#336b44}
+
+
+/* Political centers: a clear ongoing benefit with an explicit corruption cost. */
+.investment-ideology{border-color:#d6c9b9;background:#fffdf9}
+.investment-ideology .investment-symbol{background:#f4ede2;border-color:#dcaf72}
+.investment-ideology .investment-stats{display:grid;grid-template-columns:1fr;gap:6px}
+.investment-ideology .investment-stats span{display:block;min-width:0;line-height:1.45;overflow-wrap:break-word}
+.investment-ideology .investment-stats span:nth-child(2){background:#e8f4e8;color:#236b39;font-weight:750}
+.investment-ideology .investment-stats span:last-child{background:#fff0ec;color:#983b2d}
+@media(min-width:700px){.investment-ideology .investment-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.investment-ideology .investment-stats span:first-child{grid-column:1/-1}}
