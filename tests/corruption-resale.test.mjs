@@ -120,7 +120,8 @@ test('UI labels explicit dubious actions and commerce transformation',()=>{
  const html=readFileSync(new URL('../web/index.html',import.meta.url),'utf8');
  const app=readFileSync(new URL('../web/runtime-anthem-v15/app.js',import.meta.url),'utf8');
  assert.match(html,/Corrompre 5 agents publics/);
- assert.match(html,/Acheter une agence de propagande/);
+ assert.doesNotMatch(html,/Acheter une agence de propagande/);
+ assert.match(app,/investment-propaganda/); // historical agency excluded from unified catalogue
  assert.match(html,/id="import-convert"/);
  assert.match(app,/activity-convert-button/);
  assert.match(app,/convertActivity\(state,definition\.id,targetId\)/);
