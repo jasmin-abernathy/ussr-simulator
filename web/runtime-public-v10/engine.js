@@ -1,4 +1,4 @@
-import { ACTIVITIES, RULES } from './game-data.js?v=2026-11-27-public-budget-confidence-1';
+import { ACTIVITIES, RULES } from './game-data.js?v=2026-11-27-public-budget-confidence-2';
 
 const BY_ID = new Map(ACTIVITIES.map((item, index) => [item.id, { item, index }]));
 const MAX_TIME = 8.64e15;
@@ -230,7 +230,7 @@ export function getStats(state) {
     productionBonusPercent: state.counters.productionBonusPercent, taxBonusPercent: state.counters.taxBonusPercent,
     productionInflation: inflation(state.productionSteps, RULES.productionInflationStep),
     taxInflation: inflation(state.taxSteps, RULES.taxInflationStep),
-    canReduceInflation: state.taxSteps >= RULES.taxInflationStep || (state.corruption||0)>=1,
+    canReduceInflation: state.taxSteps >= RULES.taxInflationStep || ((state.corruption||0)>=1&&(!state.worldEconomyEnabled||(state.publicBudget||0)>=15)),
     plan: { unlocked: state.communism >= RULES.planUnlock, status: state.plan.status,
       remainingMs: state.plan.remainingMs,
       durationMs: state.plan.status === 'idle' ? planDuration(state) : state.plan.durationMs,
@@ -440,9 +440,15 @@ export function claimPlan(state, now = Date.now()) {
 /** Historical anticorruption action: -1 inflation point, one tax tick, +1 communism. */
 export function reduceInflation(state) {
   if((state.corruption||0)>=1){
+    // In the world economy, restoring political confidence costs public
+    // resources, avoiding an unlimited, free corruption-removal exploit.
+    const cost=state.worldEconomyEnabled?15:0;
+    if((state.publicBudget||0)<cost)return {ok:false,reason:'public-funds',required:cost};
     const removed=Math.min(5,state.corruption);
+    state.publicBudget=Math.max(0,(state.publicBudget||0)-cost);
+    state.publicSpent=cap((state.publicSpent||0)+cost);
     state.corruption=Math.max(0,state.corruption-removed);
-    return {ok:true,earned:0,corruptionReduced:removed};
+    return {ok:true,earned:0,corruptionReduced:removed,spent:cost};
   }
   if (state.taxSteps < RULES.taxInflationStep) return { ok: false, reason: 'no-inflation', earned: 0 };
   state.taxSteps -= RULES.taxInflationStep;

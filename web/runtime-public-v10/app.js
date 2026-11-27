@@ -1,12 +1,12 @@
-const APP_VERSION='2026-11-27-public-budget-confidence-1';
-import { ACTIVITIES, RULES } from './game-data.js?v=2026-11-27-public-budget-confidence-1';
+const APP_VERSION='2026-11-27-public-budget-confidence-2';
+import { ACTIVITIES, RULES } from './game-data.js?v=2026-11-27-public-budget-confidence-2';
 import {
   createState, hydrateState, getStats, getActivity, quotePurchase,
   clickProduce, buyActivity, advance, startPlan, claimPlan, publicProjectOffers, spendPublicBudget,
   reduceInflation, exportState, getGoals, activityBusinessRate, setTaxPolicy, TAX_POLICY_LABELS, getBusinessEconomyForPolicy,
-} from './engine.js?v=2026-11-27-public-budget-confidence-1';
-import { COUNTRIES, MILESTONES, createWorld, hydrateWorld, chooseCountry, getCooperation, cooperate, getWorldStats, celebrate, rewardAnthem, START_COUNTRIES, USA_COUNTRY_ID, getVisibleCountries, getWorldStage, getCampaignWaves, getUSImportOffer, buyUSImports, getBureaucracyOffer, buyBureaucracy, getBilateralOffer, buyBilateralAgreement } from './world.js?v=2026-11-27-public-budget-confidence-1';
-import { ANTHEM_END_SECONDS, anthemClipFinished } from './anthem-clip.js?v=2026-11-27-public-budget-confidence-1';
+} from './engine.js?v=2026-11-27-public-budget-confidence-2';
+import { COUNTRIES, MILESTONES, createWorld, hydrateWorld, chooseCountry, getCooperation, cooperate, getWorldStats, celebrate, rewardAnthem, START_COUNTRIES, USA_COUNTRY_ID, getVisibleCountries, getWorldStage, getCampaignWaves, getUSImportOffer, buyUSImports, getBureaucracyOffer, buyBureaucracy, getBilateralOffer, buyBilateralAgreement } from './world.js?v=2026-11-27-public-budget-confidence-2';
+import { ANTHEM_END_SECONDS, anthemClipFinished } from './anthem-clip.js?v=2026-11-27-public-budget-confidence-2';
 
 const SAVE_KEY = 'ussr-simulator:save:v1';
 const BACKUP_KEY = 'ussr-simulator:backup:v1';
@@ -197,9 +197,12 @@ function renderActivities() {
         metric('Taxe',`${rate.taxRate} %`),
         metric('Trésorerie / s',money(rate.dividendsPerSecond),'activity-metric-net'),
       );
-      if(item.id==='gum'){
+      if(['gum','trading','black-market'].includes(item.id)){
         const risk=document.createElement('span');risk.className='activity-corruption';
-        risk.textContent='⚠ +2 corruption à chaque achat · aucun malus par minute';
+        risk.textContent=item.id==='gum'
+          ? '⚠ +2 corruption à chaque achat · aucun malus par minute'
+          : item.id==='trading'?'⚠ +0,5 corruption à chaque achat'
+          : '⚠ +2 corruption à chaque achat';
         refs.effects.append(risk);
       }
       if(item.effects.communism){
@@ -257,6 +260,8 @@ function render() {
   setText($('home-taxes'),format(stats.business.taxesCollectedPerSecond));
   setText($('home-commerce'),format(stats.business.dividendsPerSecond));
   setText($('home-corruption'),`${format(stats.corruption)} points`);
+  const worldTrust=stats.communism+stats.corruption>0?stats.communism/(stats.communism+stats.corruption):1;
+  setText($('home-confidence'),`${format(worldTrust*100)} % de confiance`);
   setText($('corruption-value'),format(stats.corruption));
   const offer=getUSImportOffer(world,state);
   setText($('import-owned'),`${offer.count} établissement${offer.count>1?'s':''}`);
@@ -330,7 +335,12 @@ function render() {
   setText($('session-stats'), `${integer.format(stats.clicks)} clics · ${format(stats.totalEarned)} roubles produits · ${integer.format(stats.plan.completed)} plans terminés`);
   setText($('inflation-value'), `${stats.taxInflation} % inflation · ${format(stats.corruption)} corruption`);
   const inflationButton = $('inflation-button');
-  if (inflationButton) inflationButton.disabled = !canWrite || !stats.canReduceInflation;
+  if(inflationButton){
+    inflationButton.disabled=!canWrite||!stats.canReduceInflation;
+    setText(inflationButton,stats.corruption>=1&&state.worldEconomyEnabled
+      ? 'Assainir · 15 ₽ de caisse publique'
+      : stats.corruption>=1?'Réduire la corruption':'Réduire l’inflation');
+  }
   const plan = stats.plan;
   const planButton = $('plan-button');
   const progress = $('plan-progress');
@@ -408,7 +418,14 @@ $('inflation-button')?.addEventListener('click', () => {
   if (!canWrite) return;
   advance(state);
   const result = reduceInflation(state);
-  if (result.ok) { changed(); notify(`Inflation des taxes : −1 point · +1 communisme · +${money(result.earned)}`); }
+  if(result.ok){
+    changed();
+    notify(result.corruptionReduced
+      ? `Corruption réduite de ${format(result.corruptionReduced)} · ${money(result.spent||0)} de budget public mobilisés`
+      : `Inflation des taxes : −1 point · +1 communisme · +${money(result.earned)}`);
+  } else if(result.reason==='public-funds'){
+    notify('Caisse publique insuffisante pour financer une enquête anticorruption.');
+  }
 });
 
 function updateNavigation() {
@@ -830,6 +847,9 @@ function renderWorld(){
            `Depuis ${stats.origin.name}, les voisins passent d’abord, puis les pays du même continent. ${stats.waveRemaining} à intégrer pour débloquer la vague suivante.`];
   setText($('world-stage-title'),waveMessages[0]);
   setText($('world-stage-description'),waveMessages[1]);
+  const trust=state.communism+state.corruption>0?state.communism/(state.communism+state.corruption):1;
+  setText($('world-confidence'),`Confiance : ${format(trust*100)} % · minimum 85 % pour coopérer`);
+  $('world-confidence')?.classList.toggle('is-low-confidence',trust<.85);
   const reached=MILESTONES.filter(m=>m.threshold<=state.communism);
   if(reached.length)setText(document.getElementById('milestone-message'),reached.at(-1).message);
   if(lastWorldDisplayStage!==stats.stage){

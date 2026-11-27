@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createState,buyActivity,getStats,advance,exportState,hydrateState,getBusinessEconomy,
- publicProjectOffers,spendPublicBudget,getCommunismPerMinute} from '../web/engine.js';
+ publicProjectOffers,spendPublicBudget,getCommunismPerMinute,reduceInflation} from '../web/engine.js';
 import {createWorld,chooseCountry,getCooperation,cooperate} from '../web/world.js';
 const NOW=1700000000000;
 const close=(a,b,tol=1e-8)=>assert.ok(Math.abs(a-b)<tol,`${a} vs ${b}`);
@@ -112,4 +112,34 @@ test('capped offline duration credits public budget at most 8 hours, never twice
  const cash=s.cash,budget=s.publicBudget;
  advance(s,NOW+10*3600000);
  close(s.cash,cash);close(s.publicBudget,budget);
+});
+
+test('political confidence ratio responds to gum purchase and to passive communism',()=>{
+ const s=world(),w=createWorld();chooseCountry(w,'0');
+ s.communism=10;s.corruption=0;
+ const before=getCooperation(w,s,'1');
+ assert.equal(before.confidenceOk,true);
+ assert.equal(buyActivity(s,'gum').ok,true); // purchase gives +1 communism AND +2 corruption
+ assert.equal(s.communism,11);assert.equal(s.corruption,2);
+ assert.ok(getCooperation(w,s,'1').confidence<.85);
+ assert.equal(getCooperation(w,s,'1').confidenceOk,false);
+ advance(s,NOW+60000);
+ assert.equal(s.communism,12);
+ assert.ok(getCooperation(w,s,'1').confidence>=.85);
+ assert.equal(getCooperation(w,s,'1').confidenceOk,true);
+});
+test('world anticorruption investigations require 15 public rubles, without spending business cash',()=>{
+ const s=world();s.corruption=6;s.publicBudget=14;
+ const baseline=s.cash;
+ assert.equal(getStats(s).canReduceInflation,false);
+ assert.equal(reduceInflation(s).reason,'public-funds');
+ assert.equal(s.corruption,6);assert.equal(s.publicBudget,14);
+ s.publicBudget=15;
+ assert.equal(getStats(s).canReduceInflation,true);
+ const result=reduceInflation(s);
+ assert.equal(result.ok,true);assert.equal(result.spent,15);
+ assert.equal(result.corruptionReduced,5);
+ assert.equal(s.corruption,1);assert.equal(s.publicBudget,0);
+ assert.equal(s.publicSpent,15);close(s.cash,baseline);
+ assert.equal(reduceInflation(s).reason,'public-funds');
 });

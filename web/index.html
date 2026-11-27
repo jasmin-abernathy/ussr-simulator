@@ -9,8 +9,8 @@
   <title>Communist World Simulator — Édition de développement</title>
   <link rel="icon" href="./assets/icon.svg" type="image/svg+xml">
   <link rel="manifest" href="./manifest.webmanifest">
-  <link rel="stylesheet" href="./runtime-public-v10/styles.css?v=2026-11-27-public-budget-confidence-1">
-  <script type="module" src="./runtime-public-v10/app.js?v=2026-11-27-public-budget-confidence-1"></script>
+  <link rel="stylesheet" href="./runtime-public-v10/styles.css?v=2026-11-27-public-budget-confidence-2">
+  <script type="module" src="./runtime-public-v10/app.js?v=2026-11-27-public-budget-confidence-2"></script>
 <script>
 /* Web playtest: disable the previous offline service worker and its caches.
    The game state is in localStorage and must never be touched here. */
@@ -61,7 +61,7 @@
         <div><span>Communisme</span><strong class="red" id="home-communism">0</strong><small class="passive-communism-rate" id="home-communism-per-minute">+0 / min</small></div>
         <div><span>Production</span><strong class="teal"><span id="home-production">10</span> ₽ / clic</strong></div>
         <div><span>Taxes collectées</span><strong class="green"><span id="home-taxes">0</span> ₽ / seconde</strong></div>
-        <div><span>Dividendes</span><strong class="teal"><span id="home-commerce">0</span> ₽ / seconde</strong></div><div><span>Corruption</span><strong class="red" id="home-corruption">0 point</strong></div>
+        <div><span>Dividendes</span><strong class="teal"><span id="home-commerce">0</span> ₽ / seconde</strong></div><div><span>Corruption</span><strong class="red" id="home-corruption">0 point</strong><small class="confidence-inline" id="home-confidence">100 % de confiance</small></div>
       </section>
       <p class="home-hint">Les recettes automatiques continuent pendant ton absence.</p>
       <section class="anthem-panel" aria-label="L’Internationale">
@@ -224,6 +224,7 @@
       </section><p id="milestone-message" class="world-milestone" role="status">Une autre économie est possible. Construis les premiers liens !</p>
       <div class="world-toolbar"><label for="world-filter">Région</label><select id="world-filter"><option value="all">Toutes</option><option>Europe</option><option>Amérique du Nord</option><option>Amérique du Sud</option><option>Afrique</option><option>Europe et Asie</option><option>Asie</option><option>Océanie</option></select></div>
       <p class="world-balance-note">Voisins d’abord, puis pays du même continent. Pour coopérer, atteins le seuil de communisme et maintiens au moins 85 % de confiance : communisme ÷ (communisme + corruption).</p>
+      <p class="world-confidence" id="world-confidence" aria-live="polite">Confiance : 100 % · minimum 85 % pour coopérer</p>
       <div id="world-list" class="world-list"></div>
       <button id="world-more" class="world-more" type="button" hidden>Afficher d’autres pays</button>
     </section>
