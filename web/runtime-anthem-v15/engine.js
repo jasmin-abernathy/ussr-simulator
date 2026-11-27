@@ -169,6 +169,14 @@ const commerceRevenuePerSecond = state => state.worldEconomyEnabled?(
   (state.owned['black-market']||0)*70+(state.importsOwned||0)*90):0;
 /** Recurring business corruption is 5% of each unit's one-time penalty. */
 export const CORRUPTION_PURCHASE=Object.freeze({gum:2,trading:0.5,'black-market':2});
+/** Some controversial investments also undermine political support immediately. */
+export const COMMUNISM_PURCHASE_PENALTY=Object.freeze({gum:1,trading:2,'black-market':4});
+export const applyCommunismPenalty=(state,points)=>{
+ const previous=cap(state.communism);
+ const lost=Math.min(previous,Math.max(0,Number(points)||0));
+ state.communism=cap(previous-lost);
+ return lost;
+};
 export const PASSIVE_CORRUPTION_RATIO=.05;
 /** Even lawful commercial expansion requires oversight: rising activity raises structural risk. */
 export const STRUCTURAL_CORRUPTION_PER_BUSINESS=.06;
@@ -338,6 +346,7 @@ export function buyActivity(state, id, quantity = 1) {
     state.counters.productionBonusPercent = cap(state.counters.productionBonusPercent + effects.productionPercent);
     state.counters.taxBonusPercent = cap(state.counters.taxBonusPercent + effects.taxPercent);
     state.communism = cap(state.communism + effects.communism);
+    if(state.worldEconomyEnabled)applyCommunismPenalty(state,COMMUNISM_PURCHASE_PENALTY[id]||0);
     const risk=CORRUPTION_PURCHASE[id]||0;
     if(risk&&(state.worldEconomyEnabled||id!=='gum'))
       state.corruption=Math.min(1e6,(state.corruption||0)+risk);
@@ -393,7 +402,7 @@ export function convertActivity(state,sourceId,targetId){
 export function getPropagandaOffer(state){
  const count=state.propagandaAgencies||0;
  const cost=Math.round(2500*Math.pow(1.35,count));
- return {count,cost,corruptionOnPurchase:3,corruptionPerMinute:.036,
+ return {count,cost,corruptionOnPurchase:3,corruptionPerMinute:.12,communismPenalty:3,
    communismPerMinute:.05,available:state.worldEconomyEnabled&&count<1000&&state.communism>=40&&state.cash>=cost};
 }
 export function buyPropagandaAgency(state){
@@ -402,7 +411,8 @@ export function buyPropagandaAgency(state){
  state.cash-=offer.cost;
  state.propagandaAgencies++;
  state.corruption=Math.min(1e6,(state.corruption||0)+offer.corruptionOnPurchase);
- return {ok:true,spent:offer.cost,offer};
+ const communismLost=applyCommunismPenalty(state,offer.communismPenalty);
+ return {ok:true,spent:offer.cost,offer,communismLost};
 }
 
 /** Mutates state. The clock is advanced separately by the UI. */
