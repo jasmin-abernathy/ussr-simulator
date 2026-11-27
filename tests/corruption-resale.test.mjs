@@ -60,7 +60,7 @@ test('no general resale or refunds: only risky shops can be reconverted to valid
  assert.equal(Object.hasOwn(CONVERSION_TARGETS,'matches'),false);
 });
 test('insufficient funds and locked destinations never destroy the original shop',()=>{
- const s=world();s.communism=2;buyActivity(s,'gum');
+ const s=world();s.communism=5;assert.equal(buyActivity(s,'gum').ok,true);
  assert.equal(quoteActivityConversion(s,'gum','grocery').reason,'locked');
  s.communism=5000;s.cash=0;
  const quote=quoteActivityConversion(s,'gum','grocery');
