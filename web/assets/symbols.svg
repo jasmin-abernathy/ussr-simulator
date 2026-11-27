@@ -26,4 +26,8 @@
  <symbol fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" id="download" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></symbol>
  <symbol fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" id="upload" viewBox="0 0 24 24"><path d="M12 16V4m-5 5 5-5 5 5M4 16v5h16v-5"/></symbol>
  <symbol fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" id="lock" viewBox="0 0 24 24"><path d="M5 11h14v10H5zm3 0V7a4 4 0 0 1 8 0v4M12 15v2"/></symbol>
+ <symbol id="nav-home" viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v11h-7v-7h-4v7H3z"/></symbol>
+ <symbol id="nav-public" viewBox="0 0 24 24"><path d="M3 9h18M4 20h16M6 9v9m4-9v9m4-9v9m4-9v9M2 7l10-5 10 5v2H2z"/></symbol>
+ <symbol id="nav-world" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c-3 3-4 6-4 9s1 6 4 9m0-18c3 3 4 6 4 9s-1 6-4 9"/></symbol>
+ <symbol id="nav-plan" viewBox="0 0 24 24"><path d="m12 2.5 2.8 6.1 6.7.8-4.9 4.6 1.3 6.5-5.9-3.3-5.9 3.3 1.3-6.5-4.9-4.6 6.7-.8z"/></symbol>
 </svg>
