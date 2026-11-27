@@ -3394,3 +3394,15 @@ conic-gradient(#17bd2a 0% var(--anthem-progress),#090909 var(--anthem-progress) 
 .activity-list>.activity-card[hidden]{display:none!important}
 
 .activity-list .activity-legacy-note{grid-column:1/-1;display:block;font:600 11px/1.45 var(--body);color:#675d50;background:#f4efe7;border-radius:9px;padding:8px 10px;overflow-wrap:break-word}
+
+
+/* Header emblem: previously generated white hammer/sickle PNG on the red pennant. */
+.brand-mark img{
+  display:block;
+  width:30px;
+  height:30px;
+  max-width:none;
+  object-fit:contain;
+  pointer-events:none;
+}
+@media(max-width:700px){.brand-mark img{width:29px;height:29px}}
