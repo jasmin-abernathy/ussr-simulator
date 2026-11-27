@@ -70,5 +70,5 @@ test('Stakhanovist terminology, cost visibility and prior commentary are display
  assert.match(html,/>Pousser la production</);
  assert.match(html,/−0,05 communisme \/ clic/);
  assert.match(html,/Le camarade Stakhanov approuverait/);
- assert.match(html,/Tes entreprises renforcent légèrement ton effort et continuent de rapporter sans toi/);
+ assert.match(html,/Au-delà de 10 ₽/s de revenus automatiques, chaque clic rapporte le double de ces revenus/);
 });
