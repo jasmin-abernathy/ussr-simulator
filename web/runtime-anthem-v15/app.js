@@ -817,7 +817,7 @@ if (anthemAudio && anthemButton) {
       if (bonus.ok) {
         // changed() persists the reward immediately, even in a hidden tab.
         changed();
-        notify(`Camaraderie renforcée : +${format(bonus.points)} points de communisme !`);
+        notify(`Camaraderie renforcée : +${format(bonus.points)} communisme !`);
       }
     }
     updateAnthem();
