@@ -10,6 +10,7 @@ const time = value => typeof value === 'number' && Number.isFinite(value)
 /** UTC day index makes the daily audit quota independent of local timezone changes. */
 const auditDay = now => Math.floor(time(now)/86400000);
 export const MAX_DAILY_AUDITS=2;
+export const AUDIT_CORRUPTION_REDUCTION=.20;
 export function getDailyAuditUsage(state,now=Date.now()){
  const day=auditDay(now);
  const recorded=Number.isSafeInteger(state.auditDay)?state.auditDay:day;
@@ -226,7 +227,7 @@ export const PUBLIC_PROJECTS=Object.freeze({
  crisis:Object.freeze({name:'Résoudre la crise',description:'Répare une crise économique : restaure la collecte fiscale et réduit la pression de corruption.'}),
  transport:Object.freeze({name:'Développer les transports publics',description:'Améliore durablement les revenus des activités grâce à une meilleure desserte.'}),
  housing:Object.freeze({name:'Construire des logements coopératifs',description:'Protège progressivement les recettes publiques pendant les crises.'}),
- audit:Object.freeze({name:'Contrôle des comptes',description:'Une inspection ponctuelle fait reculer la corruption.'}),
+ audit:Object.freeze({name:'Contrôle des comptes',description:'Une inspection réduit de 20 % la corruption existante, au maximum deux fois par jour.'}),
  maintenance:Object.freeze({name:'Entretenir les infrastructures',description:'Remet les équipements en état et soulage les tensions économiques.'}),
 });
 export function publicProjectOffers(state,now=Date.now()){
@@ -263,7 +264,7 @@ export function spendPublicBudget(state,project,now=Date.now()){
   const usage=getDailyAuditUsage(state,now);
   state.auditDay=usage.day;
   state.auditsToday=usage.used+1;
-  state.corruption=Math.max(0,(state.corruption||0)-5);
+  state.corruption=Math.max(0,(state.corruption||0)*(1-AUDIT_CORRUPTION_REDUCTION));
   state.corruptionAudits=Math.min(100000,(state.corruptionAudits||0)+1);
  }
  if(project==='maintenance'){
