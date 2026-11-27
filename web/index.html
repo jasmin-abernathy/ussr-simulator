@@ -9,8 +9,8 @@
   <title>Communist World Simulator — Édition de développement</title>
   <link rel="icon" href="./assets/icon.svg" type="image/svg+xml">
   <link rel="manifest" href="./manifest.webmanifest">
-  <link rel="stylesheet" href="./runtime-anthem-v15/styles.css?v=2026-11-27-communism-1pct-1">
-  <script type="module" src="./runtime-anthem-v15/app.js?v=2026-11-27-communism-1pct-1"></script>
+  <link rel="stylesheet" href="./runtime-anthem-v15/styles.css?v=2026-11-27-politics-cost-1">
+  <script type="module" src="./runtime-anthem-v15/app.js?v=2026-11-27-politics-cost-1"></script>
 <script>
 /* Web playtest: disable the previous offline service worker and its caches.
    The game state is in localStorage and must never be touched here. */
@@ -155,7 +155,7 @@
             <div class="investment-symbol" aria-hidden="true">🏛️</div>
             <div class="investment-details"><h4>Corrompre 5 agents publics</h4>
               <p>Verse des pots-de-vin à cinq agents pour augmenter la collecte fiscale. Cette pratique est distincte du financement des services publics.</p>
-              <div class="investment-stats"><span id="bureaucracy-owned">0 groupe d’agents</span><span>+2 % d'efficacité fiscale</span><span id="bureaucracy-risk">+2 corruption à l’achat · +0,02 / min (1 %)</span></div>
+              <div class="investment-stats"><span id="bureaucracy-owned">0 groupe d’agents</span><span>+2 % d'efficacité fiscale</span><span id="bureaucracy-risk">Corruption en hausse · −4 communisme à l’achat</span></div>
             </div>
             <button id="bureaucracy-buy" class="country-action" type="button" disabled>Acheter · 1 200 ₽</button>
           </article>
@@ -166,15 +166,15 @@
               <label class="bilateral-select-label" for="bilateral-country">Pays partenaire
                 <select id="bilateral-country" aria-label="Pays capitaliste pour l'accord"></select>
               </label>
-              <div class="investment-stats"><span id="bilateral-owned">0 accord</span><span>+1 % de recettes commerciales</span><span id="bilateral-risk">+4 corruption à la signature · +0,04 / min (1 %)</span></div>
+              <div class="investment-stats"><span id="bilateral-owned">0 accord</span><span>+1 % de recettes commerciales</span><span id="bilateral-risk">Corruption en hausse · −6 communisme à la signature</span></div>
             </div>
             <button id="bilateral-buy" class="country-action" type="button" disabled>Signer l'accord</button>
           </article>
           <article class="investment-item investment-propaganda">
           <div class="investment-symbol" aria-hidden="true">📢</div>
           <div class="investment-details"><h4>Acheter une agence de propagande</h4>
-            <p>Diffuse un discours officiel : +2 communisme par minute et par agence, avec un coût durable en confiance politique.</p>
-            <div class="investment-stats"><span id="propaganda-owned">0 agence</span><span>+2 communisme / min</span><span>⚠ +3 corruption à l’achat · +0,03 / min (1 %)</span></div>
+            <p>Diffuse un discours officiel pour renforcer ton influence. Cette décision controversée fragilise le soutien politique.</p>
+            <div class="investment-stats"><span id="propaganda-owned">0 agence</span><span>Influence continue</span><span id="propaganda-risk">⚠ Corruption en hausse · −3 communisme à l’achat</span></div>
           </div>
           <button id="propaganda-buy" class="country-action" type="button" disabled>Acheter · 2 500 ₽</button>
           </article>
