@@ -2732,3 +2732,22 @@ button, select {
 
 .production-label .mono { white-space: nowrap; }
 @media (max-width: 600px) { .production-label { flex-wrap: wrap; } }
+
+/* Large, accessible musical control optimized for phone screens. */
+.anthem-panel { margin-top: 16px; }
+.anthem-kicker { font-size: 11px; font-weight: 800; letter-spacing: 1.2px; color: var(--red-dark); margin-bottom: 8px; }
+.anthem-button { display: flex; align-items: center; gap: 12px; width: 100%; padding: 16px; min-height: 84px; border: 2px solid #8f2a20; background: #ad3026; color: #fff8eb; text-align: left; box-shadow: 0 4px 0 #71251c; }
+.anthem-button:hover, .anthem-button.is-playing { background: #8f2a20; }
+.anthem-button:active { transform: translateY(2px); box-shadow: 0 2px 0 #71251c; }
+.anthem-note { width: 46px; height: 46px; border: 1px solid #ffffff80; border-radius: 50%; flex-shrink: 0; display: grid; place-items: center; font-size: 29px; }
+.anthem-copy { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.anthem-copy strong { font-weight: 850; font-size: 17px; line-height: 1.2; }
+.anthem-copy small { color: #f9d8c8; font-size: 12px; line-height: 1.35; }
+#anthem-control-symbol { font-size: 22px; }
+.anthem-credit { margin-top: 10px; font-size: 11px; line-height: 1.4; color: var(--muted); }
+.anthem-credit a { text-underline-offset: 3px; }
+@media (max-width: 600px) {
+  .anthem-panel { margin-top: 14px; }
+  .anthem-button { min-height: 88px; padding: 15px; }
+  .anthem-copy strong { font-size: 18px; }
+}

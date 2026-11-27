@@ -1,0 +1,11 @@
+{
+  "appId": "org.lepotager.ussrsimulator",
+  "appName": "USSR Simulator",
+  "webDir": "web",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "backgroundColor": "#f2eee7"
+  }
+}

@@ -1,0 +1,49 @@
+name: Build Android APK
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: android-actions/setup-android@v3
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Retrieve public-domain instrumental recording
+        run: |
+          curl --fail --location --retry 3 --silent --show-error \
+            -A "USSR-Simulator/1.0 (Wikimedia Commons CC0)" \
+            'https://commons.wikimedia.org/wiki/Special:Redirect/file/L%27internationale.ogg' \
+            -o web/assets/internationale.ogg
+          test $(wc -c < web/assets/internationale.ogg) -gt 100000
+          file web/assets/internationale.ogg
+      - name: Embed the recording in the native application
+        run: |
+          node -e "const fs=require('fs');const p='web/index.html';let s=fs.readFileSync(p,'utf8');s=s.replace('https://commons.wikimedia.org/wiki/Special:Redirect/file/L%27internationale.ogg','./assets/internationale.ogg');fs.writeFileSync(p,s)"
+      - name: Run tests
+        run: npm test
+      - name: Create native Android project
+        run: npx cap add android
+      - name: Sync packaged web assets
+        run: npx cap sync android
+      - name: Build unsigned debug APK
+        working-directory: android
+        run: chmod +x gradlew && ./gradlew assembleDebug --no-daemon
+      - name: Upload installable debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ussr-simulator-android-debug
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error

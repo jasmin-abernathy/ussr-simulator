@@ -62,3 +62,7 @@ Le dépôt conserve la [licence MIT originale](LICENSE.md), avec l’attribution
 Cette livraison est une application web progressive (PWA). Elle ne produit pas d’APK Android ni d’application iOS native. L’installation sur l’écran d’accueil dépend du navigateur ; la publication en ligne doit utiliser HTTPS pour le service worker. Le mode hors connexion devient disponible après un premier chargement et une mise en cache réussis.
 
 Il n’y a ni compte joueur ni synchronisation des parties sur un serveur. Une sauvegarde locale reste liée au navigateur et à son stockage. Effacer les données du site, utiliser la navigation privée ou changer d’adresse d’accès peut rendre cette progression indisponible. Utiliser régulièrement l’export de sauvegarde pour en conserver une copie.
+
+## Android
+
+Une application Android est construite avec Capacitor 8 dans [GitHub Actions](.github/workflows/android-debug.yml) et distribuée sous forme d’APK de test. Lire [docs/ANDROID.md](docs/ANDROID.md). La musique est **L’Internationale instrumentale**, fichier CC0 récupéré à la compilation et embarqué dans l’application.

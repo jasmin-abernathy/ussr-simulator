@@ -461,3 +461,26 @@ function acquireSession() {
   });
 }
 acquireSession();
+
+
+const anthemAudio = document.getElementById('anthem-audio');
+const anthemButton = document.getElementById('anthem-button');
+if (anthemAudio && anthemButton) {
+  const updateAnthem = (message) => {
+    const playing = !anthemAudio.paused && !anthemAudio.ended;
+    anthemButton.setAttribute('aria-pressed', String(playing));
+    anthemButton.classList.toggle('is-playing', playing);
+    document.getElementById('anthem-label').textContent = playing ? 'Mettre en pause L’Internationale' : 'Jouer L’Internationale';
+    document.getElementById('anthem-control-symbol').textContent = playing ? 'Ⅱ' : '▶';
+    document.getElementById('anthem-status').textContent = message || (playing ? 'Lecture en cours · sans paroles' : 'Version instrumentale · sans paroles');
+  };
+  anthemButton.addEventListener('click', async () => {
+    if (!anthemAudio.paused) { anthemAudio.pause(); return; }
+    try { await anthemAudio.play(); }
+    catch { updateAnthem('Lecture impossible : fichier audio indisponible.'); }
+  });
+  anthemAudio.addEventListener('play', () => updateAnthem());
+  anthemAudio.addEventListener('pause', () => updateAnthem());
+  anthemAudio.addEventListener('ended', () => { anthemAudio.currentTime = 0; updateAnthem(); });
+  anthemAudio.addEventListener('error', () => updateAnthem('Fichier non chargé. Vérifie la connexion ou réessaie.'));
+}
