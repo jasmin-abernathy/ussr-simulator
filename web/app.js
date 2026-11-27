@@ -2,7 +2,7 @@ import { ACTIVITIES, RULES } from './game-data.js';
 import {
   createState, hydrateState, getStats, getActivity, quotePurchase,
   clickProduce, buyActivity, advance, startPlan, claimPlan,
-  reduceInflation, exportState, getGoals,
+  reduceInflation, exportState, getGoals, activityBusinessRate, setTaxPolicy, TAX_POLICY_LABELS,
 } from './engine.js';
 import { COUNTRIES, MILESTONES, createWorld, hydrateWorld, chooseCountry, getCooperation, cooperate, getWorldStats, celebrate, rewardAnthem, START_COUNTRIES, USA_COUNTRY_ID, getUSImportOffer, buyUSImports } from './world.js';
 import { ANTHEM_END_SECONDS, anthemClipFinished } from './anthem-clip.js';
@@ -178,7 +178,8 @@ function renderActivities() {
     refs.card.classList.toggle('can-afford', quote.ok);
     setText(refs.owned, `×${integer.format(item.owned)}`);
     refs.owned.setAttribute('aria-label', `${integer.format(item.owned)} unité${item.owned > 1 ? 's' : ''} possédée${item.owned > 1 ? 's' : ''}`);
-    setText(refs.effects, effectsText(item.effects));
+    const rate=activityBusinessRate(state,item.id);
+    setText(refs.effects, rate ? `+${money(rate.grossPerMinute)} CA / min · taxe ${rate.taxRate} % · +${format(item.effects.communism)} communisme` : effectsText(item.effects));
     refs.unlock.hidden = item.unlocked;
     setText(refs.unlock, `Déblocage à ${format(item.unlock)} de communisme`);
     refs.button.disabled = !canWrite || !quote.ok;
@@ -224,22 +225,33 @@ function render() {
   setText($('home-balance'),format(stats.cash));
   setText($('home-communism'),format(stats.communism));
   setText($('home-production'),format(stats.productionPerClick));
-  setText($('home-taxes'),format(stats.taxesPerSecond));
-  setText($('home-commerce'),format(stats.commerceRevenuePerSecond));
+  setText($('home-taxes'),format(stats.business.taxesCollectedPerMinute));
+  setText($('home-commerce'),format(stats.business.dividendsPerMinute));
   setText($('home-corruption'),`${format(stats.corruption)} points`);
   setText($('corruption-value'),format(stats.corruption));
   const offer=getUSImportOffer(world,state);
   setText($('import-owned'),`${offer.count} commerce${offer.count>1?'s':''}`);
-  setText($('import-rate'),'+90 revenus +60 taxes / s, par commerce');
+  const importRate=activityBusinessRate(state,'us-imports');
+  setText($('import-rate'),`CA ${money(importRate.grossPerMinute)} / min · taxe ${importRate.taxRate} %`);
   setText($('import-risk'),offer.capitalist?'+5 corruption par achat · +0,35/min':'Sans corruption américaine');
   if($('import-buy')){$('import-buy').disabled=!canWrite||!offer.available;
     setText($('import-buy'),state.communism<150?'Déblocage à 150 communisme':`Acheter · ${money(offer.cost)}`);}
   setText($('production-rate'), format(stats.productionPerClick));
-  setText($('tax-rate'), format(stats.taxesPerSecond));
+  setText($('tax-rate'), format(stats.business.netToTreasuryPerMinute));
   setText($('communism'), format(stats.communism));
   setText($('owned-count'), integer.format(stats.totalOwned));
   setText($('owned-label'), stats.totalOwned > 1 ? ' activités' : ' activité');
   setText($('produce-gain'), `+${money(stats.productionPerClick)} / clic`);
+  setText($('finance-gross'),money(stats.business.grossPerMinute));
+  setText($('finance-taxes'),money(stats.business.taxesCollectedPerMinute));
+  setText($('finance-dividends'),money(stats.business.dividendsPerMinute));
+  setText($('finance-net'),money(stats.business.netToTreasuryPerMinute));
+  setText($('finance-countdown'),duration(stats.business.secondsUntilPayout*1000));
+  for(const button of document.querySelectorAll('[data-tax-policy]')){
+    const active=button.dataset.taxPolicy===stats.business.taxPolicy;
+    button.classList.toggle('is-active',active);
+    button.setAttribute('aria-pressed',String(active));button.disabled=!canWrite;
+  }
   setText($('session-stats'), `${integer.format(stats.clicks)} clics · ${format(stats.totalEarned)} roubles produits · ${integer.format(stats.plan.completed)} plans terminés`);
   setText($('inflation-value'), `${stats.taxInflation} % inflation · ${format(stats.corruption)} corruption`);
   const inflationButton = $('inflation-button');
@@ -496,6 +508,12 @@ $('import-buy')?.addEventListener('click',()=>{
   if(!canWrite)return;advance(state);
   const bought=buyUSImports(world,state);if(!bought.ok)return;
   changed();notify(bought.offer.capitalist?'Importation ouverte · revenus automatiques et corruption en hausse':'Importation ouverte · revenus automatiques, sans corruption américaine');
+});
+for(const button of document.querySelectorAll('[data-tax-policy]'))button.addEventListener('click',()=>{
+  if(!canWrite)return;advance(state);
+  if(setTaxPolicy(state,button.dataset.taxPolicy)){
+    changed();notify(`Politique appliquée : ${TAX_POLICY_LABELS[state.taxPolicy]}`);
+  }
 });
 const anthemAudio = document.getElementById('anthem-audio');
 const anthemButton = document.getElementById('anthem-button');

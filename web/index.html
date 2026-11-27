@@ -37,8 +37,8 @@
         <div><span>Balance</span><strong><span id="home-balance">0</span> ₽</strong></div>
         <div><span>Communisme</span><strong class="red" id="home-communism">0</strong></div>
         <div><span>Production</span><strong class="teal"><span id="home-production">10</span> ₽ / clic</strong></div>
-        <div><span>Taxes</span><strong class="green"><span id="home-taxes">0</span> ₽ / seconde</strong></div>
-        <div><span>Revenus commerciaux</span><strong class="teal"><span id="home-commerce">0</span> ₽ / seconde</strong></div><div><span>Corruption</span><strong class="red" id="home-corruption">0 point</strong></div>
+        <div><span>Taxes collectées</span><strong class="green"><span id="home-taxes">0</span> ₽ / minute</strong></div>
+        <div><span>Dividendes</span><strong class="teal"><span id="home-commerce">0</span> ₽ / minute</strong></div><div><span>Corruption</span><strong class="red" id="home-corruption">0 point</strong></div>
       </section>
       <p class="home-hint">Les recettes automatiques continuent pendant ton absence.</p>
       <section class="anthem-panel" aria-label="L’Internationale">
@@ -70,7 +70,7 @@
             <span>Produire</span>
             <span class="button-press-mark" aria-hidden="true">+</span>
           </button>
-          <p class="action-hint">Touche pour produire.<br>Les recettes s’accumulent toutes seules.</p>
+          <p class="action-hint">Chaque action rapporte 10 ₽.<br>Les entreprises génèrent leurs revenus séparément.</p>
         </div>
       </div>
       <p class="quiet-note"><svg aria-hidden="true"><use href="./assets/symbols.svg#leaf"></use></svg>À ton rythme. Sans publicité.</p>
@@ -84,16 +84,31 @@
         </div>
         <div class="economy-details">
           <div class="mini-stat"><span class="stat-label"><svg aria-hidden="true"><use href="./assets/symbols.svg#hand"></use></svg>Par action</span><span class="stat-value"><span id="production-rate">10</span><span class="stat-unit"> ₽</span></span></div>
-          <div class="mini-stat"><span class="stat-label"><svg aria-hidden="true"><use href="./assets/symbols.svg#clock"></use></svg>Par seconde</span><span class="stat-value"><span id="tax-rate">0</span><span class="stat-unit"> ₽</span></span></div>
+          <div class="mini-stat"><span class="stat-label"><svg aria-hidden="true"><use href="./assets/symbols.svg#clock"></use></svg>Par minute</span><span class="stat-value"><span id="tax-rate">0</span><span class="stat-unit"> ₽</span></span></div>
           <div class="mini-stat"><span class="stat-label">Corruption</span><span class="stat-value" id="corruption-value">0</span></div><div class="mini-stat communism-stat"><span class="stat-label"><svg aria-hidden="true"><use href="./assets/symbols.svg#star"></use></svg>Communisme</span><span class="stat-value" id="communism">0</span></div>
         </div>
       </section>
 
+      <section class="finance-panel" aria-label="Régulation et recettes automatiques">
+ <div class="finance-panel-heading"><h3>Économie automatique</h3><span>Versement dans <strong id="finance-countdown">1 min</strong></span></div>
+ <div class="finance-grid">
+  <div><span>Chiffre d’affaires / min</span><strong id="finance-gross">0 ₽</strong></div>
+  <div><span>Taxes collectées / min</span><strong id="finance-taxes">0 ₽</strong></div>
+  <div><span>Dividendes / min</span><strong id="finance-dividends">0 ₽</strong></div>
+  <div class="finance-net"><span>Trésorerie / min</span><strong id="finance-net">0 ₽</strong></div>
+ </div>
+ <p class="finance-explain">La collectivité perçoit les taxes et 60 % des bénéfices après impôt. Le reste est réinvesti ; la corruption peut réduire la collecte.</p>
+ <div class="policy-buttons" role="group" aria-label="Politique fiscale">
+  <button type="button" data-tax-policy="social">Allégée</button>
+  <button type="button" data-tax-policy="balanced" class="is-active">Équilibrée</button>
+  <button type="button" data-tax-policy="solidarity">Solidaire</button>
+ </div>
+ </section>
       <div class="section-heading">
         <div><p class="eyebrow">L’ÉCONOMIE SE CONSTRUIT</p><h2 id="activities-title">Tes activités</h2></div>
         <span class="count-label"><span id="owned-count">0</span><span id="owned-label"> activité</span></span>
       </div>
-      <p class="section-description">Investis tes roubles pour produire plus et ouvrir de nouvelles possibilités.</p>
+      <p class="section-description">Chaque entreprise rapporte automatiquement toutes les minutes. La taxe dépend du secteur et de ta politique fiscale.</p>
 
       <div class="activity-toolbar">
         <div class="filter-tabs" role="group" aria-label="Afficher les activités">

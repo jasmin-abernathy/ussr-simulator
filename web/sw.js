@@ -1,5 +1,5 @@
 // Bump VERSION whenever a published asset changes. Only this game's scope is used.
-const VERSION = '2026-11-27-anthem-intro-first-2';
+const VERSION = '2026-11-27-minute-economy-1';
 const SCOPE = new URL(self.registration.scope);
 const PREFIX = `ussr-simulator:${SCOPE.pathname}:`;
 const CACHE = `${PREFIX}${VERSION}`;

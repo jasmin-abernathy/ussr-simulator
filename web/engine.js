@@ -19,7 +19,7 @@ const addMoney = (state, amount) => {
 export function createState(now = Date.now()) {
   return {
     version: RULES.saveVersion,
-    cash: 0, totalEarned: 0, clicks: 0, automaticSeconds: 0, communism: 0, corruption: 0, importsOwned: 0, usCapitalist: true, worldEconomyEnabled: false,
+    cash: 0, totalEarned: 0, clicks: 0, automaticSeconds: 0, communism: 0, corruption: 0, importsOwned: 0, usCapitalist: true, worldEconomyEnabled: false, taxPolicy: 'balanced', minuteRemainderMs: 0,
     owned: Object.fromEntries(ACTIVITIES.map(item => [item.id, 0])),
     counters: { production: RULES.initialProduction, taxes: 0, productionBonusPercent: 0, taxBonusPercent: 0 },
     productionSteps: 0, taxSteps: 0,
@@ -78,6 +78,8 @@ export function hydrateState(raw, now = Date.now()) {
   state.importsOwned=raw.importsOwned===undefined?0:readNumber(raw.importsOwned,0,10000,true);
   state.usCapitalist=raw.usCapitalist===false?false:true;
   state.worldEconomyEnabled=raw.worldEconomyEnabled===true;
+  state.taxPolicy=['social','balanced','solidarity'].includes(raw.taxPolicy)?raw.taxPolicy:'balanced';
+  state.minuteRemainderMs=raw.minuteRemainderMs===undefined?0:readNumber(raw.minuteRemainderMs,0,59999.999);
   state.cash = readNumber(raw.cash, 0);
   state.totalEarned = Math.max(state.cash, readNumber(raw.totalEarned, state.cash));
   state.communism = Math.max(minimum.communism, readNumber(raw.communism, minimum.communism));
@@ -117,7 +119,7 @@ const planReward = state => Math.min(RULES.maxNumber,
 const inflation = (steps, size) => Math.floor(steps / size);
 const grossProduction = state => cap(state.counters.production * (1 + state.counters.productionBonusPercent / 100));
 const grossTaxes = state => cap(state.counters.taxes * (1 + state.counters.taxBonusPercent / 100));
-const production = state => grossProduction(state) * (1 - inflation(state.productionSteps, RULES.productionInflationStep) / 100);
+const production = state => state.worldEconomyEnabled ? RULES.initialProduction : grossProduction(state) * (1 - inflation(state.productionSteps, RULES.productionInflationStep) / 100);
 const taxes = state => grossTaxes(state) * (1-inflation(state.taxSteps,RULES.taxInflationStep)/100)
  * (1-Math.min(35,Math.floor((state.corruption||0)/25))/100);
 const commerceRevenuePerSecond = state => state.worldEconomyEnabled?(
@@ -131,7 +133,8 @@ const corruptionPerMinute = state => (state.owned['black-market']||0)*0.07+(stat
 export function getStats(state) {
   return {
     cash: state.cash, totalEarned: state.totalEarned, communism: state.communism, corruption: state.corruption||0, corruptionPerMinute:corruptionPerMinute(state), commerceRevenuePerSecond:commerceRevenuePerSecond(state), clicks: state.clicks,
-    productionPerClick: production(state), taxesPerSecond: taxes(state),
+    productionPerClick: production(state), taxesPerSecond: state.worldEconomyEnabled?0:taxes(state),
+    business: getBusinessEconomy(state),
     totalOwned: Object.values(state.owned).reduce((total, count) => total + count, 0),
     unlockedCount: ACTIVITIES.filter(item => item.unlock <= state.communism).length,
     productionBase: state.counters.production, taxBase: state.counters.taxes,
@@ -225,7 +228,7 @@ export function buyActivity(state, id, quantity = 1) {
 export function clickProduce(state) {
   const earned = addMoney(state, production(state));
   state.clicks = cap(state.clicks + 1, Number.MAX_SAFE_INTEGER);
-  state.productionSteps = Math.min(RULES.productionInflationStep * RULES.maxInflation, state.productionSteps + 1);
+  if(!state.worldEconomyEnabled)state.productionSteps = Math.min(RULES.productionInflationStep * RULES.maxInflation, state.productionSteps + 1);
   return { ok: true, earned };
 }
 
@@ -259,6 +262,23 @@ export function advance(state, now = Date.now()) {
   const result = { ok: true, earned: 0, elapsedMs, creditedMs, capped: elapsedMs > creditedMs };
   if (elapsedMs === 0) return result;
   state.lastUpdate = now; // Discard time over the cap, rather than banking it.
+  if(state.worldEconomyEnabled){
+    const elapsed=state.minuteRemainderMs+creditedMs;
+    const minutes=Math.floor(elapsed/60000);
+    state.minuteRemainderMs=elapsed-minutes*60000;
+    if(minutes>0){
+      const finances=getBusinessEconomy(state);
+      result.earned=addMoney(state,finances.netToTreasuryPerMinute*minutes);
+      state.automaticSeconds=cap(state.automaticSeconds+minutes*60,Number.MAX_SAFE_INTEGER);
+      const addedCorruption=corruptionPerMinute(state)*minutes;
+      if(addedCorruption>0)state.corruption=Math.min(1e6,(state.corruption||0)+addedCorruption);
+    }
+    if(state.plan.status==='running'){
+      state.plan.remainingMs=Math.max(0,state.plan.remainingMs-creditedMs);
+      if(state.plan.remainingMs===0)state.plan.status='ready';
+    }
+    return result;
+  }
   const tickMs = state.tickRemainderMs + creditedMs;
   const seconds = Math.floor(tickMs / 1000);
   state.tickRemainderMs = tickMs - seconds * 1000;
@@ -326,4 +346,56 @@ export function getGoals(state) {
   ];
   return definitions.map(([id, title, description, current, target]) =>
     ({ id, title, description, current, target, complete: current >= target, progress: Math.min(1, current / target) }));
+}
+
+/** Global economy: every owned enterprise pays once per minute.
+ * Its turnover is divided between taxes and retained commercial profits.
+ * 60% of post-tax profit is redistributed to the player's treasury.
+ */
+export const BUSINESS_TYPES=Object.freeze({
+ matches:[150,8],gum:[240,14],beer:[480,22],radio:[750,12],
+ dissidence:[900,5],trading:[1050,27],soda:[1400,24],
+ grocery:[1800,16],'black-market':[2600,38],posters:[3200,10],
+ television:[4500,18],censorship:[4800,32],mausoleum:[5100,15],
+ lenin:[5500,20],electrification:[7200,12],canning:[8200,21],
+ candy:[9200,24],champagne:[11000,30],collectivisation:[13000,14],
+ corn:[12500,9],'virgin-lands':[16000,12],cinema:[18500,23],
+ 'us-imports':[5400,40],
+});
+const TAX_POLICIES=Object.freeze({social:-10,balanced:0,solidarity:10});
+export const TAX_POLICY_LABELS=Object.freeze({social:'Fiscalité allégée',balanced:'Fiscalité équilibrée',solidarity:'Fiscalité solidaire'});
+export function setTaxPolicy(state,policy){
+ if(!Object.prototype.hasOwnProperty.call(TAX_POLICIES,policy))return false;
+ state.taxPolicy=policy;return true;
+}
+export function activityBusinessRate(state,id){
+ const definition=BUSINESS_TYPES[id];
+ if(!definition)return null;
+ const rate=Math.max(5,Math.min(65,definition[1]+(TAX_POLICIES[state.taxPolicy]??0)));
+ return {grossPerMinute:definition[0],taxRate:rate,
+ taxesPerMinute:definition[0]*rate/100,
+ dividendsPerMinute:definition[0]*(1-rate/100)*0.6};
+}
+export function getBusinessEconomy(state){
+ let gross=0,taxes=0,dividends=0,owned=0;
+ for(const [id,count] of Object.entries(state.owned||{})){
+  if(!count)continue;
+  const rate=activityBusinessRate(state,id);
+  if(!rate)continue;
+  const units=cap(count,RULES.maxOwned);owned+=units;
+  gross+=rate.grossPerMinute*units;taxes+=rate.taxesPerMinute*units;dividends+=rate.dividendsPerMinute*units;
+ }
+ if(state.importsOwned){
+  const rate=activityBusinessRate(state,'us-imports');
+  gross+=rate.grossPerMinute*state.importsOwned;
+  taxes+=rate.taxesPerMinute*state.importsOwned;
+  dividends+=rate.dividendsPerMinute*state.importsOwned;
+  owned+=state.importsOwned;
+ }
+ const leakage=Math.min(35,Math.floor((state.corruption||0)/25))/100;
+ return {grossPerMinute:cap(gross),taxesPerMinute:cap(taxes),
+ taxesCollectedPerMinute:cap(taxes*(1-leakage)),dividendsPerMinute:cap(dividends),
+ netToTreasuryPerMinute:cap(taxes*(1-leakage)+dividends),
+ taxPolicy:state.taxPolicy||'balanced',owned,
+ secondsUntilPayout:(60000-(state.minuteRemainderMs||0))/1000};
 }
