@@ -117,7 +117,11 @@ export function hydrateState(raw, now = Date.now()) {
   state.crisisRemainderMs=raw.crisisRemainderMs===undefined?0:readNumber(raw.crisisRemainderMs,0,899999.999);
   state.cash = readNumber(raw.cash, 0);
   state.totalEarned = Math.max(state.cash, readNumber(raw.totalEarned, state.cash));
-  state.communism = Math.max(minimum.communism, readNumber(raw.communism, minimum.communism));
+  // Political costs may legitimately lower communism below the historical sum
+  // of purchase bonuses. Preserve the saved value in world-economy games.
+  state.communism = state.worldEconomyEnabled
+    ? readNumber(raw.communism,minimum.communism)
+    : Math.max(minimum.communism,readNumber(raw.communism,minimum.communism));
   state.clicks = readNumber(raw.clicks, 0, Number.MAX_SAFE_INTEGER, true);
   state.automaticSeconds = readNumber(raw.automaticSeconds, 0, Number.MAX_SAFE_INTEGER, true);
   state.productionSteps = readNumber(raw.productionSteps, 0, RULES.productionInflationStep * RULES.maxInflation, true);
@@ -181,6 +185,7 @@ const commerceRevenuePerSecond = state => state.worldEconomyEnabled?(
 export const CORRUPTION_PURCHASE=Object.freeze({gum:2,trading:0.5,'black-market':2});
 /** Some controversial investments also undermine political support immediately. */
 export const COMMUNISM_PURCHASE_PENALTY=Object.freeze({gum:1,trading:2,'black-market':4});
+export const STAKHANOV_COMMUNISM_COST=.05;
 export const applyCommunismPenalty=(state,points)=>{
  const previous=cap(state.communism);
  const lost=Math.min(previous,Math.max(0,Number(points)||0));
@@ -430,9 +435,10 @@ export function buyPropagandaAgency(state){
 /** Mutates state. The clock is advanced separately by the UI. */
 export function clickProduce(state) {
   const earned = addMoney(state, production(state));
+  const communismLost=state.worldEconomyEnabled?applyCommunismPenalty(state,STAKHANOV_COMMUNISM_COST):0;
   state.clicks = cap(state.clicks + 1, Number.MAX_SAFE_INTEGER);
   if(!state.worldEconomyEnabled)state.productionSteps = Math.min(RULES.productionInflationStep * RULES.maxInflation, state.productionSteps + 1);
-  return { ok: true, earned };
+  return { ok: true, earned, communismLost };
 }
 
 /** Sum historical per-second income, crossing at most 100 inflation boundaries. */
