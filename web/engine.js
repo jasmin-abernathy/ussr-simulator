@@ -127,7 +127,23 @@ const planReward = state => Math.min(RULES.maxNumber,
 const inflation = (steps, size) => Math.floor(steps / size);
 const grossProduction = state => cap(state.counters.production * (1 + state.counters.productionBonusPercent / 100));
 const grossTaxes = state => cap(state.counters.taxes * (1 + state.counters.taxBonusPercent / 100));
-const production = state => state.worldEconomyEnabled ? RULES.initialProduction : grossProduction(state) * (1 - inflation(state.productionSteps, RULES.productionInflationStep) / 100);
+// In the world game, a manual action has a modest productivity bonus proportional
+// to the actual (pre-tax) turnover of owned normal enterprises. Imports and
+// political investments never enhance the manual button.
+export function manualProductionBonus(state){
+  if(!state.worldEconomyEnabled)return 0;
+  let turnover=0;
+  for(const [id,count] of Object.entries(state.owned||{})){
+    if(!count)continue;
+    const activity=activityBusinessRate(state,id);
+    if(activity)turnover+=activity.grossPerSecond*Math.min(count,RULES.maxOwned);
+  }
+  // 25% of one second of factory turnover, rounded to the visible cent.
+  return Math.round(Math.min(RULES.maxNumber,turnover*.25)*100)/100;
+}
+const production = state => state.worldEconomyEnabled
+  ? cap(RULES.initialProduction+manualProductionBonus(state))
+  : grossProduction(state) * (1 - inflation(state.productionSteps, RULES.productionInflationStep) / 100);
 const taxes = state => grossTaxes(state) * (1-inflation(state.taxSteps,RULES.taxInflationStep)/100)
  * (1-Math.min(35,Math.floor((state.corruption||0)/25))/100);
 const commerceRevenuePerSecond = state => state.worldEconomyEnabled?(
@@ -143,7 +159,7 @@ const corruptionPerMinute = state =>
 export function getStats(state) {
   return {
     cash: state.cash, totalEarned: state.totalEarned, communism: state.communism, corruption: state.corruption||0, corruptionPerMinute:corruptionPerMinute(state), commerceRevenuePerSecond:commerceRevenuePerSecond(state), clicks: state.clicks,
-    productionPerClick: production(state), taxesPerSecond: state.worldEconomyEnabled?0:taxes(state),
+    productionPerClick: production(state), manualProductionBonus: manualProductionBonus(state), taxesPerSecond: state.worldEconomyEnabled?0:taxes(state),
     business: getBusinessEconomy(state),
     totalOwned: Object.values(state.owned).reduce((total, count) => total + count, 0),
     unlockedCount: ACTIVITIES.filter(item => item.unlock <= state.communism).length,

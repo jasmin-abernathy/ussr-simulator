@@ -10,11 +10,11 @@ test('matches factory pays every second, at a quarter of previous per-minute ear
  const business=getBusinessEconomy(s);
  close(business.grossPerSecond,.625);
  close(business.netToTreasuryPerSecond,.395);
- assert.equal(getStats(s).productionPerClick,10);
- clickProduce(s);close(s.cash,start+10);
- advance(s,NOW+999);close(s.cash,start+10);
- advance(s,NOW+1000);close(s.cash,start+10+business.netToTreasuryPerSecond);
- advance(s,NOW+60000);close(s.cash,start+10+60*business.netToTreasuryPerSecond);
+ assert.equal(getStats(s).productionPerClick,10.16);
+ clickProduce(s);close(s.cash,start+10.16);
+ advance(s,NOW+999);close(s.cash,start+10.16);
+ advance(s,NOW+1000);close(s.cash,start+10.16+business.netToTreasuryPerSecond);
+ advance(s,NOW+60000);close(s.cash,start+10.16+60*business.netToTreasuryPerSecond);
 });
 test('rates still vary by sector and policies change the per-second income',()=>{
  const s=createState(NOW);s.worldEconomyEnabled=true;s.cash=10000;s.communism=5000;
@@ -57,7 +57,7 @@ test('forecast remains immediate and does not modify the chosen tax policy',()=>
  const s=createState(NOW);s.cash=500;s.worldEconomyEnabled=false;buyActivity(s,'matches');
  close(getBusinessEconomy(s).grossPerSecond,.625);
  s.worldEconomyEnabled=true;close(getStats(s).business.netToTreasuryPerSecond,.395);
- assert.equal(getStats(s).productionPerClick,10);
+ assert.equal(getStats(s).productionPerClick,10.16);
  close(getBusinessEconomyForPolicy(s,'balanced').taxesPerSecond,.05);
  assert.ok(getBusinessEconomyForPolicy(s,'social').netToTreasuryPerSecond<
  getBusinessEconomyForPolicy(s,'solidarity').netToTreasuryPerSecond);

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createState, buyActivity, clickProduce, advance, getStats, exportState, hydrateState } from '../web/runtime/engine.js';
-import { RULES } from '../web/runtime/game-data.js';
+import { createState, buyActivity, clickProduce, advance, getStats, exportState, hydrateState, manualProductionBonus } from '../web/runtime-click-v3/engine.js';
+import { RULES } from '../web/runtime-click-v3/game-data.js';
 const now=1700000000000;
 const close=(actual,expected)=>assert.ok(Math.abs(actual-expected)<1e-8,`${actual} vs ${expected}`);
 test('deployed runtime has a fixed 10 rouble action and precisely quoted per-second income',()=>{
@@ -10,7 +10,9 @@ test('deployed runtime has a fixed 10 rouble action and precisely quoted per-sec
  assert.equal(buyActivity(s,'matches',5).ok,true);
  const start=s.cash;
  const perSecond=getStats(s).business.netToTreasuryPerSecond;
- assert.equal(getStats(s).productionPerClick,10);
+ const visible=getStats(s).productionPerClick;
+ assert.equal(visible,10+manualProductionBonus(s));
+ assert.ok(visible>10&&visible<12);
  advance(s,now+2000);
  close(s.cash,start+2*perSecond);
  clickProduce(s);close(s.cash,start+2*perSecond+10);
@@ -27,4 +29,34 @@ test('runtime saves keep income rate, previous balance and fractional second pro
  close(restored.cash,s.cash);
  advance(restored,now+1999);close(restored.cash,s.cash);
  advance(restored,now+2000);close(restored.cash,s.cash+r);
+});
+
+test('small factories increase manual pay gently, without extra effect from import shops',()=>{
+ const state=createState(now);state.worldEconomyEnabled=true;state.cash=1000000;state.communism=5000;
+ assert.equal(getStats(state).productionPerClick,10);
+ buyActivity(state,'matches');
+ assert.equal(manualProductionBonus(state),.16);
+ assert.equal(getStats(state).productionPerClick,10.16);
+ const before=getStats(state).productionPerClick;
+ state.importsOwned=50;state.bureaucracyOffices=10;state.bilateralAgreements=5;
+ assert.equal(getStats(state).productionPerClick,before);
+ buyActivity(state,'beer');
+ const after=getStats(state).productionPerClick;
+ assert.ok(after>before);
+ assert.ok(after<before+1);
+ const balance=state.cash;
+ const click=clickProduce(state);
+ assert.equal(click.earned,after);
+ assert.ok(Math.abs(state.cash-(balance+after))<1e-8);
+});
+test('click bonus is derived from owned factory rates even on old saves with accumulated counters',()=>{
+ const s=createState(now);s.worldEconomyEnabled=true;s.cash=10000;
+ s.owned.matches=2;
+ s.counters.production=500000;
+ const preview=getStats(s).productionPerClick;
+ assert.equal(preview,10.31);
+ const restored=hydrateState(exportState(s,now),now);
+ assert.equal(getStats(restored).productionPerClick,preview);
+ const click=clickProduce(restored);
+ assert.equal(click.earned,preview);
 });

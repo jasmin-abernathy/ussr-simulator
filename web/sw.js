@@ -1,10 +1,11 @@
 // Bump VERSION whenever a published asset changes. Only this game's scope is used.
-const VERSION = '2026-11-27-runtime-v2';
+const VERSION = '2026-11-27-click-balance-3';
 const SCOPE = new URL(self.registration.scope);
 const PREFIX = `ussr-simulator:${SCOPE.pathname}:`;
 const CACHE = `${PREFIX}${VERSION}`;
 const FILES = [
   './', './index.html', './styles.css', './app.js', './engine.js', './game-data.js', './world.js', './anthem-clip.js',
+   './runtime-click-v3/app.js', './runtime-click-v3/engine.js', './runtime-click-v3/game-data.js', './runtime-click-v3/world.js', './runtime-click-v3/anthem-clip.js', './runtime-click-v3/styles.css',
    './runtime/app.js', './runtime/engine.js', './runtime/world.js', './runtime/game-data.js', './runtime/anthem-clip.js', './runtime/styles.css',
   './manifest.webmanifest', './assets/icon.svg', './assets/icon-192.png',
   './assets/icon-512.png', './assets/factory.svg', './assets/symbols.svg', './assets/anthem-world.png', './LICENSE.txt',
