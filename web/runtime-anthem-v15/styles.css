@@ -3261,3 +3261,53 @@ conic-gradient(#17bd2a 0% var(--anthem-progress),#090909 var(--anthem-progress) 
 .anthem-panel .anthem-button:active #anthem-control-symbol{transform:translateX(-50%) scale(.94)}
 .anthem-panel .anthem-button:focus-visible #anthem-control-symbol{outline:2px solid white;outline-offset:3px}
 @media (prefers-reduced-motion:reduce){.anthem-panel #anthem-control-symbol{transition:none}}
+
+
+/* Activity cards: compact, readable business metrics and unambiguous political impact. */
+.activity-card .activity-copy{width:100%;min-width:0}
+.activity-card .activity-description{max-width:48ch;overflow-wrap:break-word}
+.activity-card .activity-meta{display:block;width:100%;margin-top:12px}
+.activity-card .activity-effects{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:8px!important;width:100%;margin:0;
+  font-family:var(--body);font-size:12px;line-height:1.35;
+}
+.activity-card .activity-effects .activity-metric{
+  display:flex;flex-direction:column;justify-content:center;align-items:flex-start;
+  min-width:0;padding:10px 12px;gap:4px;
+  border:1px solid #e8dfd3;border-radius:11px;background:#f7f3ed;
+}
+.activity-card .activity-effects .activity-metric small{
+  display:block;font-family:var(--body);font-size:11px;color:#625b53;
+  font-weight:650;letter-spacing:0;line-height:1.25;
+}
+.activity-card .activity-effects .activity-metric strong{
+  display:block;font-family:var(--body);font-size:clamp(14px,3.8vw,19px);
+  font-weight:800;line-height:1.15;letter-spacing:0;overflow-wrap:normal;
+}
+.activity-card .activity-effects .activity-metric-net{
+  grid-column:1/-1;background:#e8f4e8;border-color:#d4e9d4;
+}
+.activity-card .activity-effects .activity-corruption,
+.activity-card .activity-effects .activity-communism{
+  display:block;grid-column:1/-1;
+  width:100%;min-width:0;margin:0;padding:10px 12px;
+  border-radius:11px;line-height:1.45;
+  font-family:var(--body);font-size:12px;font-weight:650;
+  white-space:normal;overflow-wrap:break-word;
+}
+.activity-card .activity-effects .activity-corruption{
+  color:#992d26;background:#fff0eb;border:1px solid #efd0c9;
+}
+.activity-card .activity-effects .activity-communism{
+  color:#286b3b;background:#eff7ee;border:1px solid #d5e6d3;
+}
+.activity-card .activity-purchase{min-width:0}
+.activity-card .activity-conversion[hidden]{display:none!important}
+@media(max-width:700px){
+ .activity-card .activity-effects .activity-metric strong{font-size:clamp(13px,3.8vw,17px)}
+ .activity-card .activity-effects .activity-metric{padding:9px 10px}
+ .activity-card .activity-effects .activity-corruption,
+ .activity-card .activity-effects .activity-communism{font-size:11px;padding:9px 10px}
+}
