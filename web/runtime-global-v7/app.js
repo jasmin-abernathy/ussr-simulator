@@ -29,6 +29,8 @@ let filter = 'all';
 let search = '';
 let quantity = 1;
 let worldFilter='all';
+let worldDisplayLimit=36;
+let lastWorldDisplayStage=0;
 let selectedBilateralCountry='';
 let toastTimeout;
 let installPrompt;
@@ -770,7 +772,8 @@ document.getElementById('country-confirm')?.addEventListener('click',()=>{
   state.worldEconomyEnabled=true;
   changed();notify(`Bienvenue en ${result.country.name} ! Fais grandir la coopération.`);
 });
-document.getElementById('world-filter')?.addEventListener('change',e=>{worldFilter=e.currentTarget.value;renderWorld();});
+document.getElementById('world-filter')?.addEventListener('change',e=>{worldFilter=e.currentTarget.value;worldDisplayLimit=36;renderWorld();});
+document.getElementById('world-more')?.addEventListener('click',()=>{worldDisplayLimit+=36;renderWorld();});
 function renderWorld(){
   const target=document.getElementById('world-list');if(!target)return;
   const stats=getWorldStats(world);
@@ -792,9 +795,29 @@ function renderWorld(){
   setText($('world-stage-description'),stageMessages[stats.stage][1]);
   const reached=MILESTONES.filter(m=>m.threshold<=state.communism);
   if(reached.length)setText(document.getElementById('milestone-message'),reached.at(-1).message);
+  if(lastWorldDisplayStage!==stats.stage){
+    worldDisplayLimit=36;
+    lastWorldDisplayStage=stats.stage;
+  }
   const countries=rankCountriesByDifficulty(getVisibleCountries(world).filter(c=>worldFilter==='all'||c.region===worldFilter));
-  const items=countries.map(c=>getCooperation(world,state,c.id));
-  const signature=JSON.stringify([world.origin,world.partners,world.bilateral,state.communism,Math.floor(state.cash),worldFilter,'global-wave-v1',stats.stage]);
+  // After wave 1, display new/cooperable nations ahead of already completed
+  // countries. Otherwise the newly unlocked 146 would appear far below the fold.
+  if(stats.stage>=2){
+    countries.sort((a,b)=>{
+      const joinedA=a.id===world.origin||world.partners.includes(a.id);
+      const joinedB=b.id===world.origin||world.partners.includes(b.id);
+      return Number(joinedA)-Number(joinedB);
+    });
+  }
+  const showLimited=stats.stage>=2;
+  const items=(showLimited?countries.slice(0,worldDisplayLimit):countries).map(c=>getCooperation(world,state,c.id));
+  const remaining=Math.max(0,countries.length-worldDisplayLimit);
+  const more=$('world-more');
+  if(more){
+    more.hidden=!showLimited||remaining===0;
+    more.textContent=`Afficher ${Math.min(36,remaining)} pays supplémentaires · ${remaining} restants`;
+  }
+  const signature=JSON.stringify([world.origin,world.partners,world.bilateral,state.communism,Math.floor(state.cash),worldFilter,'global-wave-v2',stats.stage,worldDisplayLimit]);
   if(target.dataset.signature===signature)return;
   target.dataset.signature=signature;
   const frag=document.createDocumentFragment();

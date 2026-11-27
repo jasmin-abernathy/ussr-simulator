@@ -2962,3 +2962,7 @@ conic-gradient(#17bd2a 0% var(--anthem-progress),#090909 var(--anthem-progress) 
  background:#edf6ea;border-radius:14px;margin:12px 0;}
 .world-stage-banner strong{font-size:15px;line-height:1.35;color:#23692c;}
 .world-stage-banner p{margin:0;color:#52654d;font-size:12px;line-height:1.5;}
+
+.world-more{display:block;width:100%;margin:12px 0 18px;padding:13px;border-radius:12px;
+ background:#fff;border:1px solid #d6c6b8;color:#8e3024;font-size:13px;font-weight:750;}
+.world-more[hidden]{display:none!important;}
