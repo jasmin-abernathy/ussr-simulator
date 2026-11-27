@@ -223,7 +223,7 @@ export function getCommunismPerMinute(state){
  let total=0;
  for(const item of ACTIVITIES){
   const count=state.owned?.[item.id]||0;
-  if(count>0&&item.effects.communism>0){
+  if(count>0&&item.effects.communism>0&&!(state.worldEconomyEnabled&&Object.hasOwn(COMMUNISM_PURCHASE_PENALTY,item.id))){
    total=cap(total+cap(count,RULES.maxOwned)*item.effects.communism);
   }
  }
@@ -426,8 +426,11 @@ export function buyActivity(state, id, quantity = 1) {
     state.counters.taxes = cap(state.counters.taxes + effects.taxes);
     state.counters.productionBonusPercent = cap(state.counters.productionBonusPercent + effects.productionPercent);
     state.counters.taxBonusPercent = cap(state.counters.taxBonusPercent + effects.taxPercent);
-    state.communism = cap(state.communism + effects.communism);
-    if(state.worldEconomyEnabled)applyCommunismPenalty(state,COMMUNISM_PURCHASE_PENALTY[id]||0);
+    // In the world economy, illicit or controversial shops undermine support:
+    // their historic positive purchase bonus is not granted before a penalty.
+    const penalized=state.worldEconomyEnabled&&Object.hasOwn(COMMUNISM_PURCHASE_PENALTY,id);
+    if(!penalized)state.communism=cap(state.communism+effects.communism);
+    if(penalized)applyCommunismPenalty(state,COMMUNISM_PURCHASE_PENALTY[id]);
     const risk=CORRUPTION_PURCHASE[id]||0;
     if(risk&&(state.worldEconomyEnabled||id!=='gum'))
       state.corruption=Math.min(1e6,(state.corruption||0)+risk);
