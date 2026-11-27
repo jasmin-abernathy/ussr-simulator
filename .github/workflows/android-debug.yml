@@ -32,6 +32,10 @@ jobs:
             -o web/assets/internationale.ogg
           test $(wc -c < web/assets/internationale.ogg) -gt 100000
           file web/assets/internationale.ogg
+      - name: Install audio trimmer
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
       - name: End the instrumental at the first refrain
         run: |
           ffmpeg -hide_banner -loglevel error -y \
