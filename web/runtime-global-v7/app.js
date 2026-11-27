@@ -555,8 +555,8 @@ $('import-buy')?.addEventListener('click',()=>{
 function refreshBilateralSelector(){
   const select=$('bilateral-country');
   if(!select)return;
-  const choices=COUNTRIES.filter(c=>c.id!==world.origin&&!world.partners.includes(c.id));
-  const signature=JSON.stringify([world.origin,world.partners]);
+  const choices=getVisibleCountries(world).filter(c=>c.id!==world.origin&&!world.partners.includes(c.id));
+  const signature=JSON.stringify([world.origin,world.partners,getWorldStage(world)]);
   if(select.dataset.signature!==signature){
     select.dataset.signature=signature;
     const frag=document.createDocumentFragment();
@@ -780,7 +780,7 @@ function renderWorld(){
   setText(document.getElementById('world-origin'),stats.origin?.name||'À choisir');
   setText(document.getElementById('world-partners'),stats.partners);
   setText(document.getElementById('world-regions'),stats.regions);
-  setText($('world-counter'),stats.stage===1?
+  setText($('world-counter'),stats.stage===0?'Choisis un départ':stats.stage===1?
     `Étape 1 · ${stats.initialJoined}/48`:
     stats.stage===2?`Étape 2 · ${stats.totalJoined}/194`:
     stats.stage===3?'Dernier pays : États-Unis':'195 / 195 pays');
