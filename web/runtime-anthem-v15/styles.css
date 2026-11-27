@@ -3198,3 +3198,10 @@ conic-gradient(#17bd2a 0% var(--anthem-progress),#090909 var(--anthem-progress) 
 .public-project-need>div strong{color:#8e4d24}
 .public-project-need>div span{color:#92572b}
 .public-project[hidden]{display:none!important}
+
+
+/* Tax policy cards foreground actual percentage instead of a fixed rouble amount. */
+.finance-panel .policy-buttons button{min-height:110px!important;align-items:flex-start!important;justify-content:flex-start!important}
+.finance-panel .policy-buttons button [data-policy-preview]{font-size:clamp(20px,4vw,27px)!important;font-weight:850!important;line-height:1.05!important;letter-spacing:-.4px}
+.finance-panel .policy-buttons button [data-policy-estimate]{font-size:10px!important;line-height:1.35!important;font-weight:500!important;overflow-wrap:anywhere}
+@media(max-width:390px){.finance-panel .policy-buttons button{padding:9px 6px!important;gap:6px!important}.finance-panel .policy-buttons button .policy-name{font-size:12px!important}.finance-panel .policy-buttons button [data-policy-preview]{font-size:21px!important}}
