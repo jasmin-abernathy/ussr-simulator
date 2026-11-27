@@ -490,7 +490,7 @@ function render() {
       name==='inspectorates'?`${offer.level}/${offer.maxLevel} établissements · ${format(Math.min(12,offer.level)*5+Math.max(0,offer.level-12)*2)} % du reste de corruption nouvelle évitée`:
       name==='needs'?`${offer.pending} besoin${offer.pending>1?'s':''} collectif${offer.pending>1?'s':''} en attente · les équipements demandent du soutien`:
       name==='crisis'?`${stats.crisesPending} intervention${stats.crisesPending>1?'s':''} nécessaire${stats.crisesPending>1?'s':''}`:
-      name==='audit'?`${offer.charges}/${offer.maxCharges} inspections en réserve · ${offer.charges===offer.maxCharges?'réserve pleine':`prochaine charge dans ${duration(offer.cooldownMs)}`} · −20 % de corruption par inspection`:
+      name==='audit'?`${offer.charges}/${offer.maxCharges} inspections en réserve · ${offer.charges===offer.maxCharges?'réserve pleine':`prochaine charge dans ${duration(offer.cooldownMs)}`} · −30 % de corruption par inspection`:
       name==='maintenance'?'Mission renouvelable · entretien préventif':
       `Développement ${offer.level}/${offer.maxLevel}${offer.locked&&!offer.fullyDeveloped?' · nouveaux paliers avec la croissance':''}${['services','transport','housing'].includes(name)&&infrastructure.required[name]>0?` · minimum requis ${infrastructure.required[name]}${infrastructure.missing[name]>0?' ⚠ insuffisant':' ✓'}`:''}`;
     setText($('public-project-'+name+'-level'),progress);
