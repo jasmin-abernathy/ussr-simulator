@@ -3311,3 +3311,15 @@ conic-gradient(#17bd2a 0% var(--anthem-progress),#090909 var(--anthem-progress) 
  .activity-card .activity-effects .activity-corruption,
  .activity-card .activity-effects .activity-communism{font-size:11px;padding:9px 10px}
 }
+
+
+/* Permanent anticorruption institutions are a separate public investment. */
+.public-integrity-status{
+ margin:0;padding:12px 14px;border:1px solid #cbdccc;
+ border-radius:11px;background:#eef6eb;color:#345a3b;
+ font-size:12px;font-weight:650;line-height:1.55;
+}
+.public-integrity-status.is-improving{border-color:#a6d0b1;background:#e4f4e8;color:#256638}
+.public-project-integrity{border-color:#cddfcd;background:#f9fdf8}
+.public-project-integrity>div strong{color:#2c6541}
+.public-project-integrity>div span{color:#336b44}
