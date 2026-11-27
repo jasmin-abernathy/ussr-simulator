@@ -1,12 +1,12 @@
-const APP_VERSION='2026-11-28-player-session-repair-2';
-import { ACTIVITIES, RULES } from './game-data.js?v=2026-11-28-player-session-repair-2';
+const APP_VERSION='2026-11-28-audit-reserve-1';
+import { ACTIVITIES, RULES } from './game-data.js?v=2026-11-28-audit-reserve-1';
 import {
   createState, hydrateState, getStats, getActivity, quotePurchase,
   clickProduce, buyActivity, quoteActivityConversion, convertActivity, CONVERSION_TARGETS, getActivityCorruptionRate, CORRUPTION_PURCHASE, COMMUNISM_PURCHASE_PENALTY, getPropagandaOffer, buyPropagandaAgency, getIdeologyInstitutionOffer, buyIdeologyInstitution, advance, startPlan, claimPlan, publicProjectOffers, spendPublicBudget,
   reduceInflation, exportState, getGoals, activityBusinessRate, setTaxPolicy, TAX_POLICIES, TAX_POLICY_LABELS, getBusinessEconomyForPolicy,
-} from './engine.js?v=2026-11-28-player-session-repair-2';
-import { COUNTRIES, MILESTONES, createWorld, hydrateWorld, chooseCountry, getCooperation, cooperate, rankCountriesByCooperationCost, getWorldStats, celebrate, rewardAnthem, getAnthemReward, START_COUNTRIES, USA_COUNTRY_ID, getVisibleCountries, getWorldStage, getCampaignWaves, getUSImportOffer, buyUSImports, convertUSImports, getBureaucracyOffer, buyBureaucracy, getBilateralOffer, buyBilateralAgreement } from './world.js?v=2026-11-28-player-session-repair-2';
-import { ANTHEM_END_SECONDS, anthemClipFinished } from './anthem-clip.js?v=2026-11-28-player-session-repair-2';
+} from './engine.js?v=2026-11-28-audit-reserve-1';
+import { COUNTRIES, MILESTONES, createWorld, hydrateWorld, chooseCountry, getCooperation, cooperate, rankCountriesByCooperationCost, getWorldStats, celebrate, rewardAnthem, getAnthemReward, START_COUNTRIES, USA_COUNTRY_ID, getVisibleCountries, getWorldStage, getCampaignWaves, getUSImportOffer, buyUSImports, convertUSImports, getBureaucracyOffer, buyBureaucracy, getBilateralOffer, buyBilateralAgreement } from './world.js?v=2026-11-28-audit-reserve-1';
+import { ANTHEM_END_SECONDS, anthemClipFinished } from './anthem-clip.js?v=2026-11-28-audit-reserve-1';
 
 const SAVE_KEY = 'ussr-simulator:save:v1';
 const BACKUP_KEY = 'ussr-simulator:backup:v1';
@@ -486,18 +486,18 @@ function render() {
   for(const name of ['services','solidarity','crisis','transport','housing','audit','maintenance','needs','transparency','inspectorates']){
     const offer=projects[name];
     const button=$('public-project-'+name);
-    const progress=name==='transparency'?`${offer.level}/${offer.maxLevel} établissements · ${format(offer.level*10)} % de corruption nouvelle évitée`:
-      name==='inspectorates'?`${offer.level}/${offer.maxLevel} établissements · ${format(offer.level*5)} % du reste de corruption nouvelle évitée`:
+    const progress=name==='transparency'?`${offer.level}/${offer.maxLevel} établissements · ${format(Math.min(6,offer.level)*10+Math.max(0,offer.level-6)*3)} % de corruption nouvelle évitée`:
+      name==='inspectorates'?`${offer.level}/${offer.maxLevel} établissements · ${format(Math.min(12,offer.level)*5+Math.max(0,offer.level-12)*2)} % du reste de corruption nouvelle évitée`:
       name==='needs'?`${offer.pending} besoin${offer.pending>1?'s':''} collectif${offer.pending>1?'s':''} en attente · les équipements demandent du soutien`:
       name==='crisis'?`${stats.crisesPending} intervention${stats.crisesPending>1?'s':''} nécessaire${stats.crisesPending>1?'s':''}`:
-      name==='audit'?(offer.cooldownActive?`Prochaine inspection dans ${duration(offer.cooldownMs)}`:'Inspection disponible · réduction de la corruption'):
+      name==='audit'?`${offer.charges}/${offer.maxCharges} inspections en réserve · ${offer.charges===offer.maxCharges?'réserve pleine':`prochaine charge dans ${duration(offer.cooldownMs)}`} · −20 % de corruption par inspection`:
       name==='maintenance'?'Mission renouvelable · entretien préventif':
       `Développement ${offer.level}/${offer.maxLevel}${offer.locked&&!offer.fullyDeveloped?' · nouveaux paliers avec la croissance':''}${['services','transport','housing'].includes(name)&&infrastructure.required[name]>0?` · minimum requis ${infrastructure.required[name]}${infrastructure.missing[name]>0?' ⚠ insuffisant':' ✓'}`:''}`;
     setText($('public-project-'+name+'-level'),progress);
     if(button){
       button.disabled=!canWrite||!offer.available;
       setText(button,offer.locked?(name==='crisis'?'Aucune crise':name==='audit'?(offer.cooldownActive?`Disponible dans ${duration(offer.cooldownMs)}`:'Comptes assainis'):name==='needs'?'Aucune demande en attente':name==='maintenance'?'Équipements en état':offer.fullyDeveloped?'Programme achevé':'En attente de développement'):
-        `${name==='audit'?'Inspecter':name==='transparency'?'Construire':name==='inspectorates'?'Ouvrir':name==='needs'?'Financer':name==='maintenance'?'Entretenir':name==='crisis'?'Intervenir':'Investir'} · ${money(offer.cost)}`);
+        `${name==='audit'?`Inspecter (${offer.charges}/${offer.maxCharges})`:name==='transparency'?'Construire':name==='inspectorates'?'Ouvrir':name==='needs'?'Financer':name==='maintenance'?'Entretenir':name==='crisis'?'Intervenir':'Investir'} · ${money(offer.cost)}`);
     }
   }
   for(const button of document.querySelectorAll('[data-tax-policy]')){
