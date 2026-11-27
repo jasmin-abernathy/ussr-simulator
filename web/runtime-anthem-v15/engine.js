@@ -679,7 +679,7 @@ const BUSINESS_TYPES=Object.freeze({
  corn:[12500,9],'virgin-lands':[16000,12],cinema:[18500,23],
  'us-imports':[5400,40],
 });
-const TAX_POLICIES=Object.freeze({social:-10,balanced:0,solidarity:10});
+export const TAX_POLICIES=Object.freeze({social:10,balanced:20,solidarity:30});
 export const TAX_POLICY_LABELS=Object.freeze({social:'Fiscalité allégée',balanced:'Fiscalité équilibrée',solidarity:'Fiscalité solidaire'});
 export function setTaxPolicy(state,policy){
  if(!Object.prototype.hasOwnProperty.call(TAX_POLICIES,policy))return false;
@@ -688,7 +688,7 @@ export function setTaxPolicy(state,policy){
 export function activityBusinessRate(state,id){
  const definition=BUSINESS_TYPES[id];
  if(!definition)return null;
- const rate=Math.max(5,Math.min(65,definition[1]+(TAX_POLICIES[state.taxPolicy]??0)));
+ const rate=TAX_POLICIES[state.taxPolicy]??TAX_POLICIES.balanced;
  const grossPerSecond=definition[0]*BUSINESS_REBALANCE/60;
  return {grossPerSecond,taxRate:rate,
  taxesPerSecond:grossPerSecond*rate/100,
