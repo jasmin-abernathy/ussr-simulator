@@ -1,3 +1,4 @@
+import {getCommunismPerMinute} from './engine.js';
 import {COUNTRY_GEOGRAPHY} from './world-geography.js';
 import {ADDITIONAL_COUNTRIES,ADDITIONAL_COUNTRY_DATA} from './world-expansion.js';
 // Independent cooperative-world expansion, not part of the 2016 historical engine.
@@ -217,10 +218,20 @@ export function celebrate(w,points){const result=[];for(const m of MILESTONES)if
  * Pausing or starting the recording earns nothing. A full new listen earns
  * the same reward again with no cooldown or daily limit.
  */
+/** The anthem stays valuable when industrial communism surpasses +3/min.
+ * The reward is determined at actual playback completion, and never
+ * decreases below the original +3. Fractional rates round up.
+ */
+export function getAnthemReward(state){
+ const rate=getCommunismPerMinute(state);
+ return Math.max(ANTHEM_BONUS,Math.ceil(Number.isFinite(rate)?rate:0));
+}
 export function rewardAnthem(world,state){
-  if(!world.origin)return {ok:false,reason:'choose-origin'};
-  state.communism=Math.min(1e100,Math.max(0,state.communism)+ANTHEM_BONUS);
-  return {ok:true,points:ANTHEM_BONUS};
+ if(!world.origin)return {ok:false,reason:'choose-origin'};
+ const points=getAnthemReward(state);
+ const previous=Math.max(0,state.communism);
+ state.communism=Math.min(1e100,previous+points);
+ return {ok:true,points:state.communism-previous};
 }
 
 /** Additional trade, independent of the 22 historical activity definitions. */

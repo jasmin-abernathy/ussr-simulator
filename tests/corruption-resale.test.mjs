@@ -118,7 +118,7 @@ test('old saves keep shops and corruption but default to zero agencies',()=>{
 });
 test('UI labels explicit dubious actions and commerce transformation',()=>{
  const html=readFileSync(new URL('../web/index.html',import.meta.url),'utf8');
- const app=readFileSync(new URL('../web/runtime-conversion-v14/app.js',import.meta.url),'utf8');
+ const app=readFileSync(new URL('../web/runtime-anthem-v15/app.js',import.meta.url),'utf8');
  assert.match(html,/Corrompre 5 agents publics/);
  assert.match(html,/Acheter une agence de propagande/);
  assert.match(html,/id="import-convert"/);
