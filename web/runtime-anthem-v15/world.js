@@ -174,7 +174,7 @@ export function getCooperation(w,state,id){
   const political=getPoliticalDifficulty(c);
   const threshold=political.threshold;
   const baseCost=id===USA_COUNTRY_ID?USA_COOPERATION_COST:Math.round((1500+threshold*6.5)/50)*50;
-  const cost=Math.ceil(baseCost*(1-Math.min(.40,(state.internationalAidLevel||0)*.05)+Math.min(.03,Math.max(0,(state.internationalAidLevel||0)-8)*.01)));
+  const cost=Math.ceil(baseCost*(1-Math.min(.40,(state.internationalAidLevel||0)*.05)-Math.min(.03,Math.max(0,(state.internationalAidLevel||0)-8)*.01)));
   const joined=w.partners.includes(id),home=w.origin===id;
   const unlocked=home||joined||isCountryVisible(w,id);
   const confidence=state.communism<=0?(state.corruption>0?0:1):state.communism/(state.communism+Math.max(0,state.corruption||0));
