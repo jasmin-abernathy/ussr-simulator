@@ -65,6 +65,8 @@ test('mobile navigation uses five matching vector pictograms and no mixed emoji 
  const nav=html.match(/<nav class="mobile-nav"[\s\S]*?<\/nav>/)?.[0]||'';
  assert.equal((nav.match(/data-screen=/g)||[]).length,5);
  assert.equal((nav.match(/<svg aria-hidden="true">/g)||[]).length,5);
- assert.match(nav,/nav-public/);
+ assert.match(nav,/data-screen="public"/);
+ assert.match(nav,/viewBox="0 0 24 24"/);
+ assert.doesNotMatch(nav,/<use href=/);
  assert.doesNotMatch(nav,/🏛/);
 });
