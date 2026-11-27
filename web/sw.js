@@ -1,5 +1,5 @@
 // Bump VERSION whenever a published asset changes. Only this game's scope is used.
-const VERSION = '2026-11-27-minute-economy-1';
+const VERSION = '2026-11-27-fiscal-ui-2';
 const SCOPE = new URL(self.registration.scope);
 const PREFIX = `ussr-simulator:${SCOPE.pathname}:`;
 const CACHE = `${PREFIX}${VERSION}`;
@@ -38,7 +38,8 @@ self.addEventListener('fetch', event => {
         return await caches.match(new URL('./index.html', SCOPE).href) || Response.error();
       }
     })());
-  } else if (ASSETS.has(url.href)) {
-    event.respondWith(caches.match(request).then(cached => cached || fetch(request)));
+  } else if (ASSETS.has(url.origin + url.pathname)) {
+    const canonical=url.origin+url.pathname;
+    event.respondWith(caches.match(canonical).then(cached => cached || fetch(request)));
   }
 });

@@ -32,7 +32,7 @@ const activity = (id, legacyId, name, originalName, description, initialPrice, u
 /** Edit prices, thresholds and effects here to rebalance your own version. */
 export const ACTIVITIES = Object.freeze([
   activity('matches', 1, 'Allumettes', 'Matches',
-    'Une petite fabrique pour allumer la production.', 200, 0, 10, 0, 1),
+    'Une fabrique coopérative qui verse des recettes chaque minute.', 200, 0, 10, 0, 1),
   activity('gum', 2, 'Chewing-gum', 'Bubble gum',
     'Un kiosque qui fait entrer les premières recettes régulières.', 400, 5, 0, 10, 1),
   activity('beer', 3, 'Brasserie', 'Beer',

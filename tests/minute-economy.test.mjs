@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createState,buyActivity,clickProduce,advance,hydrateState,exportState,getStats,getBusinessEconomy,activityBusinessRate,setTaxPolicy} from '../web/engine.js';
+import {createState,buyActivity,clickProduce,advance,hydrateState,exportState,getStats,getBusinessEconomy,activityBusinessRate,setTaxPolicy,getBusinessEconomyForPolicy} from '../web/engine.js';
 const NOW=1700000000000;
 const close=(a,b)=>assert.ok(Math.abs(a-b)<1e-8,`${a} vs ${b}`);
 test('matches factory starts paying only after one full minute; click remains 10',()=>{
@@ -40,4 +40,19 @@ test('minute payout credits taxes and dividends but corruption leaks a portion o
  const dirty=structuredClone(clean);dirty.corruption=250;
  advance(clean,NOW+60000);advance(dirty,NOW+60000);
  assert.ok(clean.cash>dirty.cash);assert.ok(dirty.cash>0);
+});
+
+test('forecast is immediate for an existing factory even before the next payout',()=>{
+ const s=createState(NOW);s.cash=500;s.worldEconomyEnabled=false;
+ buyActivity(s,'matches');
+ // Existing saves may still have the legacy economy flag; the dashboard must
+ // forecast owned factories without making the player reset their progress.
+ assert.equal(getBusinessEconomy(s).grossPerMinute,150);
+ s.worldEconomyEnabled=true;
+ assert.equal(getStats(s).business.netToTreasuryPerMinute,94.8);
+ assert.equal(getStats(s).productionPerClick,10);
+ assert.equal(getBusinessEconomyForPolicy(s,'balanced').taxesPerMinute,12);
+ assert.ok(getBusinessEconomyForPolicy(s,'social').netToTreasuryPerMinute <
+   getBusinessEconomyForPolicy(s,'solidarity').netToTreasuryPerMinute);
+ assert.equal(s.taxPolicy,'balanced');
 });

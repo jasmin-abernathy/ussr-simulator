@@ -1,11 +1,11 @@
-import { ACTIVITIES, RULES } from './game-data.js';
+import { ACTIVITIES, RULES } from './game-data.js?v=2026-11-27-fiscal-ui-2';
 import {
   createState, hydrateState, getStats, getActivity, quotePurchase,
   clickProduce, buyActivity, advance, startPlan, claimPlan,
-  reduceInflation, exportState, getGoals, activityBusinessRate, setTaxPolicy, TAX_POLICY_LABELS,
-} from './engine.js';
-import { COUNTRIES, MILESTONES, createWorld, hydrateWorld, chooseCountry, getCooperation, cooperate, getWorldStats, celebrate, rewardAnthem, START_COUNTRIES, USA_COUNTRY_ID, getUSImportOffer, buyUSImports } from './world.js';
-import { ANTHEM_END_SECONDS, anthemClipFinished } from './anthem-clip.js';
+  reduceInflation, exportState, getGoals, activityBusinessRate, setTaxPolicy, TAX_POLICY_LABELS, getBusinessEconomyForPolicy,
+} from './engine.js?v=2026-11-27-fiscal-ui-2';
+import { COUNTRIES, MILESTONES, createWorld, hydrateWorld, chooseCountry, getCooperation, cooperate, getWorldStats, celebrate, rewardAnthem, START_COUNTRIES, USA_COUNTRY_ID, getUSImportOffer, buyUSImports } from './world.js?v=2026-11-27-fiscal-ui-2';
+import { ANTHEM_END_SECONDS, anthemClipFinished } from './anthem-clip.js?v=2026-11-27-fiscal-ui-2';
 
 const SAVE_KEY = 'ussr-simulator:save:v1';
 const BACKUP_KEY = 'ussr-simulator:backup:v1';
@@ -47,7 +47,7 @@ try { rawSave = localStorage.getItem(SAVE_KEY); } catch { storageFailure(); }
 let state = rawSave ? hydrateState(rawSave) : createState();
 let world = createWorld();
 try { const stored=localStorage.getItem(WORLD_KEY);if(stored)world=hydrateWorld(JSON.parse(stored)); } catch { storageFailure(); }
-state.importsOwned=world.usImports;state.usCapitalist=!world.partners.includes(USA_COUNTRY_ID);state.worldEconomyEnabled=Boolean(world.origin);
+state.importsOwned=world.usImports;state.usCapitalist=!world.partners.includes(USA_COUNTRY_ID);state.worldEconomyEnabled=true;
 
 function notify(message) {
   const toast = $('toast');
@@ -179,7 +179,27 @@ function renderActivities() {
     setText(refs.owned, `×${integer.format(item.owned)}`);
     refs.owned.setAttribute('aria-label', `${integer.format(item.owned)} unité${item.owned > 1 ? 's' : ''} possédée${item.owned > 1 ? 's' : ''}`);
     const rate=activityBusinessRate(state,item.id);
-    setText(refs.effects, rate ? `+${money(rate.grossPerMinute)} CA / min · taxe ${rate.taxRate} % · +${format(item.effects.communism)} communisme` : effectsText(item.effects));
+    if(rate){
+      const metric=(label,value,extraClass='')=>{
+        const span=document.createElement('span');
+        span.className='activity-metric '+extraClass;
+        const caption=document.createElement('small');caption.textContent=label;
+        const number=document.createElement('strong');number.textContent=value;
+        span.append(caption,number);
+        return span;
+      };
+      refs.effects.replaceChildren(
+        metric('CA / min',money(rate.grossPerMinute)),
+        metric('Taxe',`${rate.taxRate} %`),
+        metric('Trésorerie / min',money(rate.taxesPerMinute+rate.dividendsPerMinute),'activity-metric-net'),
+      );
+      if(item.effects.communism){
+        const communism=document.createElement('span');
+        communism.className='activity-communism';
+        communism.textContent=`+${format(item.effects.communism)} communisme à l’achat`;
+        refs.effects.append(communism);
+      }
+    } else setText(refs.effects,effectsText(item.effects));
     refs.unlock.hidden = item.unlocked;
     setText(refs.unlock, `Déblocage à ${format(item.unlock)} de communisme`);
     refs.button.disabled = !canWrite || !quote.ok;
@@ -249,9 +269,15 @@ function render() {
   setText($('finance-countdown'),duration(stats.business.secondsUntilPayout*1000));
   for(const button of document.querySelectorAll('[data-tax-policy]')){
     const active=button.dataset.taxPolicy===stats.business.taxPolicy;
+    const forecast=getBusinessEconomyForPolicy(state,button.dataset.taxPolicy);
+    const preview=button.querySelector('[data-policy-preview]');
+    if(preview)setText(preview,`${money(forecast.netToTreasuryPerMinute)}/min`);
     button.classList.toggle('is-active',active);
     button.setAttribute('aria-pressed',String(active));button.disabled=!canWrite;
   }
+  setText($('finance-tip'),stats.business.owned
+    ? `${integer.format(stats.business.owned)} entreprise${stats.business.owned>1?'s':''} · paiement automatique toutes les 60 s · taxes variables selon le secteur.`
+    : 'Achète une entreprise pour recevoir ton premier versement dans une minute.');
   setText($('session-stats'), `${integer.format(stats.clicks)} clics · ${format(stats.totalEarned)} roubles produits · ${integer.format(stats.plan.completed)} plans terminés`);
   setText($('inflation-value'), `${stats.taxInflation} % inflation · ${format(stats.corruption)} corruption`);
   const inflationButton = $('inflation-button');
@@ -395,7 +421,7 @@ $('import-save')?.addEventListener('change', async event => {
     const imported = hydrateState(raw);
     state = imported;
     world=hydrateWorld(raw.world);
-    state.importsOwned=world.usImports;state.usCapitalist=!world.partners.includes(USA_COUNTRY_ID);state.worldEconomyEnabled=Boolean(world.origin);
+    state.importsOwned=world.usImports;state.usCapitalist=!world.partners.includes(USA_COUNTRY_ID);state.worldEconomyEnabled=true;
     save({ backup: true });
     if(!world.origin)requestAnimationFrame(showCountryDialog);
     render();
@@ -433,7 +459,7 @@ window.addEventListener('storage', event => {
   // Keep multiple open tabs in step instead of repeatedly overwriting one save.
   try { if (localStorage.getItem(SAVE_KEY) !== event.newValue) return; } catch { return; }
   const incoming = hydrateState(event.newValue);
-  if (!incoming.recovered) { state = incoming;try { const other=localStorage.getItem(WORLD_KEY);if(other)world=hydrateWorld(JSON.parse(other));state.importsOwned=world.usImports;state.usCapitalist=!world.partners.includes(USA_COUNTRY_ID);state.worldEconomyEnabled=Boolean(world.origin); } catch {} dirty = false; render(); }
+  if (!incoming.recovered) { state = incoming;try { const other=localStorage.getItem(WORLD_KEY);if(other)world=hydrateWorld(JSON.parse(other));state.importsOwned=world.usImports;state.usCapitalist=!world.partners.includes(USA_COUNTRY_ID);state.worldEconomyEnabled=true; } catch {} dirty = false; render(); }
 });
 
 window.addEventListener('beforeinstallprompt', event => {

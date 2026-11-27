@@ -1,4 +1,4 @@
-import { ACTIVITIES, RULES } from './game-data.js';
+import { ACTIVITIES, RULES } from './game-data.js?v=2026-11-27-fiscal-ui-2';
 
 const BY_ID = new Map(ACTIVITIES.map((item, index) => [item.id, { item, index }]));
 const MAX_TIME = 8.64e15;
@@ -375,6 +375,10 @@ export function activityBusinessRate(state,id){
  return {grossPerMinute:definition[0],taxRate:rate,
  taxesPerMinute:definition[0]*rate/100,
  dividendsPerMinute:definition[0]*(1-rate/100)*0.6};
+}
+export function getBusinessEconomyForPolicy(state,policy){
+  if(!Object.prototype.hasOwnProperty.call(TAX_POLICIES,policy))return getBusinessEconomy(state);
+  return getBusinessEconomy({...state,taxPolicy:policy});
 }
 export function getBusinessEconomy(state){
  let gross=0,taxes=0,dividends=0,owned=0;

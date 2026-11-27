@@ -9,8 +9,8 @@
   <title>Communist World Simulator — Édition de développement</title>
   <link rel="icon" href="./assets/icon.svg" type="image/svg+xml">
   <link rel="manifest" href="./manifest.webmanifest">
-  <link rel="stylesheet" href="./styles.css">
-  <script type="module" src="./app.js"></script>
+  <link rel="stylesheet" href="./styles.css?v=2026-11-27-fiscal-ui-2">
+  <script type="module" src="./app.js?v=2026-11-27-fiscal-ui-2"></script>
 </head>
 <body>
   <a class="skip-link" href="#production-panel">Aller au jeu</a>
@@ -89,21 +89,36 @@
         </div>
       </section>
 
-      <section class="finance-panel" aria-label="Régulation et recettes automatiques">
- <div class="finance-panel-heading"><h3>Économie automatique</h3><span>Versement dans <strong id="finance-countdown">1 min</strong></span></div>
- <div class="finance-grid">
-  <div><span>Chiffre d’affaires / min</span><strong id="finance-gross">0 ₽</strong></div>
-  <div><span>Taxes collectées / min</span><strong id="finance-taxes">0 ₽</strong></div>
-  <div><span>Dividendes / min</span><strong id="finance-dividends">0 ₽</strong></div>
-  <div class="finance-net"><span>Trésorerie / min</span><strong id="finance-net">0 ₽</strong></div>
- </div>
- <p class="finance-explain">La collectivité perçoit les taxes et 60 % des bénéfices après impôt. Le reste est réinvesti ; la corruption peut réduire la collecte.</p>
- <div class="policy-buttons" role="group" aria-label="Politique fiscale">
-  <button type="button" data-tax-policy="social">Allégée</button>
-  <button type="button" data-tax-policy="balanced" class="is-active">Équilibrée</button>
-  <button type="button" data-tax-policy="solidarity">Solidaire</button>
- </div>
- </section>
+      <section class="finance-panel" aria-labelledby="finance-title">
+        <div class="finance-panel-heading">
+          <div>
+            <span class="finance-eyebrow">TES REVENUS AUTOMATIQUES</span>
+            <h3 id="finance-title">Économie</h3>
+          </div>
+          <div class="finance-timer"><span>Prochain versement</span><strong id="finance-countdown">1 min</strong></div>
+        </div>
+        <div class="finance-net-hero">
+          <span>Versé en trésorerie chaque minute</span>
+          <strong id="finance-net">0 ₽</strong>
+        </div>
+        <div class="finance-breakdown" aria-label="Détail des revenus">
+          <div><span>Activité totale</span><strong id="finance-gross">0 ₽</strong></div>
+          <div><span>Taxes</span><strong id="finance-taxes">0 ₽</strong></div>
+          <div><span>Dividendes</span><strong id="finance-dividends">0 ₽</strong></div>
+        </div>
+        <div class="finance-policy">
+          <div class="finance-policy-heading">
+            <h4>Choisis ta fiscalité</h4>
+            <p>Elle modifie la part prélevée sur chaque entreprise.</p>
+          </div>
+          <div class="policy-buttons" role="group" aria-label="Politique fiscale">
+            <button type="button" data-tax-policy="social" aria-pressed="false"><span class="policy-name">Allégée</span><small>−10 pts de taxe</small><strong data-policy-preview="social">0 ₽/min</strong></button>
+            <button type="button" data-tax-policy="balanced" aria-pressed="true" class="is-active"><span class="policy-name">Équilibrée</span><small>Taux par secteur</small><strong data-policy-preview="balanced">0 ₽/min</strong></button>
+            <button type="button" data-tax-policy="solidarity" aria-pressed="false"><span class="policy-name">Solidaire</span><small>+10 pts de taxe</small><strong data-policy-preview="solidarity">0 ₽/min</strong></button>
+          </div>
+          <p class="finance-tip" id="finance-tip">Les taux diffèrent selon les entreprises ; un versement arrive toutes les 60 secondes.</p>
+        </div>
+      </section>
       <div class="section-heading">
         <div><p class="eyebrow">L’ÉCONOMIE SE CONSTRUIT</p><h2 id="activities-title">Tes activités</h2></div>
         <span class="count-label"><span id="owned-count">0</span><span id="owned-label"> activité</span></span>
