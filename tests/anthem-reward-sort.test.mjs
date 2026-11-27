@@ -20,7 +20,7 @@ test('anthem grants at least 2 communism, then 2.5x when passive production exce
  assert.equal(getCommunismPerMinute(s),.8);
  assert.equal(getAnthemReward(s),2);
  s.owned.matches=81;
- assert.equal(getAnthemReward(s),2.025);
+ assert.ok(Math.abs(getAnthemReward(s)-2.025)<1e-10);
  s.owned.matches=800;
  assert.equal(getCommunismPerMinute(s),8);
  assert.equal(getAnthemReward(s),20);
@@ -35,10 +35,10 @@ test('full listening pays exactly the computed fractional reward and remains rep
  assert.equal(getAnthemReward(s),2);
  assert.deepEqual(rewardAnthem(w,s),{ok:true,points:2});
  assert.equal(s.communism,before+2);
- assert.deepEqual(rewardAnthem(w,s),{ok:true,points:.5});
+ assert.deepEqual(rewardAnthem(w,s),{ok:true,points:2});
  assert.equal(s.communism,before+4);
  assert.equal(rewardAnthem(createWorld(),s).ok,false);
- assert.equal(s.communism,before+1);
+ assert.equal(s.communism,before+4);
 });
 test('anthem reward follows saved existing industries and cannot mutate state while only quoted',()=>{
  const s=state();s.owned.matches=800;
