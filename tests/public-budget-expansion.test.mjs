@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {
  createState,hydrateState,exportState,getStats,getBusinessEconomy,publicProjectOffers,
  spendPublicBudget,
@@ -60,8 +61,7 @@ test('previous saves recover with zero additional public-project levels',()=>{
  assert.ok(getStats(restored).publicProjects.transport);
 });
 test('mobile navigation uses five matching vector pictograms and no mixed emoji tabs',()=>{
- const fs=await import('node:fs');
- const html=fs.readFileSync(new URL('../web/index.html',import.meta.url),'utf8');
+ const html=readFileSync(new URL('../web/index.html',import.meta.url),'utf8');
  const nav=html.match(/<nav class="mobile-nav"[\s\S]*?<\/nav>/)?.[0]||'';
  assert.equal((nav.match(/data-screen=/g)||[]).length,5);
  assert.equal((nav.match(/<svg aria-hidden="true">/g)||[]).length,5);
