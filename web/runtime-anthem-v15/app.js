@@ -1,12 +1,12 @@
-const APP_VERSION='2026-11-27-nav-corruption-3';
-import { ACTIVITIES, RULES } from './game-data.js?v=2026-11-27-nav-corruption-3';
+const APP_VERSION='2026-11-27-communism-1pct-1';
+import { ACTIVITIES, RULES } from './game-data.js?v=2026-11-27-communism-1pct-1';
 import {
   createState, hydrateState, getStats, getActivity, quotePurchase,
   clickProduce, buyActivity, quoteActivityConversion, convertActivity, CONVERSION_TARGETS, getActivityCorruptionRate, CORRUPTION_PURCHASE, getPropagandaOffer, buyPropagandaAgency, advance, startPlan, claimPlan, publicProjectOffers, spendPublicBudget,
   reduceInflation, exportState, getGoals, activityBusinessRate, setTaxPolicy, TAX_POLICY_LABELS, getBusinessEconomyForPolicy,
-} from './engine.js?v=2026-11-27-nav-corruption-3';
-import { COUNTRIES, MILESTONES, createWorld, hydrateWorld, chooseCountry, getCooperation, cooperate, rankCountriesByCooperationCost, getWorldStats, celebrate, rewardAnthem, getAnthemReward, START_COUNTRIES, USA_COUNTRY_ID, getVisibleCountries, getWorldStage, getCampaignWaves, getUSImportOffer, buyUSImports, convertUSImports, getBureaucracyOffer, buyBureaucracy, getBilateralOffer, buyBilateralAgreement } from './world.js?v=2026-11-27-nav-corruption-3';
-import { ANTHEM_END_SECONDS, anthemClipFinished } from './anthem-clip.js?v=2026-11-27-nav-corruption-3';
+} from './engine.js?v=2026-11-27-communism-1pct-1';
+import { COUNTRIES, MILESTONES, createWorld, hydrateWorld, chooseCountry, getCooperation, cooperate, rankCountriesByCooperationCost, getWorldStats, celebrate, rewardAnthem, getAnthemReward, START_COUNTRIES, USA_COUNTRY_ID, getVisibleCountries, getWorldStage, getCampaignWaves, getUSImportOffer, buyUSImports, convertUSImports, getBureaucracyOffer, buyBureaucracy, getBilateralOffer, buyBilateralAgreement } from './world.js?v=2026-11-27-communism-1pct-1';
+import { ANTHEM_END_SECONDS, anthemClipFinished } from './anthem-clip.js?v=2026-11-27-communism-1pct-1';
 
 const SAVE_KEY = 'ussr-simulator:save:v1';
 const BACKUP_KEY = 'ussr-simulator:backup:v1';
@@ -228,7 +228,7 @@ function renderActivities() {
       if(item.effects.communism){
         const communism=document.createElement('span');
         communism.className='activity-communism';
-        communism.textContent=`+${format(item.effects.communism)} communisme à l’achat · influence continue`;
+        communism.textContent=`+${format(item.effects.communism)} communisme à l’achat · progression lente et continue`;
         refs.effects.append(communism);
       }
     } else setText(refs.effects,effectsText(item.effects));
