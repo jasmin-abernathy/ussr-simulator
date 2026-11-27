@@ -456,7 +456,8 @@ function render() {
   setText($('finance-net'),money(stats.business.netToTreasuryPerSecond));
   setText($('finance-countdown'),duration(stats.business.secondsUntilPayout*1000));
   setText($('public-budget'),money(stats.publicBudget));
-  setText($('public-budget-rate'),`+${money(stats.business.taxesCollectedPerSecond)} / s`);
+  const publicNetRate=stats.business.taxesCollectedPerSecond-stats.business.infrastructure.costPerSecond;
+  setText($('public-budget-rate'),`${publicNetRate>=0?'+':'−'}${money(Math.abs(publicNetRate))} / s · solde public`);
   setText($('public-collected'),money(stats.publicTaxesCollected));
   const infrastructure=stats.business.infrastructure;
   const missingInfrastructure=Object.values(infrastructure.missing).some(count=>count>0);
