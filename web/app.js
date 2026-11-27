@@ -494,12 +494,12 @@ if (anthemAudio && anthemButton) {
       ? 'Mettre en pause L’Internationale' : 'Jouer L’Internationale';
     document.getElementById('anthem-control-symbol').textContent = playing ? 'Ⅱ' : '▶';
     document.getElementById('anthem-status').textContent = message ||
-      (playing ? 'Écoute jusqu’au deuxième refrain pour gagner +3 communisme.'
-        : 'Jusqu’au deuxième refrain · +3 communisme par écoute complète');
+      (playing ? 'Écoute jusqu’au premier refrain pour gagner +3 communisme.'
+        : 'Jusqu’au premier refrain · +3 communisme par écoute complète');
   };
 
   function finishAnthem() {
-    // The full source on the web has trailing silence after the second refrain.
+    // The full source on the web has trailing silence after the first refrain.
     // The Android build embeds a 76-second cut of the very same recording.
     // The guard avoids awarding twice when timeupdate and ended both fire.
     if (rewardedThisListen || !anthemClipFinished(anthemAudio.currentTime)) return;
@@ -510,7 +510,7 @@ if (anthemAudio && anthemButton) {
       const bonus = rewardAnthem(world, state);
       if (bonus.ok) {
         changed();
-        notify(`🎵 Deuxième refrain terminé : +${bonus.points} communisme !`);
+        notify(`🎵 Premier refrain terminé : +${bonus.points} communisme !`);
       }
     }
     updateAnthem('Extrait terminé · +3 communisme, réécoutable sans limite');
@@ -523,7 +523,7 @@ if (anthemAudio && anthemButton) {
     catch { updateAnthem('Lecture impossible : fichier audio indisponible.'); }
   });
   anthemAudio.addEventListener('play', () => {
-    updateAnthem('Écoute les deux refrains jusqu’au bout pour gagner +3 communisme.');
+    updateAnthem('Écoute le premier refrain jusqu’au bout pour gagner +3 communisme.');
   });
   anthemAudio.addEventListener('pause', () => {
     if (!rewardedThisListen) updateAnthem();

@@ -32,11 +32,11 @@ jobs:
             -o web/assets/internationale.ogg
           test $(wc -c < web/assets/internationale.ogg) -gt 100000
           file web/assets/internationale.ogg
-      - name: End the instrumental at the second refrain
+      - name: End the instrumental at the first refrain
         run: |
           ffmpeg -hide_banner -loglevel error -y \
             -i web/assets/internationale.ogg \
-            -t 76 -c:a libopus -b:a 128k \
+            -t 38 -c:a libopus -b:a 128k \
             web/assets/internationale-cut.ogg
           mv web/assets/internationale-cut.ogg web/assets/internationale.ogg
           test $(wc -c < web/assets/internationale.ogg) -gt 100000
