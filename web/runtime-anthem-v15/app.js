@@ -1,12 +1,12 @@
 const APP_VERSION='2026-11-27-communism-1pct-1';
-import { ACTIVITIES, RULES } from './game-data.js?v=2026-11-27-communism-1pct-1';
+import { ACTIVITIES, RULES } from './game-data.js?v=2026-11-27-politics-cost-1';
 import {
   createState, hydrateState, getStats, getActivity, quotePurchase,
-  clickProduce, buyActivity, quoteActivityConversion, convertActivity, CONVERSION_TARGETS, getActivityCorruptionRate, CORRUPTION_PURCHASE, getPropagandaOffer, buyPropagandaAgency, advance, startPlan, claimPlan, publicProjectOffers, spendPublicBudget,
+  clickProduce, buyActivity, quoteActivityConversion, convertActivity, CONVERSION_TARGETS, getActivityCorruptionRate, CORRUPTION_PURCHASE, COMMUNISM_PURCHASE_PENALTY, getPropagandaOffer, buyPropagandaAgency, advance, startPlan, claimPlan, publicProjectOffers, spendPublicBudget,
   reduceInflation, exportState, getGoals, activityBusinessRate, setTaxPolicy, TAX_POLICY_LABELS, getBusinessEconomyForPolicy,
-} from './engine.js?v=2026-11-27-communism-1pct-1';
-import { COUNTRIES, MILESTONES, createWorld, hydrateWorld, chooseCountry, getCooperation, cooperate, rankCountriesByCooperationCost, getWorldStats, celebrate, rewardAnthem, getAnthemReward, START_COUNTRIES, USA_COUNTRY_ID, getVisibleCountries, getWorldStage, getCampaignWaves, getUSImportOffer, buyUSImports, convertUSImports, getBureaucracyOffer, buyBureaucracy, getBilateralOffer, buyBilateralAgreement } from './world.js?v=2026-11-27-communism-1pct-1';
-import { ANTHEM_END_SECONDS, anthemClipFinished } from './anthem-clip.js?v=2026-11-27-communism-1pct-1';
+} from './engine.js?v=2026-11-27-politics-cost-1';
+import { COUNTRIES, MILESTONES, createWorld, hydrateWorld, chooseCountry, getCooperation, cooperate, rankCountriesByCooperationCost, getWorldStats, celebrate, rewardAnthem, getAnthemReward, START_COUNTRIES, USA_COUNTRY_ID, getVisibleCountries, getWorldStage, getCampaignWaves, getUSImportOffer, buyUSImports, convertUSImports, getBureaucracyOffer, buyBureaucracy, getBilateralOffer, buyBilateralAgreement } from './world.js?v=2026-11-27-politics-cost-1';
+import { ANTHEM_END_SECONDS, anthemClipFinished } from './anthem-clip.js?v=2026-11-27-politics-cost-1';
 
 const SAVE_KEY = 'ussr-simulator:save:v1';
 const BACKUP_KEY = 'ussr-simulator:backup:v1';
@@ -222,7 +222,7 @@ function renderActivities() {
       );
       if(Object.hasOwn(CORRUPTION_PURCHASE,item.id)){
         const risk=document.createElement('span');risk.className='activity-corruption';
-        risk.textContent=`⚠ +${format(CORRUPTION_PURCHASE[item.id])} à l’achat · +${format(getActivityCorruptionRate(item.id))}/min par commerce actif`;
+        risk.textContent=`⚠ Corruption en hausse · −${COMMUNISM_PURCHASE_PENALTY[item.id]} communisme à l’achat`;
         refs.effects.append(risk);
       }
       if(item.effects.communism){
@@ -312,7 +312,7 @@ function render() {
   setText($('import-owned'),`${offer.count} établissement${offer.count>1?'s':''}`);
   const importRate=activityBusinessRate(state,'us-imports');
   setText($('import-rate'),`CA ${money(importRate.grossPerSecond)} / s · taxe ${importRate.taxRate} %`);
-  setText($('import-risk'),offer.capitalist?'+5 corruption à l’achat · +0,05 / min par établissement (1 %)':'Commerce sans corruption liée aux États-Unis');
+  setText($('import-risk'),offer.capitalist?'⚠ Corruption accrue · −5 communisme à l’achat':'Échanges apaisés avec les États-Unis');
   if($('import-buy')){
     $('import-buy').disabled=!canWrite||!offer.available;
     setText($('import-buy'),state.communism<150?'Déblocage à 150 communisme':`Acheter · ${money(offer.cost)}`);
@@ -335,18 +335,21 @@ function render() {
       'Aucune importation à transformer');
   }
   const bureau=getBureaucracyOffer(state);
+  setText($('bureaucracy-risk'),'⚠ Corruption accrue · −4 communisme à l’achat');
   setText($('bureaucracy-owned'),`${bureau.count} groupe${bureau.count>1?'s':''} de cinq agents`);
   if($('bureaucracy-buy')){
     $('bureaucracy-buy').disabled=!canWrite||!bureau.available;
     setText($('bureaucracy-buy'),state.communism<25?'Déblocage à 25 communisme':`Renforcer · ${money(bureau.cost)}`);
   }
   const propaganda=getPropagandaOffer(state);
+  setText($('propaganda-risk'),'⚠ Corruption accrue · −3 communisme à l’achat');
   setText($('propaganda-owned'),`${propaganda.count} agence${propaganda.count>1?'s':''}`);
   if($('propaganda-buy')){
     $('propaganda-buy').disabled=!canWrite||!propaganda.available;
     setText($('propaganda-buy'),state.communism<40?'Déblocage à 40 communisme':`Acheter · ${money(propaganda.cost)}`);
   }
   setText($('bilateral-owned'),`${world.bilateral.length} accord${world.bilateral.length>1?'s':''}`);
+  setText($('bilateral-risk'),'⚠ Corruption accrue · −6 communisme à la signature');
   setText($('investments-corruption'),format(stats.corruption));
   setText($('investments-corruption-rate'),`+${format(stats.corruptionPerMinute)} / min`);
   refreshBilateralSelector();
@@ -664,7 +667,7 @@ acquireSession();
 $('import-buy')?.addEventListener('click',()=>{
   if(!canWrite)return;advance(state);
   const bought=buyUSImports(world,state);if(!bought.ok)return;
-  changed();notify(bought.offer.capitalist?'Importation ouverte · revenus automatiques et corruption en hausse':'Importation ouverte · revenus automatiques, sans corruption américaine');
+  changed();notify(bought.communismLost?`Importation ouverte : −${format(bought.communismLost)} communisme, corruption en hausse.`:'Importation ouverte : échanges commerciaux renforcés.');
 });
 function refreshBilateralSelector(){
   const select=$('bilateral-country');
@@ -713,14 +716,14 @@ $('propaganda-buy')?.addEventListener('click',()=>{
   if(!canWrite)return;advance(state);
   const result=buyPropagandaAgency(state);
   if(!result.ok){render();return;}
-  changed();notify('Agence de propagande ouverte : influence accrue, mais corruption en hausse.');
+  changed();notify(`Agence ouverte : −${format(result.communismLost)} communisme et corruption accrue.`);
 });
 $('bureaucracy-buy')?.addEventListener('click',()=>{
   if(!canWrite)return;
   advance(state);
   const result=buyBureaucracy(state);
   if(!result.ok){render();return;}
-  changed();notify('Cinq agents publics corrompus : collecte améliorée, mais corruption en hausse.');
+  changed();notify(`Cinq agents corrompus : −${format(result.communismLost)} communisme et corruption accrue.`);
 });
 $('bilateral-buy')?.addEventListener('click',()=>{
   if(!canWrite)return;
@@ -729,7 +732,7 @@ $('bilateral-buy')?.addEventListener('click',()=>{
   const result=buyBilateralAgreement(world,state,id);
   if(!result.ok){render();return;}
   selectedBilateralCountry=id;
-  changed();notify(`Accord signé avec ${result.country.name} : recettes commerciales améliorées, corruption en hausse.`);
+  changed();notify(`Accord signé avec ${result.country.name} : −${format(result.communismLost)} communisme, corruption accrue.`);
 });
 for(const button of document.querySelectorAll('[data-tax-policy]'))button.addEventListener('click',()=>{
   if(!canWrite)return;advance(state);
