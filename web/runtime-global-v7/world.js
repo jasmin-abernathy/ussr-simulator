@@ -109,7 +109,7 @@ export function hydrateWorld(raw){
   if(Array.isArray(raw.celebrated))w.celebrated=[...new Set(raw.celebrated.filter(x=>Number.isInteger(x)&&MILESTONES.some(m=>m.threshold===x)))];
   return w;
 }
-export function chooseCountry(w,id){if(id===USA_COUNTRY_ID||w.origin||!byId.has(id))return {ok:false};w.origin=id;return {ok:true,country:byId.get(id)};}
+export function chooseCountry(w,id){if(w.origin||!START_COUNTRIES.some(c=>c.id===id))return {ok:false};w.origin=id;return {ok:true,country:byId.get(id)};}
 export function getCooperation(w,state,id){
   const c=byId.get(id);if(!c)return null;
   const index=Number(id);
