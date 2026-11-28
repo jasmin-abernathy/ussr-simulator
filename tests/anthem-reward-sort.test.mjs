@@ -9,24 +9,24 @@ import {
 const NOW=1700000000000;
 const start=()=>{const w=createWorld();assert.equal(chooseCountry(w,'0').ok,true);return w;};
 const state=()=>{const s=createState(NOW);s.worldEconomyEnabled=true;s.communism=1000;s.cash=1e10;return s;};
-test('anthem grants at least 2 communism, then 2.5x when passive production exceeds 0.8/min',()=>{
+test('anthem grants at least 2 communism, then 3x when passive production exceeds 2/3 per minute',()=>{
  const s=state();
  assert.equal(getCommunismPerMinute(s),0);
  assert.equal(getAnthemReward(s),2);
  s.owned.matches=16;
  assert.equal(getCommunismPerMinute(s),.16);
  assert.equal(getAnthemReward(s),2);
- s.owned.matches=80;
- assert.equal(getCommunismPerMinute(s),.8);
+ s.owned.matches=66;
+ assert.equal(getCommunismPerMinute(s),.66);
  assert.equal(getAnthemReward(s),2);
- s.owned.matches=81;
- assert.ok(Math.abs(getAnthemReward(s)-2.025)<1e-10);
+ s.owned.matches=67;
+ assert.ok(Math.abs(getAnthemReward(s)-2.01)<1e-10);
  s.owned.matches=800;
  assert.equal(getCommunismPerMinute(s),8);
- assert.equal(getAnthemReward(s),20);
+ assert.equal(getAnthemReward(s),24);
  s.propagandaAgencies=2;
  assert.equal(getCommunismPerMinute(s),8.1);
- assert.equal(getAnthemReward(s),20.25);
+ assert.equal(getAnthemReward(s),24.3);
 });
 test('full listening pays exactly the computed fractional reward and remains repeatable',()=>{
  const s=state(),w=start();
@@ -43,7 +43,7 @@ test('full listening pays exactly the computed fractional reward and remains rep
 test('anthem reward follows saved existing industries and cannot mutate state while only quoted',()=>{
  const s=state();s.owned.matches=800;
  const loaded=hydrateState(exportState(s,NOW),NOW);
- assert.equal(getAnthemReward(loaded),20);
+ assert.equal(getAnthemReward(loaded),24);
  const previous=loaded.communism;
  getAnthemReward(loaded);
  assert.equal(loaded.communism,previous);
