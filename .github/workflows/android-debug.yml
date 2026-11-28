@@ -6,6 +6,8 @@ on:
     paths:
       - 'web/**'
       - 'package*.json'
+      - 'scripts/**'
+      - 'tests/**'
       - 'capacitor.config.json'
       - '.github/workflows/android-debug.yml'
 permissions:
@@ -50,23 +52,48 @@ jobs:
         run: npx cap add android
       - name: Sync packaged web assets
         run: npx cap sync android
-      - name: Build signed debug APK
+      - name: Set Android version
+        env:
+          BUILD_NUMBER: ${{ github.run_number }}
+        run: |
+          node --input-type=module -e 'import fs from "node:fs"; const p="android/app/build.gradle"; let s=fs.readFileSync(p,"utf8"); if(!/versionCode\s+\d+/.test(s)) throw Error("versionCode missing"); s=s.replace(/versionCode\s+\d+/,"versionCode "+process.env.BUILD_NUMBER); s=s.replace(/versionName\s+"[^"]+"/,"versionName \"0.1."+process.env.BUILD_NUMBER+"\""); fs.writeFileSync(p,s)'
+      - name: Build release APK
         working-directory: android
-        run: chmod +x gradlew && ./gradlew assembleDebug --no-daemon
-      - name: Upload installable debug APK
+        run: chmod +x gradlew && ./gradlew assembleRelease --no-daemon
+      - name: Sign and verify APK
+        env:
+          ANDROID_SIGNING: ${{ secrets.ANDROID_SIGNING }}
+        run: |
+          set -euo pipefail
+          if [ -z "$ANDROID_SIGNING" ]; then
+            echo "::error::Missing ANDROID_SIGNING repository secret; no APK will be published."
+            exit 1
+          fi
+          umask 077
+          trap 'rm -f "$RUNNER_TEMP/cws-signing.p12"; unset KS_PASS' EXIT
+          node -e 'const fs=require("fs"); const data=JSON.parse(process.env.ANDROID_SIGNING); fs.writeFileSync(process.env.RUNNER_TEMP+"/cws-signing.p12",Buffer.from(data.keystore,"base64"),{mode:0o600})'
+          export KS_PASS="$(node -e 'process.stdout.write(JSON.parse(process.env.ANDROID_SIGNING).password)')"
+          echo "::add-mask::$KS_PASS"
+          tools="$ANDROID_HOME/build-tools/36.0.0"
+          "$tools/zipalign" -P 16 -f 4 android/app/build/outputs/apk/release/app-release-unsigned.apk "$RUNNER_TEMP/cws-aligned.apk"
+          "$tools/apksigner" sign --ks "$RUNNER_TEMP/cws-signing.p12" --ks-type PKCS12 --ks-key-alias communist-world --ks-pass env:KS_PASS --key-pass env:KS_PASS --out communist-world-simulator.apk "$RUNNER_TEMP/cws-aligned.apk"
+          "$tools/apksigner" verify --verbose --print-certs communist-world-simulator.apk
+          sha256sum communist-world-simulator.apk > communist-world-simulator.apk.sha256
+      - name: Upload signed APK
         uses: actions/upload-artifact@v4
         with:
-          name: communist-world-simulator-android-debug
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: communist-world-simulator-android
+          path: |
+            communist-world-simulator.apk
+            communist-world-simulator.apk.sha256
           if-no-files-found: error
       - name: Publish public Android download
         if: github.ref == 'refs/heads/master'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          cp android/app/build/outputs/apk/debug/app-debug.apk communist-world-simulator.apk
           if ! gh release view android-latest >/dev/null 2>&1; then
-            gh release create android-latest --target "$GITHUB_SHA" --title "Communist World Simulator - Android" --notes "Version de test Android (APK debug)."
+            gh release create android-latest --target "$GITHUB_SHA" --title "Communist World Simulator - Android" --notes "APK Android signée."
           fi
-          gh release upload android-latest communist-world-simulator.apk --clobber
-          gh release edit android-latest --notes "Version de test Android (APK debug). Commit: $GITHUB_SHA"
+          gh release upload android-latest communist-world-simulator.apk communist-world-simulator.apk.sha256 --clobber
+          gh release edit android-latest --notes "APK Android signée. Commit: $GITHUB_SHA"

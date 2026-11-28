@@ -28,3 +28,7 @@ La version web charge l'enregistrement sur Wikimedia Commons en ligne. L'APK uti
 ## Musique écourtée
 
 L'enregistrement instrumental de Wikimedia Commons dure environ 78 secondes. Le passage instrumental demandé comprend l'introduction et le premier refrain, et se termine près de 1 min 16. Le workflow Android recoupe l'enregistrement à 76 secondes avant de l'embarquer. Dans la version web, le lecteur arrête le fichier source au même point. Les +3 points ne sont attribués qu'une seule fois au terme de chaque écoute de cet extrait ; pause et reprise sont autorisées.
+
+## Publication signée
+
+La compilation release utilise le secret GitHub Actions `ANDROID_SIGNING` (objet JSON avec `keystore` en base64 et `password`, alias `communist-world`, format PKCS12). Ne jamais committer la clé privée. La publication est bloquée si le secret manque ou si la vérification apksigner échoue. Le numéro de version Android augmente avec le numéro de build. Télécharger via https://github.com/jasmin-abernathy/ussr-simulator/releases/download/android-latest/communist-world-simulator.apk .

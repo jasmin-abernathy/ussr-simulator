@@ -102,7 +102,7 @@ async function inspectFile(file) {
     await checkReference(match[2], file, { importModule: true });
   }
   for (const match of source.matchAll(/serviceWorker\s*\.\s*register\s*\(\s*(['"])([^'"\n]+)\1/g)) {
-    await checkReference(match[2], file);
+    await checkReference(match[2], resolve(webRoot, 'index.html'));
   }
   for (const match of source.matchAll(/new\s+URL\s*\(\s*(['"])([^'"\n]+)\1\s*,\s*import\.meta\.url/g)) {
     await checkReference(match[2], file);
