@@ -105,3 +105,13 @@ test('live player checks real media playback and does not advertise the secret',
  assert.match(app,/clickProduce\(state,\{anthemPlaying\}\)/);
  assert.doesNotMatch(html,/Stakhanovisme[^<]*Internationale/i);
 });
+
+test('Stakhanovist penalty label disappears only while the anthem really plays',()=>{
+ const app=readFileSync(new URL('../web/runtime-anthem-v15/app.js',import.meta.url),'utf8');
+ const html=readFileSync(new URL('../web/index.html',import.meta.url),'utf8');
+ assert.match(app,/function syncStakhanovPenaltyVisibility\(\)/);
+ assert.match(app,/penalty\.hidden=Boolean\(audio&&!audio\.paused&&!audio\.ended&&audio\.currentTime<ANTHEM_END_SECONDS\)/);
+ assert.match(app,/function render\(\) \{\s*syncStakhanovPenaltyVisibility\(\)/);
+ assert.match(app,/function updateAnthem\(\) \{\s*syncStakhanovPenaltyVisibility\(\)/);
+ assert.match(html,/class="production-ideology-cost">−0,05 communisme \/ clic/);
+});
