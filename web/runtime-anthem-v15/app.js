@@ -1,4 +1,4 @@
-const APP_VERSION='2026-11-28-anthem-hidden-penalty-1';
+const APP_VERSION='2026-11-28-unified-investment-data-1';
 import { ACTIVITIES, RULES } from './game-data.js?v=2026-11-28-anthem-hidden-penalty-1';
 import {
   createState, hydrateState, getStats, getActivity, quotePurchase,
@@ -158,6 +158,68 @@ function refreshConversionTargets(select,sourceId){
  select.dataset.targets=signature;
  if(available.includes(previous))select.value=previous;
 }
+// Sensitive investments share the exact same metric components as the historic
+// activity catalogue. All existing IDs and action nodes are preserved.
+function investmentMetric(label,id,extraClass='') {
+  const box=document.createElement('span');
+  box.className='activity-metric '+extraClass;
+  const caption=document.createElement('small');
+  caption.textContent=label;
+  const value=document.createElement('strong');
+  value.id=id;
+  box.append(caption,value);
+  return box;
+}
+function setInvestmentPurchase(button,label,cost) {
+  if(!button)return;
+  const heading=document.createElement('span');
+  heading.className='activity-buy-label';
+  heading.textContent=label;
+  const price=document.createElement('strong');
+  price.className='activity-price';
+  price.textContent=cost==null?'':money(cost);
+  button.replaceChildren(heading,price);
+}
+function unifyInvestmentCard(card,id) {
+  const details=card.querySelector('.investment-details');
+  const stats=details?.querySelector('.investment-stats');
+  const owned=details?.querySelector('#'+id+'-owned');
+  const buy=card.querySelector('#'+id+'-buy');
+  if(!details||!stats||!owned||!buy)return;
+  card.classList.add('unified-investment-card');
+  details.querySelector('h4')?.classList.add('activity-title');
+  details.querySelector('p')?.classList.add('activity-description');
+  stats.classList.add('activity-effects');
+  const oldRisk=details.querySelector('#'+id+'-risk');
+  const risk=document.createElement('span');
+  risk.id=id+'-risk';
+  risk.className='activity-corruption';
+  if(oldRisk)oldRisk.remove();
+  // Keep the existing IDs for the runtime, in well-labelled, separate cells.
+  const layout={
+    import:[['CA / s','import-gross'],['Taxe','import-tax'],['Trésorerie / s','import-net','activity-metric-net']],
+    bureaucracy:[['Agents concernés','bureaucracy-agents'],['Gain fiscal / groupe','bureaucracy-gain']],
+    bilateral:[['Accords conclus','bilateral-count'],['Gain commercial / accord','bilateral-gain']],
+    mobilization:[['Communisme / min','mobilization-benefit'],['Établissements','mobilization-capacity']],
+    institute:[['Communisme / min','institute-benefit'],['Établissements','institute-capacity']],
+  }[id]||[];
+  stats.replaceChildren(...layout.map(([label,field,cls])=>investmentMetric(label,field,cls)),risk);
+  // Match the historic cards: stock count immediately before the buy button,
+  // with the country selector (where relevant) positioned with its action.
+  let actions=card.querySelector('.investment-actions');
+  if(!actions){
+    actions=document.createElement('div');
+    actions.className='investment-actions';
+    buy.before(actions);
+    actions.append(buy);
+  }
+  owned.remove();
+  owned.className='activity-owned';
+  actions.insertBefore(owned,buy);
+  const partner=details.querySelector('.bilateral-select-label');
+  if(partner)actions.insertBefore(partner,buy);
+  buy.classList.add('buy-button','special-buy-button');
+}
 function createActivityCards() {
   const list = $('activity-list');
   const fragment = document.createDocumentFragment();
@@ -211,6 +273,7 @@ function createActivityCards() {
       if(!id)continue;
       card.classList.add('activity-card','special-activity-card');
       card.dataset.investmentId=id;
+      unifyInvestmentCard(card,id);
       const at=Math.min(list.children.length,insertAfter[index]+index+1);
       list.insertBefore(card,list.children[at]||null);
       specialCards.push({id,card});
@@ -404,11 +467,15 @@ function render() {
   const offer=getUSImportOffer(world,state);
   setText($('import-owned'),`${offer.count} établissement${offer.count>1?'s':''}`);
   const importRate=activityBusinessRate(state,'us-imports');
-  setText($('import-rate'),`CA ${money(importRate.grossPerSecond)} / s · taxe ${importRate.taxRate} %`);
-  setText($('import-risk'),offer.capitalist?'⚠ Corruption accrue · −5 communisme à l’achat':'Échanges apaisés avec les États-Unis');
+  setText($('import-gross'),money(importRate.grossPerSecond));
+  setText($('import-tax'),`${importRate.taxRate} %`);
+  setText($('import-net'),money(importRate.treasuryPerSecond));
+  $('import-risk')?.classList.toggle('activity-communism',!offer.capitalist);
+  $('import-risk')?.classList.toggle('activity-corruption',offer.capitalist);
+  setText($('import-risk'),offer.capitalist?'⚠ À l’achat : −5 communisme · +5 corruption. Ensuite +0,15 corruption/min par importation.':'Échanges apaisés avec les États-Unis.');
   if($('import-buy')){
     $('import-buy').disabled=!canWrite||!offer.available;
-    setText($('import-buy'),state.communism<150?'Déblocage à 150 communisme':`Acheter · ${money(offer.cost)}`);
+    setInvestmentPurchase($('import-buy'),state.communism<150?'Verrouillé':'Acheter',offer.cost);
   }
   const importTarget=$('import-conversion-target');
   const importButton=$('import-convert');
@@ -421,11 +488,13 @@ function render() {
       'Aucune importation à transformer');
   }
   const bureau=getBureaucracyOffer(state);
-  setText($('bureaucracy-risk'),'⚠ Corruption accrue · −4 communisme à l’achat');
-  setText($('bureaucracy-owned'),`${bureau.count} groupe${bureau.count>1?'s':''} de cinq agents`);
+  setText($('bureaucracy-risk'),'⚠ À l’achat : −4 communisme · +2 corruption. Ensuite +0,09 corruption/min par groupe.');
+  setText($('bureaucracy-agents'),integer.format(bureau.count*5));
+  setText($('bureaucracy-gain'),'+2 %');
+  setText($('bureaucracy-owned'),`×${integer.format(bureau.count)}`);
   if($('bureaucracy-buy')){
     $('bureaucracy-buy').disabled=!canWrite||!bureau.available;
-    setText($('bureaucracy-buy'),state.communism<25?'Déblocage à 25 communisme':`Renforcer · ${money(bureau.cost)}`);
+    setInvestmentPurchase($('bureaucracy-buy'),state.communism<25?'Verrouillé':'Renforcer',bureau.cost);
   }
   const propaganda=getPropagandaOffer(state);
   setText($('propaganda-risk'),'⚠ Corruption accrue · −3 communisme à l’achat');
@@ -437,19 +506,21 @@ function render() {
   for(const id of ['mobilization','institute']){
     const offer=getIdeologyInstitutionOffer(state,id);
     if(!offer)continue;
-    setText($(id+'-owned'),`${offer.count} établissement${offer.count>1?'s':''} / ${offer.max}`);
-    setText($(id+'-benefit'),`+${format(offer.communismPerMinute)} communisme/min par établissement`);
-    setText($(id+'-risk'),`⚠ +${format(offer.corruptionOnPurchase)} corruption à l’achat · +${format(offer.corruptionPerMinute)}/min par établissement`);
+    setText($(id+'-owned'),`×${integer.format(offer.count)}`);
+    setText($(id+'-benefit'),`+${format(offer.communismPerMinute)}`);
+    setText($(id+'-capacity'),`${integer.format(offer.count)} / ${integer.format(offer.max)}`);
+    setText($(id+'-risk'),`⚠ À l’achat : +${format(offer.corruptionOnPurchase)} corruption. Ensuite +${format(offer.corruptionPerMinute)} corruption/min par établissement.`);
     const button=$(id+'-buy');
     if(button){
       button.disabled=!canWrite||!offer.available;
-      setText(button,offer.count>=offer.max?'Maximum atteint':
-        offer.locked?`Déblocage à ${format(offer.unlock)} communisme`:
-        `Construire · ${money(offer.cost)}`);
+      setInvestmentPurchase(button,offer.count>=offer.max?'Maximum atteint':
+        offer.locked?'Verrouillé':'Construire',offer.count>=offer.max?null:offer.cost);
     }
   }
-  setText($('bilateral-owned'),`${world.bilateral.length} accord${world.bilateral.length>1?'s':''}`);
-  setText($('bilateral-risk'),'⚠ Corruption accrue · −6 communisme à la signature');
+  setText($('bilateral-owned'),`×${integer.format(world.bilateral.length)}`);
+  setText($('bilateral-count'),integer.format(world.bilateral.length));
+  setText($('bilateral-gain'),'+1 %');
+  setText($('bilateral-risk'),'⚠ À la signature : −6 communisme · +4 corruption. Ensuite +0,10 corruption/min par accord.');
   setText($('investments-corruption'),format(stats.corruption));
   setText($('investments-corruption-rate'),`+${format(stats.corruptionPerMinute)} / min`);
   refreshBilateralSelector();
@@ -457,8 +528,8 @@ function render() {
   const agreement=bilateralId?getBilateralOffer(world,state,bilateralId):null;
   if($('bilateral-buy')){
     $('bilateral-buy').disabled=!canWrite||!agreement?.available;
-    setText($('bilateral-buy'),!agreement?'Aucun pays disponible':agreement.signed?'Accord déjà conclu':
-      state.communism<100?'Déblocage à 100 communisme':`Signer · ${money(agreement.cost)}`);
+    setInvestmentPurchase($('bilateral-buy'),!agreement?'Aucun pays disponible':agreement.signed?'Accord déjà conclu':
+      state.communism<100?'Verrouillé':'Signer',agreement?.cost??null);
   }
   setText($('production-rate'), format(stats.productionPerClick));
   setText($('tax-rate'), format(stats.business.netToTreasuryPerSecond));
