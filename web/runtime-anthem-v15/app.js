@@ -48,7 +48,7 @@ function storageFailure() {
   const warning = $('storage-warning');
   if (warning) {
     warning.hidden = false;
-    setText(warning, 'La sauvegarde automatique est indisponible dans ce navigateur. Exporte ta partie depuis le menu Partie pour la conserver.');
+    setText(warning, 'La sauvegarde automatique est indisponible sur cet appareil. Exporte ta partie depuis les options pour la conserver.');
   }
   setText($('save-status'), 'Sauvegarde indisponible');
 }
@@ -1119,7 +1119,7 @@ if (anthemAudio && anthemButton) {
       await anthemAudio.play();
     } catch {
       updateAnthem();
-      notify('Lecture impossible : vérifie que le navigateur autorise le son.');
+      notify('Lecture impossible : vérifie les réglages audio de ton appareil.');
     }
   }
   function pauseAnthem() { anthemAudio.pause(); }
