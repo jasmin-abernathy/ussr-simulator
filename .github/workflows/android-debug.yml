@@ -9,7 +9,10 @@ on:
       - 'capacitor.config.json'
       - '.github/workflows/android-debug.yml'
 permissions:
-  contents: read
+  contents: write
+concurrency:
+  group: android-publication
+  cancel-in-progress: true
 jobs:
   android:
     runs-on: ubuntu-latest
@@ -29,6 +32,8 @@ jobs:
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platform-tools" "platforms;android-36" "build-tools;36.0.0"
       - name: Install dependencies
         run: npm install --no-audit --no-fund
+      - name: Install audio encoder
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
       - name: Retrieve French anthem recording
         run: |
           curl --fail --location --retry 3 --silent --show-error \
@@ -54,3 +59,14 @@ jobs:
           name: communist-world-simulator-android-debug
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+      - name: Publish public Android download
+        if: github.ref == 'refs/heads/master'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp android/app/build/outputs/apk/debug/app-debug.apk communist-world-simulator.apk
+          if ! gh release view android-latest >/dev/null 2>&1; then
+            gh release create android-latest --target "$GITHUB_SHA" --title "Communist World Simulator - Android" --notes "Version de test Android (APK debug)."
+          fi
+          gh release upload android-latest communist-world-simulator.apk --clobber
+          gh release edit android-latest --notes "Version de test Android (APK debug). Commit: $GITHUB_SHA"
