@@ -12,6 +12,6 @@ DirectoryIndex index.html
   Header always set Referrer-Policy "strict-origin-when-cross-origin"
   Header always set X-Robots-Tag "noindex, nofollow"
   <FilesMatch "\.(html|js|css|webmanifest)$">
-    Header always set Cache-Control "no-store, max-age=0, must-revalidate"
+    Header set Cache-Control "no-store, max-age=0, must-revalidate"
   </FilesMatch>
 </IfModule>
