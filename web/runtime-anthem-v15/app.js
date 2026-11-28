@@ -1,12 +1,12 @@
-const APP_VERSION='2026-11-28-audit-reserve-1';
-import { ACTIVITIES, RULES } from './game-data.js?v=2026-11-28-audit-reserve-1';
+const APP_VERSION='2026-11-28-all-conversions-1';
+import { ACTIVITIES, RULES } from './game-data.js?v=2026-11-28-all-conversions-1';
 import {
   createState, hydrateState, getStats, getActivity, quotePurchase,
   clickProduce, buyActivity, quoteActivityConversion, convertActivity, CONVERSION_TARGETS, getActivityCorruptionRate, CORRUPTION_PURCHASE, COMMUNISM_PURCHASE_PENALTY, getPropagandaOffer, buyPropagandaAgency, getIdeologyInstitutionOffer, buyIdeologyInstitution, advance, startPlan, claimPlan, publicProjectOffers, spendPublicBudget,
   reduceInflation, exportState, getGoals, activityBusinessRate, setTaxPolicy, TAX_POLICIES, TAX_POLICY_LABELS, getBusinessEconomyForPolicy,
-} from './engine.js?v=2026-11-28-audit-reserve-1';
-import { COUNTRIES, MILESTONES, createWorld, hydrateWorld, chooseCountry, getCooperation, cooperate, rankCountriesByCooperationCost, getWorldStats, celebrate, rewardAnthem, getAnthemReward, START_COUNTRIES, USA_COUNTRY_ID, getVisibleCountries, getWorldStage, getCampaignWaves, getUSImportOffer, buyUSImports, convertUSImports, getBureaucracyOffer, buyBureaucracy, getBilateralOffer, buyBilateralAgreement } from './world.js?v=2026-11-28-audit-reserve-1';
-import { ANTHEM_END_SECONDS, anthemClipFinished } from './anthem-clip.js?v=2026-11-28-audit-reserve-1';
+} from './engine.js?v=2026-11-28-all-conversions-1';
+import { COUNTRIES, MILESTONES, createWorld, hydrateWorld, chooseCountry, getCooperation, cooperate, rankCountriesByCooperationCost, getWorldStats, celebrate, rewardAnthem, getAnthemReward, START_COUNTRIES, USA_COUNTRY_ID, getVisibleCountries, getWorldStage, getCampaignWaves, getUSImportOffer, buyUSImports, convertUSImports, getBureaucracyOffer, buyBureaucracy, getBilateralOffer, buyBilateralAgreement } from './world.js?v=2026-11-28-all-conversions-1';
+import { ANTHEM_END_SECONDS, anthemClipFinished } from './anthem-clip.js?v=2026-11-28-all-conversions-1';
 
 const SAVE_KEY = 'ussr-simulator:save:v1';
 const BACKUP_KEY = 'ussr-simulator:backup:v1';
@@ -133,6 +133,31 @@ const glyphFor = id => ['radio', 'dissidence', 'television'].includes(id) ? 'rad
         : ['collectivisation', 'corn', 'virgin-lands'].includes(id) ? 'fields' : 'factory';
 const cards = new Map();
 
+/** Keep the selector aligned with all activities that the player can buy.
+ * Only unlocked destinations are listed; switching from any owned source
+ * never requires discarding the original business without compensation.
+ */
+function refreshConversionTargets(select,sourceId){
+ if(!select)return;
+ const available=CONVERSION_TARGETS[sourceId]?.filter(id=>{
+   const activity=getActivity(state,id);
+   return activity?.unlocked&&activity.owned<RULES.maxOwned;
+ })||[];
+ const signature=available.join(',');
+ if(select.dataset.targets===signature)return;
+ const previous=select.value;
+ const fragment=document.createDocumentFragment();
+ for(const id of available){
+   const activity=getActivity(state,id);
+   const option=document.createElement('option');
+   option.value=id;
+   option.textContent=activity.name;
+   fragment.append(option);
+ }
+ select.replaceChildren(fragment);
+ select.dataset.targets=signature;
+ if(available.includes(previous))select.value=previous;
+}
 function createActivityCards() {
   const list = $('activity-list');
   const fragment = document.createDocumentFragment();
@@ -148,15 +173,7 @@ function createActivityCards() {
     refs.conversionBox=card.querySelector('.activity-conversion');
     refs.conversionSelect=card.querySelector('.activity-conversion-target');
     refs.convertButton=card.querySelector('.activity-convert-button');
-    if(Object.hasOwn(CONVERSION_TARGETS,definition.id)){
-      for(const id of CONVERSION_TARGETS[definition.id]){
-        const target=ACTIVITIES.find(activity=>activity.id===id);
-        const option=document.createElement('option');
-        option.value=id;
-        option.textContent=target?.name||id;
-        refs.conversionSelect.append(option);
-      }
-    }
+    // Destinations are populated on render as the player unlocks activities.
     refs.card = card;
     setText(refs.title, definition.name);
     setText(refs.description, definition.description);
@@ -177,7 +194,7 @@ function createActivityCards() {
       if(!converted.ok){render();return;}
       changed();
       const target=ACTIVITIES.find(activity=>activity.id===targetId);
-      notify(`Commerce transformé en ${target?.name||targetId} · ${money(converted.cost)} de frais · risque futur réduit`);
+      notify(`Commerce transformé en ${target?.name||targetId} · ${money(converted.cost)} de frais`);
     });
     cards.set(definition.id, refs);
     fragment.append(card);
@@ -301,20 +318,12 @@ function renderActivities() {
     const convertible=Object.hasOwn(CONVERSION_TARGETS,item.id);
     refs.conversionBox.hidden=!convertible||item.owned===0;
     if(convertible){
-      // Targets stay visible but unavailable until unlocked. Ownership is
-      // preserved when the player chooses a different destination.
-      for(const option of refs.conversionSelect.options){
-        const activity=getActivity(state,option.value);
-        option.disabled=!activity?.unlocked||activity.owned>=RULES.maxOwned;
-      }
-      if(refs.conversionSelect.selectedOptions[0]?.disabled){
-        const first=Array.from(refs.conversionSelect.options).find(option=>!option.disabled);
-        if(first)refs.conversionSelect.value=first.value;
-      }
+      refreshConversionTargets(refs.conversionSelect,item.id);
       const offer=quoteActivityConversion(state,item.id,refs.conversionSelect.value);
       refs.convertButton.disabled=!canWrite||!offer.ok||!offer.available;
       setText(refs.convertButton,offer.ok?
         `Transformer 1 · frais ${money(offer.cost)}`:
+        !refs.conversionSelect.options.length?'Aucun autre établissement débloqué':
         offer.reason==='not-owned'?'Aucun commerce à transformer':
         'Transformation indisponible');
     }
@@ -389,14 +398,7 @@ function render() {
   const importTarget=$('import-conversion-target');
   const importButton=$('import-convert');
   if(importTarget&&importButton){
-    for(const option of importTarget.options){
-      const target=getActivity(state,option.value);
-      option.disabled=!target?.unlocked||target.owned>=RULES.maxOwned;
-    }
-    if(importTarget.selectedOptions[0]?.disabled){
-      const first=Array.from(importTarget.options).find(option=>!option.disabled);
-      if(first)importTarget.value=first.value;
-    }
+    refreshConversionTargets(importTarget,'us-imports');
     const conversion=quoteActivityConversion(state,'us-imports',importTarget.value);
     importButton.disabled=!canWrite||!conversion.ok||!conversion.available;
     setText(importButton,conversion.ok?
