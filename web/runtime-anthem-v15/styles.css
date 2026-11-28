@@ -3541,13 +3541,7 @@ conic-gradient(#17bd2a 0% var(--anthem-progress),#090909 var(--anthem-progress) 
   line-height:1.4;
   overflow-wrap:anywhere;
 }
-.activity-list > .special-activity-card .investment-stats > span:nth-child(3){
-  grid-column:1/-1;
-  min-height:0;
-  background:#fff0eb;
-  border-color:#efd0c9;
-  color:#992d26;
-}
+
 .activity-list > .special-activity-card.investment-ideology .investment-stats > span:nth-child(2){
   background:#eff7ee;
   border-color:#d5e6d3;
@@ -3695,13 +3689,8 @@ conic-gradient(#17bd2a 0% var(--anthem-progress),#090909 var(--anthem-progress) 
 .activity-list > .unified-investment-card .investment-stats > .activity-metric-net strong{
   color:#247440;
 }
-.activity-list > .unified-investment-card .investment-stats > .activity-metric:nth-child(2):not(.activity-metric-net){
-  background:#eff7ee;
-  border-color:#d5e6d3;
-}
-.activity-list > .unified-investment-card .investment-stats > .activity-metric:nth-child(2):not(.activity-metric-net) strong{
-  color:#286b3b;
-}
+
+
 .activity-list > .unified-investment-card .investment-stats > .activity-corruption,
 .activity-list > .unified-investment-card .investment-stats > .activity-communism{
   display:block;
@@ -3808,3 +3797,21 @@ conic-gradient(#17bd2a 0% var(--anthem-progress),#090909 var(--anthem-progress) 
  background:#eff7ee;border-color:#d5e6d3;color:#286b3b;
 }
 .activity-list > .unified-investment-card .investment-stats > .activity-metric-benefit strong{color:#286b3b;}
+
+/* Semantic status overrides for the unified investments catalogue.
+   The third metric is not a corruption indicator; it is net treasury income. */
+.activity-list > .special-activity-card.unified-investment-card .investment-stats > .activity-metric.activity-metric-net{
+  grid-column:1/-1;
+  background:#e8f4e8;
+  border-color:#d4e9d4;
+  color:#28713e;
+}
+.activity-list > .special-activity-card.unified-investment-card .investment-stats > .activity-metric.activity-metric-net strong{color:#247440}
+.activity-list > .special-activity-card.unified-investment-card .investment-stats > .activity-metric.activity-metric-tax,
+.activity-list > .special-activity-card.unified-investment-card .investment-stats > .activity-metric.activity-metric-gross{
+  background:#f7f3ed;
+  border-color:#e8dfd3;
+  color:#3b332d;
+}
+.activity-list > .special-activity-card.unified-investment-card .investment-stats > .activity-metric.activity-metric-tax strong,
+.activity-list > .special-activity-card.unified-investment-card .investment-stats > .activity-metric.activity-metric-gross strong{color:#3b332d}
