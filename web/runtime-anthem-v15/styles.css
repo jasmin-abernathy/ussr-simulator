@@ -3784,3 +3784,27 @@ conic-gradient(#17bd2a 0% var(--anthem-progress),#090909 var(--anthem-progress) 
    font-size:11px;
  }
 }
+
+/* Semantic financial badges; never infer meaning from cell position. */
+.activity-card .activity-effects .activity-metric-gross,
+.activity-card .activity-effects .activity-metric-tax,
+.activity-list > .unified-investment-card .investment-stats > .activity-metric-gross,
+.activity-list > .unified-investment-card .investment-stats > .activity-metric-tax,
+.activity-list > .unified-investment-card .investment-stats > .activity-metric:nth-child(2):not(.activity-metric-net):not(.activity-metric-benefit){
+ background:#f7f3ed;border-color:#e8dfd3;color:#3b332d;
+}
+.activity-card .activity-effects .activity-metric-gross strong,
+.activity-card .activity-effects .activity-metric-tax strong,
+.activity-list > .unified-investment-card .investment-stats > .activity-metric-gross strong,
+.activity-list > .unified-investment-card .investment-stats > .activity-metric-tax strong,
+.activity-list > .unified-investment-card .investment-stats > .activity-metric:nth-child(2):not(.activity-metric-net):not(.activity-metric-benefit) strong{color:#3b332d;}
+.activity-card .activity-effects .activity-metric-net,
+.activity-list > .unified-investment-card .investment-stats > .activity-metric-net{
+ background:#e8f4e8;border-color:#d4e9d4;color:#28713e;
+}
+.activity-card .activity-effects .activity-metric-net strong,
+.activity-list > .unified-investment-card .investment-stats > .activity-metric-net strong{color:#247440;}
+.activity-list > .unified-investment-card .investment-stats > .activity-metric-benefit{
+ background:#eff7ee;border-color:#d5e6d3;color:#286b3b;
+}
+.activity-list > .unified-investment-card .investment-stats > .activity-metric-benefit strong{color:#286b3b;}
