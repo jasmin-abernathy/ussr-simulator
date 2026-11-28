@@ -13,7 +13,7 @@ test('blocked browser tab offers an explicit recovery action rather than permane
  assert.match(app,/sessionRequested=false;showSessionWarning\(\);return;/);
 });
 test('the French sung recording is same-origin and the audio element is explicitly unmuted at playback',()=>{
- assert.match(html,/src="\.\/assets\/internationale-francaise\.mp3"/);
+ assert.match(html,/src="\.\/assets\/internationale-francaise-extrait-135s\.mp3"/);
  assert.match(app,/anthemAudio\.muted=false/);
  assert.match(app,/anthemAudio\.volume=1/);
  assert.match(app,/ANTHEM_END_SECONDS/);
