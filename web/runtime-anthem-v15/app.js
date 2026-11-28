@@ -1,12 +1,12 @@
-const APP_VERSION='2026-11-28-audits-30min-6-1';
-import { ACTIVITIES, RULES } from './game-data.js?v=2026-11-28-audits-30min-6-1';
+const APP_VERSION='2026-11-28-cooperative-integrity-1';
+import { ACTIVITIES, RULES } from './game-data.js?v=2026-11-28-cooperative-integrity-1';
 import {
   createState, hydrateState, getStats, getActivity, quotePurchase,
-  clickProduce, buyActivity, quoteActivityConversion, convertActivity, CONVERSION_TARGETS, getActivityCorruptionRate, CORRUPTION_PURCHASE, COMMUNISM_PURCHASE_PENALTY, getPropagandaOffer, buyPropagandaAgency, getIdeologyInstitutionOffer, buyIdeologyInstitution, advance, startPlan, claimPlan, publicProjectOffers, spendPublicBudget,
+  clickProduce, buyActivity, quoteActivityConversion, convertActivity, CONVERSION_TARGETS, getActivityCorruptionRate, CORRUPTION_PURCHASE, COOPERATIVE_CORRUPTION_PREVENTION, COOPERATIVE_PREVENTION_MAX, COMMUNISM_PURCHASE_PENALTY, getPropagandaOffer, buyPropagandaAgency, getIdeologyInstitutionOffer, buyIdeologyInstitution, advance, startPlan, claimPlan, publicProjectOffers, spendPublicBudget,
   reduceInflation, exportState, getGoals, activityBusinessRate, setTaxPolicy, TAX_POLICIES, TAX_POLICY_LABELS, getBusinessEconomyForPolicy,
-} from './engine.js?v=2026-11-28-audits-30min-6-1';
-import { COUNTRIES, MILESTONES, createWorld, hydrateWorld, chooseCountry, getCooperation, cooperate, rankCountriesByCooperationCost, getWorldStats, celebrate, rewardAnthem, getAnthemReward, START_COUNTRIES, USA_COUNTRY_ID, getVisibleCountries, getWorldStage, getCampaignWaves, getUSImportOffer, buyUSImports, convertUSImports, getBureaucracyOffer, buyBureaucracy, getBilateralOffer, buyBilateralAgreement } from './world.js?v=2026-11-28-audits-30min-6-1';
-import { ANTHEM_END_SECONDS, anthemClipFinished } from './anthem-clip.js?v=2026-11-28-audits-30min-6-1';
+} from './engine.js?v=2026-11-28-cooperative-integrity-1';
+import { COUNTRIES, MILESTONES, createWorld, hydrateWorld, chooseCountry, getCooperation, cooperate, rankCountriesByCooperationCost, getWorldStats, celebrate, rewardAnthem, getAnthemReward, START_COUNTRIES, USA_COUNTRY_ID, getVisibleCountries, getWorldStage, getCampaignWaves, getUSImportOffer, buyUSImports, convertUSImports, getBureaucracyOffer, buyBureaucracy, getBilateralOffer, buyBilateralAgreement } from './world.js?v=2026-11-28-cooperative-integrity-1';
+import { ANTHEM_END_SECONDS, anthemClipFinished } from './anthem-clip.js?v=2026-11-28-cooperative-integrity-1';
 
 const SAVE_KEY = 'ussr-simulator:save:v1';
 const BACKUP_KEY = 'ussr-simulator:backup:v1';
@@ -313,6 +313,14 @@ function renderActivities() {
         refs.effects.append(legacy);
       }
     } else setText(refs.effects,effectsText(item.effects));
+    const cooperative=COOPERATIVE_CORRUPTION_PREVENTION[item.id];
+    if(cooperative){
+      const safeguard=document.createElement('span');
+      safeguard.className='activity-cooperative-effect';
+      const effectiveCount=Math.min(item.owned,cooperative.maxUnits);
+      safeguard.textContent=`🛡️ −${format(cooperative.perUnit*100)} % de corruption nouvelle par établissement · protection actuelle : ${format(effectiveCount*cooperative.perUnit*100)} % (jusqu'à ${cooperative.maxUnits} établissements)`;
+      refs.effects.append(safeguard);
+    }
     refs.unlock.hidden = item.unlocked;
     setText(refs.unlock, `Déblocage à ${format(item.unlock)} de communisme`);
     const convertible=Object.hasOwn(CONVERSION_TARGETS,item.id);
@@ -478,8 +486,8 @@ function render() {
     '✓ Situation stable · aucun incident à gérer pour le moment.');
   $('public-crises')?.classList.toggle('has-crisis',stats.crisesPending>0);
   const integrity=stats.corruptionBreakdown;
-  setText($('public-integrity-status'),`🛡️ Prévention : ${format(integrity.prevention*100)} % par la transparence, puis ${format(integrity.inspectorateReduction*100)} % du reste par les inspections · corruption nouvelle : +${format(integrity.net)} /min`);
-  $('public-integrity-status')?.classList.toggle('is-improving',integrity.prevention>0||integrity.inspectorateReduction>0);
+  setText($('public-integrity-status'),`🛡️ Prévention : ${format(integrity.prevention*100)} % par la transparence, ${format(integrity.inspectorateReduction*100)} % du reste par les inspections, puis ${format(integrity.cooperativePrevention*100)} % du reste par les coopératives (max ${format(COOPERATIVE_PREVENTION_MAX*100)} %) · corruption nouvelle : +${format(integrity.net)} /min`);
+  $('public-integrity-status')?.classList.toggle('is-improving',integrity.prevention>0||integrity.inspectorateReduction>0||integrity.cooperativePrevention>0);
   const projects=stats.publicProjects;
   const needs=projects.needs;
   if($('public-needs-card'))$('public-needs-card').hidden=!needs.pending;
