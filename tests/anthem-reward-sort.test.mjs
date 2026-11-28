@@ -26,7 +26,7 @@ test('anthem grants at least 2 communism, then 3x when passive production exceed
  assert.equal(getAnthemReward(s),24);
  s.propagandaAgencies=2;
  assert.equal(getCommunismPerMinute(s),8.1);
- assert.equal(getAnthemReward(s),24.3);
+ assert.ok(Math.abs(getAnthemReward(s)-24.3)<1e-10);
 });
 test('full listening pays exactly the computed fractional reward and remains repeatable',()=>{
  const s=state(),w=start();
