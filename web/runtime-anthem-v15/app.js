@@ -196,14 +196,29 @@ function unifyInvestmentCard(card,id) {
   risk.className='activity-corruption';
   if(oldRisk)oldRisk.remove();
   // Keep the existing IDs for the runtime, in well-labelled, separate cells.
-  const layout={
-    import:[['CA / s','import-gross','activity-metric-gross'],['Taxe','import-tax','activity-metric-tax'],['Trésorerie / s','import-net','activity-metric-net']],
+  // All cards share exactly the same three financial slots, even if an
+  // institution has no commercial income. Special effects come afterward.
+  const financial=[
+    ['CA / s',id==='import'?'import-gross':id+'-gross-zero','activity-metric-gross'],
+    ['Taxe',id==='import'?'import-tax':id+'-tax-zero','activity-metric-tax'],
+    ['Trésorerie / s',id==='import'?'import-net':id+'-net-zero','activity-metric-net'],
+  ];
+  const additional={
+    import:[],
     bureaucracy:[['Agents concernés','bureaucracy-agents'],['Gain fiscal / groupe','bureaucracy-gain','activity-metric-benefit']],
     bilateral:[['Accords conclus','bilateral-count'],['Gain commercial / accord','bilateral-gain','activity-metric-benefit']],
     mobilization:[['Communisme / min','mobilization-benefit','activity-metric-benefit'],['Établissements','mobilization-capacity']],
     institute:[['Communisme / min','institute-benefit','activity-metric-benefit'],['Établissements','institute-capacity']],
   }[id]||[];
-  stats.replaceChildren(...layout.map(([label,field,cls])=>investmentMetric(label,field,cls)),risk);
+  const cells=[...financial,...additional].map(([label,field,cls])=>{
+    const cell=investmentMetric(label,field,cls);
+    if(field.endsWith('-gross-zero')||field.endsWith('-net-zero'))
+      cell.querySelector('strong').textContent='0 ₽';
+    else if(field.endsWith('-tax-zero'))
+      cell.querySelector('strong').textContent='0 %';
+    return cell;
+  });
+  stats.replaceChildren(...cells,risk);
   // Match the historic cards: stock count immediately before the buy button,
   // with the country selector (where relevant) positioned with its action.
   let actions=card.querySelector('.investment-actions');
@@ -338,7 +353,8 @@ function renderActivities() {
     setText(refs.owned, `×${integer.format(item.owned)}`);
     refs.owned.setAttribute('aria-label', `${integer.format(item.owned)} unité${item.owned > 1 ? 's' : ''} possédée${item.owned > 1 ? 's' : ''}`);
     const rate=activityBusinessRate(state,item.id);
-    if(rate){
+    // Keep financial cards aligned even for non-commercial activities.
+    {
       const metric=(label,value,extraClass='')=>{
         const span=document.createElement('span');
         span.className='activity-metric '+extraClass;
@@ -348,9 +364,9 @@ function renderActivities() {
         return span;
       };
       refs.effects.replaceChildren(
-        metric('CA / s',money(rate.grossPerSecond),'activity-metric-gross'),
-        metric('Taxe',`${rate.taxRate} %`,'activity-metric-tax'),
-        metric('Trésorerie / s',money(rate.treasuryPerSecond),'activity-metric-net'),
+        metric('CA / s',money(rate?.grossPerSecond??0),'activity-metric-gross'),
+        metric('Taxe',`${rate?.taxRate??0} %`,'activity-metric-tax'),
+        metric('Trésorerie / s',money(rate?.treasuryPerSecond??0),'activity-metric-net'),
       );
       const politicalPenalty=state.worldEconomyEnabled?(COMMUNISM_PURCHASE_PENALTY[item.id]||0):0;
       if(Object.hasOwn(CORRUPTION_PURCHASE,item.id)){
@@ -375,7 +391,16 @@ function renderActivities() {
         legacy.textContent=`Anciennes agences de propagande : ×${integer.format(state.propagandaAgencies)} · effets conservés dans ta sauvegarde`;
         refs.effects.append(legacy);
       }
-    } else setText(refs.effects,effectsText(item.effects));
+      if(!rate){
+        const effects=effectsText(item.effects);
+        if(effects){
+          const extra=document.createElement('span');
+          extra.className='activity-communism';
+          extra.textContent=effects;
+          refs.effects.append(extra);
+        }
+      }
+    }
     const cooperative=COOPERATIVE_CORRUPTION_PREVENTION[item.id];
     if(cooperative){
       const safeguard=document.createElement('span');
