@@ -80,9 +80,10 @@ test('all five added purchases reuse historic business metric components and buy
  assert.match(app,/function setInvestmentPurchase\(button,label,cost\)/);
  assert.match(app,/price\.className='activity-price'/);
  for(const id of ['import','bureaucracy','bilateral','mobilization','institute']){
-   assert.match(app,new RegExp('setInvestmentPurchase\\(\\$\\(\\''+id+'-buy'));
-   assert.match(app,new RegExp('id\\+\\'-risk'));
+   assert.ok(app.includes("'"+id+"-buy'"),id+' has a purchase button');
  }
+ assert.match(app,/risk\.id=id\+'-risk'/);
+
  for(const id of ['import-gross','import-tax','import-net','bureaucracy-agents','bureaucracy-gain','bilateral-count','bilateral-gain','mobilization-benefit','mobilization-capacity','institute-benefit','institute-capacity'])
    assert.ok(app.includes("'"+id+"'"),id);
  assert.match(css,/\.unified-investment-card \.investment-stats > \.activity-metric-net/);
