@@ -39,6 +39,6 @@ test('existing capped buildings reopen when thresholds are reached and provide s
  assert.equal(publicProjectOffers(s).inspectorates.locked,false);
  assert.equal(spendPublicBudget(s,'transparency').ok,true);
  assert.equal(spendPublicBudget(s,'inspectorates').ok,true);
- assert.equal(getCorruptionBreakdown(s).prevention,.63);
- assert.equal(getCorruptionBreakdown(s).inspectorateReduction,.62);
+ assert.ok(Math.abs(getCorruptionBreakdown(s).prevention-.63)<1e-10);
+ assert.ok(Math.abs(getCorruptionBreakdown(s).inspectorateReduction-.62)<1e-10);
 });
