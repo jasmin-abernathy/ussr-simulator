@@ -1,4 +1,4 @@
-import {getCommunismPerMinute,applyCommunismPenalty} from './engine.js?v=2026-11-28-cooperative-integrity-1';
+import {getCommunismPerMinute,applyCommunismPenalty} from './engine.js?v=2026-11-28-anthem-135s-x3-1';
 import {COUNTRY_GEOGRAPHY} from './world-geography.js?v=2026-11-27-anthem-scaled-1';
 import {ADDITIONAL_COUNTRIES,ADDITIONAL_COUNTRY_DATA} from './world-expansion.js?v=2026-11-27-anthem-scaled-1';
 // Independent cooperative-world expansion, not part of the 2016 historical engine.
@@ -155,8 +155,8 @@ export function getVisibleCountries(world){
  return ordered.filter(c=>isCountryVisible(world,c.id));
 }
 export const MILESTONES=Object.freeze([[5,"Premier collectif créé : chaque geste compte !"],[25,"La solidarité s'organise : garde le cap !"],[100,"Ton économie coopérative trouve son élan !"],[250,"Les premières initiatives commencent à transformer le quotidien !"],[500,"De nouveaux possibles s'ouvrent à toi !"],[1000,"La coopération traverse les frontières !"],[2500,"Les solidarités se renforcent sur plusieurs continents !"],[5000,"Ton projet commun prend une dimension internationale !"],[10000,"Une fédération de coopérations se dessine. Bravo !"],[25000,"Les solidarités se multiplient : un autre monde se construit !"],[50000,"De pays en pays, les initiatives convergent !"]].map(([threshold,message])=>({threshold,message})));
-/** Complete listening grants 2.5 minutes worth of passive communism. */
-export const ANTHEM_REWARD_MULTIPLIER=2.5;
+/** Complete listening grants 3 minutes worth of passive communism, minimum 2 points. */
+export const ANTHEM_REWARD_MULTIPLIER=3;
 export const ANTHEM_MIN_REWARD=2;
 export const createWorld=()=>({version:1,origin:null,partners:[],celebrated:[],usImports:0,bilateral:[]});
 export function hydrateWorld(raw){
@@ -232,7 +232,7 @@ export function celebrate(w,points){const result=[];for(const m of MILESTONES)if
  * the same reward again with no cooldown or daily limit.
  */
 /** Reward is determined at audio completion, with a baseline +2 communism.
- * The 2.5x multiplier takes over only when it exceeds that minimum.
+ * The 3x multiplier takes over only when it exceeds that minimum.
  * Preserve fractional points above the threshold.
  */
 export function getAnthemReward(state){
