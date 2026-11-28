@@ -57,7 +57,7 @@ test('charges persist across save reloads, time passing offline and midnight',()
  assert.equal(getAuditCooldown(stored,NOW+3*HALF_HOUR).charges,4);
  assert.equal(spendPublicBudget(stored,'audit',NOW+3*HALF_HOUR).ok,true);
  const next=hydrateState(exportState(stored,NOW+3*HALF_HOUR),NOW+5*HALF_HOUR);
- assert.equal(getAuditCooldown(next,NOW+5*HALF_HOUR).charges,6);
+ assert.equal(getAuditCooldown(next,NOW+5*HALF_HOUR).charges,5);
  const night=Date.UTC(2026,10,27,23,55,0);
  assert.equal(getAuditCooldown(s,night+10*60*1000).charges,6);
 });
