@@ -74,7 +74,15 @@ test('all five added purchases reuse historic business metric components and buy
  const html=readFileSync(new URL('../web/index.html',import.meta.url),'utf8');
  assert.match(app,/function unifyInvestmentCard\(card,id\)/);
  assert.match(app,/stats\.classList\.add\('activity-effects'\)/);
- assert.match(app,/stats\.replaceChildren\(\.\.\.layout\.map/);
+ assert.match(app,/stats\\.replaceChildren\\(\\.\\.\\.cells,risk\\)/);
+ assert.match(app,/const financial=\\[/);
+ assert.match(app,/const cells=\\[\\.\\.\\.financial,\\.\\.\\.additional\\]\\.map/);
+ assert.match(app,/field\\.endsWith\\('-gross-zero'\\)/);
+ assert.match(app,/field\\.endsWith\\('-tax-zero'\\)/);
+ assert.match(app,/field\\.endsWith\\('-net-zero'\\)/);
+ assert.match(app,/money\\(rate\\?\\.grossPerSecond\\?\\?0\\)/);
+ assert.match(app,/money\\(rate\\?\\.treasuryPerSecond\\?\\?0\\)/);
+ assert.match(app,/rate\\?\\.taxRate\\?\\?0/);
  assert.match(app,/risk\.className='activity-corruption'/);
  assert.match(app,/owned\.className='activity-owned'/);
  assert.match(app,/buy\.classList\.add\('buy-button','special-buy-button'\)/);
