@@ -3636,3 +3636,151 @@ conic-gradient(#17bd2a 0% var(--anthem-progress),#090909 var(--anthem-progress) 
 .activity-list > .special-activity-card > .investment-actions{
   margin-top:0;
 }
+
+
+/* One visual vocabulary for historic enterprises and special investments:
+ * identical metric cells, positive income in green, political risks in red,
+ * stock count above the same two-line purchase button. */
+.activity-list > .unified-investment-card .investment-stats.activity-effects{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:8px!important;
+  width:100%;
+  margin:12px 0 0;
+  align-items:stretch;
+  text-align:left;
+}
+.activity-list > .unified-investment-card .investment-stats > .activity-metric,
+.activity-list > .unified-investment-card.investment-ideology .investment-stats > .activity-metric{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  justify-content:center;
+  gap:4px;
+  width:100%;
+  min-width:0;
+  min-height:0;
+  padding:10px 12px;
+  border:1px solid #e8dfd3;
+  border-radius:11px;
+  background:#f7f3ed;
+  color:var(--ink);
+  overflow-wrap:normal;
+}
+.activity-list > .unified-investment-card .investment-stats > .activity-metric small{
+  display:block;
+  color:#625b53;
+  font-family:var(--body);
+  font-size:11px;
+  font-weight:650;
+  line-height:1.25;
+  overflow-wrap:normal;
+}
+.activity-list > .unified-investment-card .investment-stats > .activity-metric strong{
+  display:block;
+  min-width:0;
+  font-size:clamp(14px,3.8vw,19px);
+  font-weight:800;
+  line-height:1.15;
+  overflow-wrap:normal;
+  word-break:normal;
+  white-space:normal;
+}
+.activity-list > .unified-investment-card .investment-stats > .activity-metric-net{
+  grid-column:1/-1;
+  background:#e8f4e8;
+  border-color:#d4e9d4;
+  color:#28713e;
+}
+.activity-list > .unified-investment-card .investment-stats > .activity-metric-net strong{
+  color:#247440;
+}
+.activity-list > .unified-investment-card .investment-stats > .activity-metric:nth-child(2):not(.activity-metric-net){
+  background:#eff7ee;
+  border-color:#d5e6d3;
+}
+.activity-list > .unified-investment-card .investment-stats > .activity-metric:nth-child(2):not(.activity-metric-net) strong{
+  color:#286b3b;
+}
+.activity-list > .unified-investment-card .investment-stats > .activity-corruption,
+.activity-list > .unified-investment-card .investment-stats > .activity-communism{
+  display:block;
+  grid-column:1/-1;
+  width:100%;
+  min-height:0;
+  margin:0;
+  padding:10px 12px;
+  border-radius:11px;
+  line-height:1.45;
+  font-family:var(--body);
+  font-size:12px;
+  font-weight:650;
+  overflow-wrap:break-word;
+}
+.activity-list > .unified-investment-card .investment-stats > .activity-corruption{
+  color:#992d26;
+  background:#fff0eb;
+  border:1px solid #efd0c9;
+}
+.activity-list > .unified-investment-card .investment-stats > .activity-communism{
+  color:#286b3b;
+  background:#eff7ee;
+  border:1px solid #d5e6d3;
+}
+.activity-list > .unified-investment-card .investment-actions{
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+  width:100%;
+  margin:0;
+  align-items:stretch;
+}
+.activity-list > .unified-investment-card .investment-actions > .activity-owned{
+  display:block;
+  width:100%;
+  margin:0 0 1px;
+  color:#756d64;
+  font-size:12px;
+  font-weight:600;
+  text-align:center;
+}
+.activity-list > .unified-investment-card .investment-actions > .special-buy-button{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  width:100%;
+  min-height:58px;
+  padding:10px 8px;
+  gap:3px;
+  border-radius:10px;
+  font-family:var(--body);
+  text-align:center;
+}
+.activity-list > .unified-investment-card .special-buy-button .activity-buy-label{
+  font-family:var(--body);
+  font-size:12px;
+  font-weight:650;
+}
+.activity-list > .unified-investment-card .special-buy-button .activity-price{
+  font-size:clamp(16px,4vw,22px);
+  font-weight:800;
+  line-height:1.2;
+  overflow-wrap:normal;
+}
+.activity-list > .unified-investment-card .investment-actions > .bilateral-select-label{
+  margin:0 0 6px;
+}
+@media(max-width:700px){
+ .activity-list > .unified-investment-card .investment-stats > .activity-metric{
+   padding:9px 10px;
+ }
+ .activity-list > .unified-investment-card .investment-stats > .activity-metric strong{
+   font-size:clamp(13px,3.8vw,17px);
+ }
+ .activity-list > .unified-investment-card .investment-stats > .activity-corruption,
+ .activity-list > .unified-investment-card .investment-stats > .activity-communism{
+   padding:9px 10px;
+   font-size:11px;
+ }
+}
