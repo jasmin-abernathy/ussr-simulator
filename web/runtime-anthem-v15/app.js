@@ -1,12 +1,12 @@
-const APP_VERSION='2026-11-28-anthem-135s-x3-1';
-import { ACTIVITIES, RULES } from './game-data.js?v=2026-11-28-anthem-135s-x3-1';
+const APP_VERSION='2026-11-28-anthem-secret-click-1';
+import { ACTIVITIES, RULES } from './game-data.js?v=2026-11-28-anthem-secret-click-1';
 import {
   createState, hydrateState, getStats, getActivity, quotePurchase,
   clickProduce, buyActivity, quoteActivityConversion, convertActivity, CONVERSION_TARGETS, getActivityCorruptionRate, CORRUPTION_PURCHASE, COOPERATIVE_CORRUPTION_PREVENTION, COOPERATIVE_PREVENTION_MAX, COMMUNISM_PURCHASE_PENALTY, getPropagandaOffer, buyPropagandaAgency, getIdeologyInstitutionOffer, buyIdeologyInstitution, advance, startPlan, claimPlan, publicProjectOffers, spendPublicBudget,
   reduceInflation, exportState, getGoals, activityBusinessRate, setTaxPolicy, TAX_POLICIES, TAX_POLICY_LABELS, getBusinessEconomyForPolicy,
-} from './engine.js?v=2026-11-28-anthem-135s-x3-1';
-import { COUNTRIES, MILESTONES, createWorld, hydrateWorld, chooseCountry, getCooperation, cooperate, rankCountriesByCooperationCost, getWorldStats, celebrate, rewardAnthem, getAnthemReward, START_COUNTRIES, USA_COUNTRY_ID, getVisibleCountries, getWorldStage, getCampaignWaves, getUSImportOffer, buyUSImports, convertUSImports, getBureaucracyOffer, buyBureaucracy, getBilateralOffer, buyBilateralAgreement } from './world.js?v=2026-11-28-anthem-135s-x3-1';
-import { ANTHEM_END_SECONDS, anthemClipFinished } from './anthem-clip.js?v=2026-11-28-anthem-135s-x3-1';
+} from './engine.js?v=2026-11-28-anthem-secret-click-1';
+import { COUNTRIES, MILESTONES, createWorld, hydrateWorld, chooseCountry, getCooperation, cooperate, rankCountriesByCooperationCost, getWorldStats, celebrate, rewardAnthem, getAnthemReward, START_COUNTRIES, USA_COUNTRY_ID, getVisibleCountries, getWorldStage, getCampaignWaves, getUSImportOffer, buyUSImports, convertUSImports, getBureaucracyOffer, buyBureaucracy, getBilateralOffer, buyBilateralAgreement } from './world.js?v=2026-11-28-anthem-secret-click-1';
+import { ANTHEM_END_SECONDS, anthemClipFinished } from './anthem-clip.js?v=2026-11-28-anthem-secret-click-1';
 
 const SAVE_KEY = 'ussr-simulator:save:v1';
 const BACKUP_KEY = 'ussr-simulator:backup:v1';
@@ -565,7 +565,8 @@ render();
 $('produce-button').addEventListener('click', event => {
   if (!canWrite) return;
   advance(state);
-  const result = clickProduce(state);
+  const anthemPlaying=Boolean(anthemAudio&&!anthemAudio.paused&&!anthemAudio.ended&&anthemAudio.currentTime<ANTHEM_END_SECONDS);
+  const result = clickProduce(state,{anthemPlaying});
   changed();
   if (!reduceMotion.matches) {
     const button = event.currentTarget;
@@ -575,7 +576,9 @@ $('produce-button').addEventListener('click', event => {
   }
   // One concise announcement per second avoids flooding screen readers.
   if (Date.now() - lastAnnouncement > 1000) {
-    $('produce-button').setAttribute('aria-label', `Pousser la production : ${numbers.format(result.earned)} roubles gagnés, ${numbers.format(result.communismLost)} communisme perdu`);
+    $('produce-button').setAttribute('aria-label', anthemPlaying
+      ? `Pousser la production : ${numbers.format(result.earned)} roubles gagnés`
+      : `Pousser la production : ${numbers.format(result.earned)} roubles gagnés, ${numbers.format(result.communismLost)} communisme perdu`);
     lastAnnouncement = Date.now();
   }
 });
