@@ -465,7 +465,7 @@ function render() {
   setText($('home-confidence'),`${format(worldTrust*100)} % de confiance`);
   setText($('corruption-value'),format(stats.corruption));
   const offer=getUSImportOffer(world,state);
-  setText($('import-owned'),`${offer.count} établissement${offer.count>1?'s':''}`);
+  setText($('import-owned'),`×${integer.format(offer.count)}`);
   const importRate=activityBusinessRate(state,'us-imports');
   setText($('import-gross'),money(importRate.grossPerSecond));
   setText($('import-tax'),`${importRate.taxRate} %`);
