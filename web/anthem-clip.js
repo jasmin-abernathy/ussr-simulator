@@ -1,7 +1,7 @@
-/** French-language CC0 performance of L'Internationale, cropped in playback
- * at the cadence after its first refrain (about 47% of the 148s recording).
- * The source MP3 remains unchanged; the player stops and rewards at this point.
+/** The French-language song file is physically trimmed from 00:02 to
+ * 02:17 of the original Wikimedia Commons recording (135 seconds).
+ * Award the listening bonus only when this excerpt actually finishes.
  */
-export const ANTHEM_END_SECONDS = 70;
+export const ANTHEM_END_SECONDS = 135;
 export const anthemClipFinished = seconds =>
   Number.isFinite(seconds) && seconds >= ANTHEM_END_SECONDS - 0.25;
