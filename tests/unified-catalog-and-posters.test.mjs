@@ -51,4 +51,10 @@ test('five sensitive investments are distributed across responsive activity cata
  for(const id of ['import','bureaucracy','bilateral','mobilization','institute'])
   assert.match(html,new RegExp('id="'+id+'-buy"'));
  assert.match(css,/\.activity-list \.special-activity-card\[hidden\]/);
+ assert.match(css,/\.activity-list > \.special-activity-card\{\s*display:flex;/);
+ assert.match(css,/\.activity-list > \.special-activity-card > \.investment-symbol\{[\s\S]*?align-self:center;/);
+ assert.match(css,/\.activity-list > \.special-activity-card \.investment-stats,[\s\S]*?grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+ assert.match(css,/\.activity-list > \.special-activity-card > \.country-action,[\s\S]*?margin-top:auto;/);
+ assert.match(css,/\.activity-list > \.special-activity-card \.investment-actions\{\s*display:flex;/);
+ assert.match(html,/Des pots-de-vin pour améliorer les recettes fiscales, au prix d’une corruption accrue/);
 });
