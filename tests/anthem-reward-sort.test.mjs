@@ -40,6 +40,19 @@ test('full listening pays exactly the computed fractional reward and remains rep
  assert.equal(rewardAnthem(createWorld(),s).ok,false);
  assert.equal(s.communism,before+4);
 });
+test('anthem rewards communism only, never multiplies roubles or public taxes',()=>{
+ const s=state(),w=start();
+ s.owned.matches=800;
+ const beforeCash=s.cash,beforeBudget=s.publicBudget;
+ const beforeCommunism=s.communism;
+ assert.equal(getAnthemReward(s),24);
+ const result=rewardAnthem(w,s);
+ assert.equal(result.ok,true);
+ assert.equal(result.points,24);
+ assert.equal(s.cash,beforeCash);
+ assert.equal(s.publicBudget,beforeBudget);
+ assert.equal(s.communism,beforeCommunism+24);
+});
 test('anthem reward follows saved existing industries and cannot mutate state while only quoted',()=>{
  const s=state();s.owned.matches=800;
  const loaded=hydrateState(exportState(s,NOW),NOW);
