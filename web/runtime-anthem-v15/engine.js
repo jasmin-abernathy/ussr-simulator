@@ -1,4 +1,4 @@
-import { ACTIVITIES, RULES } from './game-data.js?v=2026-11-27-investments-1';
+import { ACTIVITIES, RULES } from './game-data.js?v=2026-11-28-cooperative-integrity-1';
 
 const BY_ID = new Map(ACTIVITIES.map((item, index) => [item.id, { item, index }]));
 const MAX_TIME = 8.64e15;
