@@ -651,10 +651,13 @@ export function buyPropagandaAgency(state){
  return {ok:true,spent:offer.cost,offer,communismLost};
 }
 
-/** Mutates state. The clock is advanced separately by the UI. */
-export function clickProduce(state) {
+/** Mutates state. The clock is advanced separately by the UI.
+ * Secret interaction: active anthem playback shields a manual production click
+ * from the communism penalty. Audio playback is verified by the UI, never saved.
+ */
+export function clickProduce(state,{anthemPlaying=false}={}) {
   const earned = addMoney(state, production(state));
-  const communismLost=state.worldEconomyEnabled?applyCommunismPenalty(state,STAKHANOV_COMMUNISM_COST):0;
+  const communismLost=state.worldEconomyEnabled&&!anthemPlaying?applyCommunismPenalty(state,STAKHANOV_COMMUNISM_COST):0;
   state.clicks = cap(state.clicks + 1, Number.MAX_SAFE_INTEGER);
   if(!state.worldEconomyEnabled)state.productionSteps = Math.min(RULES.productionInflationStep * RULES.maxInflation, state.productionSteps + 1);
   return { ok: true, earned, communismLost };
