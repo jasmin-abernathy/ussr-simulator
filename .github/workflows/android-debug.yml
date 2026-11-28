@@ -35,7 +35,7 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund
       - name: Install audio encoder
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg librsvg2-bin
       - name: Retrieve French anthem recording
         run: |
           curl --fail --location --retry 3 --silent --show-error \
@@ -50,6 +50,19 @@ jobs:
         run: npm test
       - name: Create native Android project
         run: npx cap add android
+      - name: Set launcher icon from website favicon
+        run: |
+          set -euo pipefail
+          res=android/app/src/main/res
+          for pair in mdpi:48 hdpi:72 xhdpi:96 xxhdpi:144 xxxhdpi:192; do
+            density="${pair%:*}"
+            size="${pair#*:}"
+            dir="$res/mipmap-$density"
+            mkdir -p "$dir"
+            rsvg-convert -w "$size" -h "$size" web/assets/icon.svg -o "$dir/ic_launcher.png"
+            cp "$dir/ic_launcher.png" "$dir/ic_launcher_round.png"
+          done
+          rm -f "$res/mipmap-anydpi-v26/ic_launcher.xml" "$res/mipmap-anydpi-v26/ic_launcher_round.xml"
       - name: Sync packaged web assets
         run: npx cap sync android
       - name: Set Android version
