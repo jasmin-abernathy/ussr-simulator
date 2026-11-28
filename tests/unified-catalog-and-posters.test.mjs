@@ -71,6 +71,7 @@ test('short sensitive investment cards do not stretch to match a taller neighbou
 test('all five added purchases reuse historic business metric components and buy-label/price stack',()=>{
  const app=readFileSync(new URL('../web/runtime-anthem-v15/app.js',import.meta.url),'utf8');
  const css=readFileSync(new URL('../web/runtime-anthem-v15/styles.css',import.meta.url),'utf8');
+ const html=readFileSync(new URL('../web/index.html',import.meta.url),'utf8');
  assert.match(app,/function unifyInvestmentCard\(card,id\)/);
  assert.match(app,/stats\.classList\.add\('activity-effects'\)/);
  assert.match(app,/stats\.replaceChildren\(\.\.\.layout\.map/);
@@ -80,7 +81,7 @@ test('all five added purchases reuse historic business metric components and buy
  assert.match(app,/function setInvestmentPurchase\(button,label,cost\)/);
  assert.match(app,/price\.className='activity-price'/);
  for(const id of ['import','bureaucracy','bilateral','mobilization','institute']){
-   assert.ok(app.includes("'"+id+"-buy'"),id+' has a purchase button');
+   assert.ok(html.includes('id="'+id+'-buy"'),id+' has a purchase button');
  }
  assert.match(app,/risk\.id=id\+'-risk'/);
 
