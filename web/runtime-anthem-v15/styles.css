@@ -3780,8 +3780,7 @@ conic-gradient(#17bd2a 0% var(--anthem-progress),#090909 var(--anthem-progress) 
 .activity-card .activity-effects .activity-metric-gross strong,
 .activity-card .activity-effects .activity-metric-tax strong,
 .activity-list > .unified-investment-card .investment-stats > .activity-metric-gross strong,
-.activity-list > .unified-investment-card .investment-stats > .activity-metric-tax strong,
- strong{color:#3b332d;}
+.activity-list > .unified-investment-card .investment-stats > .activity-metric-tax strong{color:#3b332d;}
 .activity-card .activity-effects .activity-metric-net,
 .activity-list > .unified-investment-card .investment-stats > .activity-metric-net{
  background:#e8f4e8;border-color:#d4e9d4;color:#28713e;
