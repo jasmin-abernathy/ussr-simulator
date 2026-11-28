@@ -1,6 +1,13 @@
 name: Build Android APK
 on:
   workflow_dispatch:
+  push:
+    branches: [master]
+    paths:
+      - 'web/**'
+      - 'package*.json'
+      - 'capacitor.config.json'
+      - '.github/workflows/android-debug.yml'
 permissions:
   contents: read
 jobs:
@@ -22,36 +29,23 @@ jobs:
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platform-tools" "platforms;android-36" "build-tools;36.0.0"
       - name: Install dependencies
         run: npm install --no-audit --no-fund
-      - name: Retrieve public-domain instrumental recording
+      - name: Retrieve French anthem recording
         run: |
           curl --fail --location --retry 3 --silent --show-error \
-            -A "USSR-Simulator/1.0 (Wikimedia Commons CC0)" \
-            'https://commons.wikimedia.org/wiki/Special:Redirect/file/L%27internationale.ogg' \
-            -o web/assets/internationale.ogg
-          test $(wc -c < web/assets/internationale.ogg) -gt 100000
-          file web/assets/internationale.ogg
-      - name: Install audio trimmer
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq ffmpeg
-      - name: End the instrumental at the first refrain
-        run: |
-          ffmpeg -hide_banner -loglevel error -y \
-            -i web/assets/internationale.ogg \
-            -t 76 -c:a libopus -b:a 128k \
-            web/assets/internationale-cut.ogg
-          mv web/assets/internationale-cut.ogg web/assets/internationale.ogg
-          test $(wc -c < web/assets/internationale.ogg) -gt 100000
-      - name: Embed the recording in the native application
-        run: |
-          node -e "const fs=require('fs');const p='web/index.html';let s=fs.readFileSync(p,'utf8');s=s.replace('https://commons.wikimedia.org/wiki/Special:Redirect/file/L%27internationale.ogg','./assets/internationale.ogg');fs.writeFileSync(p,s)"
+            -A "CommunistWorldSimulator/1.0 (Wikimedia Commons CC0)" \
+            'https://commons.wikimedia.org/wiki/Special:Redirect/file/The_Internationale_(French_Version).flac' \
+            -o /tmp/internationale.flac
+          ffmpeg -hide_banner -loglevel error -y -i /tmp/internationale.flac -t 135 -c:a libmp3lame -b:a 128k web/assets/internationale-francaise-extrait-135s.mp3
+          test -s web/assets/internationale-francaise-extrait-135s.mp3
+      - name: Check web assets
+        run: npm run check
       - name: Run tests
         run: npm test
       - name: Create native Android project
         run: npx cap add android
       - name: Sync packaged web assets
         run: npx cap sync android
-      - name: Build unsigned debug APK
+      - name: Build signed debug APK
         working-directory: android
         run: chmod +x gradlew && ./gradlew assembleDebug --no-daemon
       - name: Upload installable debug APK
