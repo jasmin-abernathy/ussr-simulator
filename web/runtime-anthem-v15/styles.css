@@ -3330,8 +3330,8 @@ conic-gradient(#17bd2a 0% var(--anthem-progress),#090909 var(--anthem-progress) 
 .investment-ideology .investment-symbol{background:#f4ede2;border-color:#dcaf72}
 .investment-ideology .investment-stats{display:grid;grid-template-columns:1fr;gap:6px}
 .investment-ideology .investment-stats span{display:block;min-width:0;line-height:1.45;overflow-wrap:break-word}
-.investment-ideology .investment-stats span:nth-child(2){background:#e8f4e8;color:#236b39;font-weight:750}
-.investment-ideology .investment-stats span:last-child{background:#fff0ec;color:#983b2d}
+
+
 @media(min-width:700px){.investment-ideology .investment-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.investment-ideology .investment-stats span:first-child{grid-column:1/-1}}
 
 
@@ -3542,11 +3542,7 @@ conic-gradient(#17bd2a 0% var(--anthem-progress),#090909 var(--anthem-progress) 
   overflow-wrap:anywhere;
 }
 
-.activity-list > .special-activity-card.investment-ideology .investment-stats > span:nth-child(2){
-  background:#eff7ee;
-  border-color:#d5e6d3;
-  color:#286b3b;
-}
+
 .activity-list > .special-activity-card .investment-stats > span:only-child{
   grid-column:1/-1;
 }
@@ -3778,15 +3774,14 @@ conic-gradient(#17bd2a 0% var(--anthem-progress),#090909 var(--anthem-progress) 
 .activity-card .activity-effects .activity-metric-gross,
 .activity-card .activity-effects .activity-metric-tax,
 .activity-list > .unified-investment-card .investment-stats > .activity-metric-gross,
-.activity-list > .unified-investment-card .investment-stats > .activity-metric-tax,
-.activity-list > .unified-investment-card .investment-stats > .activity-metric:nth-child(2):not(.activity-metric-net):not(.activity-metric-benefit){
+.activity-list > .unified-investment-card .investment-stats > .activity-metric-tax{
  background:#f7f3ed;border-color:#e8dfd3;color:#3b332d;
 }
 .activity-card .activity-effects .activity-metric-gross strong,
 .activity-card .activity-effects .activity-metric-tax strong,
 .activity-list > .unified-investment-card .investment-stats > .activity-metric-gross strong,
 .activity-list > .unified-investment-card .investment-stats > .activity-metric-tax strong,
-.activity-list > .unified-investment-card .investment-stats > .activity-metric:nth-child(2):not(.activity-metric-net):not(.activity-metric-benefit) strong{color:#3b332d;}
+ strong{color:#3b332d;}
 .activity-card .activity-effects .activity-metric-net,
 .activity-list > .unified-investment-card .investment-stats > .activity-metric-net{
  background:#e8f4e8;border-color:#d4e9d4;color:#28713e;
@@ -3815,3 +3810,23 @@ conic-gradient(#17bd2a 0% var(--anthem-progress),#090909 var(--anthem-progress) 
 }
 .activity-list > .special-activity-card.unified-investment-card .investment-stats > .activity-metric.activity-metric-tax strong,
 .activity-list > .special-activity-card.unified-investment-card .investment-stats > .activity-metric.activity-metric-gross strong{color:#3b332d}
+
+/* Unified semantic colouring across the ENTIRE activities catalogue. */
+.activity-list > .activity-card .activity-effects > .activity-metric.activity-metric-benefit,
+.activity-list > .special-activity-card.unified-investment-card .investment-stats > .activity-metric.activity-metric-benefit{
+ background:#e8f4e8;border-color:#d4e9d4;color:#28713e;
+}
+.activity-list > .activity-card .activity-effects > .activity-metric.activity-metric-benefit strong,
+.activity-list > .special-activity-card.unified-investment-card .investment-stats > .activity-metric.activity-metric-benefit strong{color:#247440;}
+.activity-list > .activity-card .activity-effects > .activity-metric.activity-metric-net,
+.activity-list > .special-activity-card.unified-investment-card .investment-stats > .activity-metric.activity-metric-net{
+ background:#e8f4e8;border-color:#d4e9d4;color:#28713e;
+}
+.activity-list > .activity-card .activity-effects > .activity-metric.activity-metric-net strong,
+.activity-list > .special-activity-card.unified-investment-card .investment-stats > .activity-metric.activity-metric-net strong{color:#247440;}
+.activity-list > .special-activity-card.unified-investment-card .investment-stats > .activity-metric.activity-metric-tax,
+.activity-list > .special-activity-card.unified-investment-card .investment-stats > .activity-metric.activity-metric-gross{
+ background:#f7f3ed;border-color:#e8dfd3;color:#3b332d;
+}
+.activity-list > .special-activity-card.unified-investment-card .investment-stats > .activity-metric.activity-metric-tax strong,
+.activity-list > .special-activity-card.unified-investment-card .investment-stats > .activity-metric.activity-metric-gross strong{color:#3b332d;}
