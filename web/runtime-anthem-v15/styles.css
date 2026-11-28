@@ -3456,3 +3456,159 @@ conic-gradient(#17bd2a 0% var(--anthem-progress),#090909 var(--anthem-progress) 
 @media(max-width:700px){
  .activity-card .activity-effects .activity-cooperative-effect{font-size:11px;padding:9px 10px}
 }
+
+
+/* Catalogue parity: political investment cards share the ordinary business
+ * card's centered icon/title, two-column stats, and bottom purchase actions.
+ * Previously the investment grid's two-column header created tall, cramped
+ * text and a large empty area above its action button on narrow screens. */
+.activity-list > .special-activity-card{
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  gap:8px;
+  min-width:0;
+  padding:13px 10px;
+  border-radius:13px;
+  grid-template-columns:none;
+  grid-template-rows:none;
+}
+.activity-list > .special-activity-card > .investment-symbol{
+  display:grid;
+  place-items:center;
+  flex:0 0 auto;
+  align-self:center;
+  grid-column:auto;
+  grid-row:auto;
+  width:57px;
+  height:57px;
+  margin:0 auto 3px;
+  border:4px solid #7ad8e9;
+  border-radius:50%;
+  font-size:26px;
+  line-height:1;
+}
+.activity-list > .special-activity-card > .investment-details{
+  display:flex;
+  flex:1 1 auto;
+  flex-direction:column;
+  gap:0;
+  grid-column:auto;
+  grid-row:auto;
+  min-width:0;
+  width:100%;
+  text-align:center;
+}
+.activity-list > .special-activity-card .investment-details h4{
+  margin:0 0 7px;
+  font-size:13px;
+  font-weight:800;
+  line-height:1.3;
+  overflow-wrap:break-word;
+}
+.activity-list > .special-activity-card .investment-details p{
+  margin:0 0 10px;
+  font-size:11px;
+  line-height:1.45;
+  color:#746b61;
+  text-wrap:pretty;
+  overflow-wrap:break-word;
+}
+.activity-list > .special-activity-card .investment-stats,
+.activity-list > .special-activity-card.investment-ideology .investment-stats{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:6px;
+  width:100%;
+  min-width:0;
+  margin-top:auto;
+  text-align:left;
+}
+.activity-list > .special-activity-card .investment-stats > span{
+  display:flex;
+  align-items:center;
+  min-width:0;
+  width:100%;
+  min-height:46px;
+  margin:0;
+  padding:9px 10px;
+  border:1px solid #e8dfd3;
+  border-radius:11px;
+  background:#f7f3ed;
+  color:#484039;
+  font-size:11px;
+  font-weight:650;
+  line-height:1.4;
+  overflow-wrap:anywhere;
+}
+.activity-list > .special-activity-card .investment-stats > span:nth-child(3){
+  grid-column:1/-1;
+  min-height:0;
+  background:#fff0eb;
+  border-color:#efd0c9;
+  color:#992d26;
+}
+.activity-list > .special-activity-card.investment-ideology .investment-stats > span:nth-child(2){
+  background:#eff7ee;
+  border-color:#d5e6d3;
+  color:#286b3b;
+}
+.activity-list > .special-activity-card .investment-stats > span:only-child{
+  grid-column:1/-1;
+}
+.activity-list > .special-activity-card > .country-action,
+.activity-list > .special-activity-card > .investment-actions{
+  flex:0 0 auto;
+  grid-column:auto;
+  width:100%;
+  min-width:0;
+  margin-top:auto;
+  align-self:stretch;
+}
+.activity-list > .special-activity-card > .country-action,
+.activity-list > .special-activity-card .investment-actions > .country-action{
+  min-height:54px;
+  padding:11px 9px;
+  border-radius:11px;
+  font-size:12px;
+  font-weight:750;
+  line-height:1.35;
+  white-space:normal;
+  overflow-wrap:break-word;
+}
+.activity-list > .special-activity-card .investment-actions{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  min-width:0;
+}
+.activity-list > .special-activity-card .investment-actions .conversion-label{
+  width:100%;
+  font-size:11px;
+  text-align:left;
+}
+.activity-list > .special-activity-card .investment-actions .conversion-select,
+.activity-list > .special-activity-card .bilateral-select-label select{
+  width:100%;
+  min-width:0;
+  min-height:40px;
+  font-size:12px;
+}
+.activity-list > .special-activity-card .bilateral-select-label{
+  width:100%;
+  min-width:0;
+  margin:0 0 9px;
+  text-align:left;
+}
+.activity-list > .special-activity-card .investment-convert-button{
+  min-height:40px;
+  font-size:11px;
+  line-height:1.35;
+  white-space:normal;
+}
+@media(min-width:701px){
+  .activity-list > .special-activity-card{padding:16px 14px;gap:10px}
+  .activity-list > .special-activity-card .investment-details h4{font-size:15px}
+  .activity-list > .special-activity-card .investment-details p{font-size:12px}
+  .activity-list > .special-activity-card .investment-stats > span{font-size:12px}
+}
