@@ -3612,3 +3612,27 @@ conic-gradient(#17bd2a 0% var(--anthem-progress),#090909 var(--anthem-progress) 
   .activity-list > .special-activity-card .investment-details p{font-size:12px}
   .activity-list > .special-activity-card .investment-stats > span{font-size:12px}
 }
+
+
+/* Independent catalogue-card heights: don't stretch short investment cards to
+ * match a long neighbouring cooperative business card. Keep their information
+ * immediately below the description, with actions directly below the stats. */
+.activity-list{
+  align-items:start;
+}
+.activity-list > .activity-card{
+  align-self:start;
+  height:auto;
+  min-height:0;
+}
+.activity-list > .special-activity-card > .investment-details{
+  flex:0 0 auto;
+}
+.activity-list > .special-activity-card .investment-stats,
+.activity-list > .special-activity-card.investment-ideology .investment-stats{
+  margin-top:0;
+}
+.activity-list > .special-activity-card > .country-action,
+.activity-list > .special-activity-card > .investment-actions{
+  margin-top:0;
+}
