@@ -72,3 +72,36 @@ test('Stakhanovist terminology, cost visibility and prior commentary are display
  assert.match(html,/Le camarade Stakhanov approuverait/);
  assert.ok(html.includes('Au-delà de 10 ₽/s de revenus automatiques, chaque clic rapporte le double de ces revenus'));
 });
+
+test('secret listening interaction disables only the political cost of Stakhanovist clicks',()=>{
+ const s=createState(NOW);s.worldEconomyEnabled=true;s.communism=5;s.owned.matches=100;
+ const normalRevenue=getStats(s).productionPerClick;
+ const startingCash=s.cash;
+ const playing=clickProduce(s,{anthemPlaying:true});
+ close(playing.earned,normalRevenue);
+ close(playing.communismLost,0);
+ close(s.communism,5);
+ close(s.cash,startingCash+normalRevenue);
+ assert.equal(s.clicks,1);
+ const paused=clickProduce(s,{anthemPlaying:false});
+ close(paused.earned,normalRevenue);
+ close(paused.communismLost,.05);
+ close(s.communism,4.95);
+ const absent=clickProduce(s);
+ close(absent.communismLost,.05);
+ close(s.communism,4.90);
+});
+test('listening exemption remains transient and never changes the saved stakhanovist rules',()=>{
+ const s=createState(NOW);s.worldEconomyEnabled=true;s.communism=3;
+ clickProduce(s,{anthemPlaying:true});
+ const reloaded=hydrateState(exportState(s,NOW),NOW);
+ assert.equal(reloaded.communism,3);
+ close(clickProduce(reloaded).communismLost,.05);
+});
+test('live player checks real media playback and does not advertise the secret',()=>{
+ const app=readFileSync(new URL('../web/runtime-anthem-v15/app.js',import.meta.url),'utf8');
+ const html=readFileSync(new URL('../web/index.html',import.meta.url),'utf8');
+ assert.match(app,/!anthemAudio\.paused&&!anthemAudio\.ended&&anthemAudio\.currentTime<ANTHEM_END_SECONDS/);
+ assert.match(app,/clickProduce\(state,\{anthemPlaying\}\)/);
+ assert.doesNotMatch(html,/Stakhanovisme[^<]*Internationale/i);
+});
