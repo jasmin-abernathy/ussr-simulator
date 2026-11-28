@@ -7,12 +7,12 @@ const record = value => value !== null && typeof value === 'object' && !Array.is
 const cap = (value, maximum = RULES.maxNumber) => Math.min(maximum, Math.max(0, value));
 const time = value => typeof value === 'number' && Number.isFinite(value)
   ? cap(value, MAX_TIME) : Date.now();
-/** An audit charge accrues each hour and up to five may be saved.
+/** An audit charge accrues every thirty minutes and up to six may be saved.
  * Reaching the cap stops the clock, so spending one cannot immediately
- * reclaim a sixth charge accrued while the reserve was full.
+ * reclaim another charge accrued while the reserve was full.
  */
-export const AUDIT_COOLDOWN_MS=60*60*1000;
-export const AUDIT_MAX_CHARGES=5;
+export const AUDIT_COOLDOWN_MS=30*60*1000;
+export const AUDIT_MAX_CHARGES=6;
 export const AUDIT_CORRUPTION_REDUCTION=.30;
 export function getAuditCooldown(state,now=Date.now()){
  const current=time(now);
@@ -126,7 +126,7 @@ export function hydrateState(raw, now = Date.now()) {
   state.citizensInspectorates=raw.citizensInspectorates===undefined?0:readNumber(raw.citizensInspectorates,0,18,true);
   state.corruptionAudits=raw.corruptionAudits===undefined?0:readNumber(raw.corruptionAudits,0,100000,true);
   state.lastAuditAt=raw.lastAuditAt===undefined?0:readNumber(raw.lastAuditAt,0,MAX_TIME,true);
-  // Migrate old single-hour cooldowns without ever erasing earned progress.
+  // Migrate older cooldown saves without erasing any accrued reserve.
   const legacyAnchor=state.lastAuditAt||Math.min(now,typeof raw.lastUpdate==='number'?raw.lastUpdate:now);
   state.auditCharges=raw.auditCharges===undefined?(state.lastAuditAt?0:1):readNumber(raw.auditCharges,1,AUDIT_MAX_CHARGES,true);
   state.auditChargeAt=raw.auditChargeAt===undefined?legacyAnchor:readNumber(raw.auditChargeAt,legacyAnchor,MAX_TIME,true);
