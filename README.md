@@ -87,7 +87,7 @@ La sauvegarde du joueur reste locale : déployer le code ne doit ni la réinitia
 
 ## Android
 
-**[Télécharger l’APK Android (version de test)](https://github.com/jasmin-abernathy/ussr-simulator/releases/download/android-latest/communist-world-simulator.apk)** — mis à jour automatiquement après une compilation réussie sur la branche principale.
+**[Télécharger l’APK Android (version de test)](https://www.advarp.org/jeux/communist-world-simulator/communist-world-simulator.apk)** — mis à jour automatiquement après une compilation réussie sur la branche principale et la synchronisation du site. [SHA-256](https://www.advarp.org/jeux/communist-world-simulator/communist-world-simulator.apk.sha256) · [Version publiée](https://www.advarp.org/jeux/communist-world-simulator/android-version.json) · [Copie GitHub](https://github.com/jasmin-abernathy/ussr-simulator/releases/download/android-latest/communist-world-simulator.apk).
 
 
 Le projet utilise **Capacitor 8** pour embarquer le jeu dans une application Android. Les scripts `npm run android:sync` et `npm run android:build` sont disponibles lorsque l'environnement Android est configuré.

@@ -48,6 +48,8 @@ jobs:
         run: npm run check
       - name: Run tests
         run: npm test
+      - name: Remove distribution-only files before native packaging
+        run: rm -f web/communist-world-simulator.apk web/communist-world-simulator.apk.sha256 web/android-version.json
       - name: Create native Android project
         run: npx cap add android
       - name: Set launcher icon from website favicon
@@ -110,3 +112,19 @@ jobs:
           fi
           gh release upload android-latest communist-world-simulator.apk communist-world-simulator.apk.sha256 --clobber
           gh release edit android-latest --notes "APK Android signée. Commit: $GITHUB_SHA"
+
+      - name: Synchronize verified APK into the website source
+        if: github.ref == 'refs/heads/master'
+        run: |
+          set -euo pipefail
+          sha256sum -c communist-world-simulator.apk.sha256
+          git fetch origin master
+          test "$(git rev-parse origin/master)" = "$GITHUB_SHA" || { echo "A newer source commit exists; its build will publish."; exit 0; }
+          cp communist-world-simulator.apk communist-world-simulator.apk.sha256 web/
+          node -e 'const fs=require("fs");const hash=fs.readFileSync("communist-world-simulator.apk.sha256","utf8").split(/\s+/)[0];fs.writeFileSync("web/android-version.json",JSON.stringify({version:"0.1."+process.env.GITHUB_RUN_NUMBER,versionCode:Number(process.env.GITHUB_RUN_NUMBER),commit:process.env.GITHUB_SHA,sha256:hash},null,2)+"\n")'
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f web/communist-world-simulator.apk web/communist-world-simulator.apk.sha256 web/android-version.json
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Publish verified Android APK to website [skip ci]"
+          git push origin HEAD:master

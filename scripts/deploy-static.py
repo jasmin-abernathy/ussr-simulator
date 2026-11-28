@@ -170,6 +170,8 @@ def archive_parts(name):
 
 
 def allowed_static_file(relative):
+    if relative in ("communist-world-simulator.apk", "communist-world-simulator.apk.sha256"):
+        return True
     if relative == ".htaccess":
         return True
     if any(part.startswith(".") for part in relative.split("/")):
@@ -210,8 +212,9 @@ def extract_web(archive_path, destination, repo, commit):
                     raise DeploymentError("Only regular static files and directories are accepted")
                 if not allowed_static_file(relative) or relative == MANIFEST_NAME:
                     raise DeploymentError("Unexpected or reserved static file: {}".format(relative))
-                if member.size < 0 or member.size > MAX_FILE_BYTES:
-                    raise DeploymentError("A static file exceeds the 10 MiB limit")
+                file_limit = 95 * 1024 * 1024 if relative == "communist-world-simulator.apk" else MAX_FILE_BYTES
+                if member.size < 0 or member.size > file_limit:
+                    raise DeploymentError("A static file exceeds its configured size limit")
                 total_bytes += member.size
                 if total_bytes > MAX_WEB_BYTES or len(files) >= MAX_FILES:
                     raise DeploymentError("web/ exceeds the total size or file-count limit")
