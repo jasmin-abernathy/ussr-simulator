@@ -197,11 +197,11 @@ function unifyInvestmentCard(card,id) {
   if(oldRisk)oldRisk.remove();
   // Keep the existing IDs for the runtime, in well-labelled, separate cells.
   const layout={
-    import:[['CA / s','import-gross'],['Taxe','import-tax'],['Trésorerie / s','import-net','activity-metric-net']],
-    bureaucracy:[['Agents concernés','bureaucracy-agents'],['Gain fiscal / groupe','bureaucracy-gain']],
-    bilateral:[['Accords conclus','bilateral-count'],['Gain commercial / accord','bilateral-gain']],
-    mobilization:[['Communisme / min','mobilization-benefit'],['Établissements','mobilization-capacity']],
-    institute:[['Communisme / min','institute-benefit'],['Établissements','institute-capacity']],
+    import:[['CA / s','import-gross','activity-metric-gross'],['Taxe','import-tax','activity-metric-tax'],['Trésorerie / s','import-net','activity-metric-net']],
+    bureaucracy:[['Agents concernés','bureaucracy-agents'],['Gain fiscal / groupe','bureaucracy-gain','activity-metric-benefit']],
+    bilateral:[['Accords conclus','bilateral-count'],['Gain commercial / accord','bilateral-gain','activity-metric-benefit']],
+    mobilization:[['Communisme / min','mobilization-benefit','activity-metric-benefit'],['Établissements','mobilization-capacity']],
+    institute:[['Communisme / min','institute-benefit','activity-metric-benefit'],['Établissements','institute-capacity']],
   }[id]||[];
   stats.replaceChildren(...layout.map(([label,field,cls])=>investmentMetric(label,field,cls)),risk);
   // Match the historic cards: stock count immediately before the buy button,
@@ -348,8 +348,8 @@ function renderActivities() {
         return span;
       };
       refs.effects.replaceChildren(
-        metric('CA / s',money(rate.grossPerSecond)),
-        metric('Taxe',`${rate.taxRate} %`),
+        metric('CA / s',money(rate.grossPerSecond),'activity-metric-gross'),
+        metric('Taxe',`${rate.taxRate} %`,'activity-metric-tax'),
         metric('Trésorerie / s',money(rate.treasuryPerSecond),'activity-metric-net'),
       );
       const politicalPenalty=state.worldEconomyEnabled?(COMMUNISM_PURCHASE_PENALTY[item.id]||0):0;
