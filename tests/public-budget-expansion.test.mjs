@@ -40,16 +40,16 @@ test('audits and maintenance offer repeatable budget decisions with sensible loc
  state.productionSteps=3000;
  const now=1700000000000;
  assert.ok(spendPublicBudget(state,'audit',now).ok);
- assert.ok(Math.abs(state.corruption-9.6)<1e-10);
+ assert.ok(Math.abs(state.corruption-8.4)<1e-10);
  assert.equal(spendPublicBudget(state,'audit',now+3599999).reason,'cooldown');
  assert.ok(spendPublicBudget(state,'audit',now+3600000).ok);
- assert.ok(Math.abs(state.corruption-7.68)<1e-10);
+ assert.ok(Math.abs(state.corruption-5.88)<1e-10);
  assert.ok(spendPublicBudget(state,'maintenance',now+3600000).ok);
  assert.equal(state.taxSteps,3000);
  assert.equal(state.productionSteps,2250);
  assert.equal(spendPublicBudget(state,'unknown',now+3600000).ok,false);
  assert.equal(spendPublicBudget(state,'audit',now+3600001).reason,'cooldown');
- assert.ok(Math.abs(state.corruption-7.68)<1e-10);
+ assert.ok(Math.abs(state.corruption-5.88)<1e-10);
  assert.equal(publicProjectOffers(state,now+3600001).audit.cooldownActive,true);
 });
 test('previous saves recover with zero additional public-project levels',()=>{
