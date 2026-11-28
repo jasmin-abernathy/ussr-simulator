@@ -252,14 +252,33 @@ export const corruptionGrossPerMinute = state =>
  */
 export const TRANSPARENCY_PREVENTION_PER_HOUSE=.10;
 export const INSPECTORATE_FLOW_REDUCTION_PER_UNIT=.05;
+/** Cooperative businesses mitigate new corruption rather than erasing the
+ * historical stock. Diminishing returns cap each category; the three types
+ * together cannot prevent more than 50% of what civic oversight leaves.
+ * Existing owned businesses contribute automatically after updating a save.
+ */
+export const COOPERATIVE_CORRUPTION_PREVENTION=Object.freeze({
+ grocery:Object.freeze({perUnit:.02,maxUnits:10}),
+ canning:Object.freeze({perUnit:.02,maxUnits:6}),
+ collectivisation:Object.freeze({perUnit:.03,maxUnits:6})
+});
+export const COOPERATIVE_PREVENTION_MAX=.50;
+export function getCooperativePrevention(state){
+ if(!state.worldEconomyEnabled)return 0;
+ return Math.min(COOPERATIVE_PREVENTION_MAX,Object.entries(COOPERATIVE_CORRUPTION_PREVENTION).reduce(
+  (sum,[id,rule])=>sum+Math.min(rule.maxUnits,Math.max(0,state.owned?.[id]||0))*rule.perUnit,0));
+}
 export function getCorruptionBreakdown(state){
  const gross=corruptionGrossPerMinute(state);
  const houses=state.transparencyHouses||0,inspectors=state.citizensInspectorates||0;
  const prevention=state.worldEconomyEnabled?Math.min(.69,Math.min(6,houses)*TRANSPARENCY_PREVENTION_PER_HOUSE+Math.max(0,houses-6)*.03):0;
  const inspectorateReduction=state.worldEconomyEnabled?Math.min(.72,Math.min(12,inspectors)*INSPECTORATE_FLOW_REDUCTION_PER_UNIT+Math.max(0,inspectors-12)*.02):0;
+ const cooperativePrevention=getCooperativePrevention(state);
  const afterTransparency=gross*(1-prevention);
  const intercepted=afterTransparency*inspectorateReduction;
- return {gross,prevention,inspectorateReduction,intercepted,recovery:0,net:Math.max(0,afterTransparency-intercepted)};
+ const cooperativeIntercepted=(afterTransparency-intercepted)*cooperativePrevention;
+ return {gross,prevention,inspectorateReduction,intercepted,cooperativePrevention,
+  cooperativeIntercepted,recovery:0,net:Math.max(0,afterTransparency-intercepted-cooperativeIntercepted)};
 }
 export const corruptionPerMinute=state=>getCorruptionBreakdown(state).net;
 
