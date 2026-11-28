@@ -539,12 +539,14 @@ export function buyActivity(state, id, quantity = 1) {
 /** A converted commerce stays in service and changes its business type.
  * Its trade-in value offsets the new structure, without cashing out.
  */
-export const CONVERSION_TARGETS=Object.freeze({
- gum:Object.freeze(['matches','soda','grocery']),
- trading:Object.freeze(['matches','soda','grocery']),
- 'black-market':Object.freeze(['matches','soda','grocery']),
- 'us-imports':Object.freeze(['matches','soda','grocery']),
-});
+/** Every owned business can become any other purchasable, unlocked activity.
+ * An establishment is never sold outright, and the same type is excluded.
+ * US imports may also be converted into any standard activity.
+ */
+export const CONVERSION_TARGETS=Object.freeze(Object.fromEntries([
+ ...ACTIVITIES.map(source=>[source.id,Object.freeze(ACTIVITIES.filter(target=>target.id!==source.id).map(target=>target.id))]),
+ ['us-imports',Object.freeze(ACTIVITIES.map(target=>target.id))],
+]));
 export const CONVERSION_TRADE_IN_RATE=.40;
 export function quoteActivityConversion(state,sourceId,targetId){
  if(!state.worldEconomyEnabled)return {ok:false,reason:'unavailable'};
