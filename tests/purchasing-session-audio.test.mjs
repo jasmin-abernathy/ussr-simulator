@@ -6,7 +6,7 @@ const html=readFileSync(new URL('../web/index.html',import.meta.url),'utf8');
 test('blocked browser tab offers an explicit recovery action rather than permanently disabling purchases',()=>{
  assert.match(app,/Reprendre la partie sur cet onglet/);
  assert.match(app,/document\.body\.append\(warning\)/);
- assert.match(html,/player-session-repair-2/);
+ assert.match(html,/runtime-anthem-v15\/app\.js\?v=/);
  assert.match(app,/navigator\.locks\.request\(SAVE_KEY,options/);
  assert.match(app,/force\?\{steal:true\}:\{ifAvailable:true\}/);
  assert.match(app,/sessionChannel\?\.postMessage\(\{type:'release-request'\}\)/);
