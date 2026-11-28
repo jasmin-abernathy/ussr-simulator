@@ -58,3 +58,12 @@ test('five sensitive investments are distributed across responsive activity cata
  assert.match(css,/\.activity-list > \.special-activity-card \.investment-actions\{\s*display:flex;/);
  assert.match(html,/Des pots-de-vin pour améliorer les recettes fiscales, au prix d’une corruption accrue/);
 });
+
+test('short sensitive investment cards do not stretch to match a taller neighbour',()=>{
+ const css=readFileSync(new URL('../web/runtime-anthem-v15/styles.css',import.meta.url),'utf8');
+ assert.match(css,/\.activity-list\{\s*align-items:start;/);
+ assert.match(css,/\.activity-list > \.activity-card\{\s*align-self:start;\s*height:auto;/);
+ assert.match(css,/\.activity-list > \.special-activity-card > \.investment-details\{\s*flex:0 0 auto;/);
+ assert.match(css,/\.activity-list > \.special-activity-card \.investment-stats,[\s\S]*?margin-top:0;/);
+ assert.match(css,/\.activity-list > \.special-activity-card > \.country-action,[\s\S]*?margin-top:0;/);
+});
